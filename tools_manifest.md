@@ -1,149 +1,88 @@
-# Curated AI Agent Tools & Repositories Manifest
+# Master AI Developer Tools, Repositories & Agent Ecosystem Manifest
 
-This manifest documents all open repositories from the developer workstation, detailing their capabilities, category, installation commands, and how they empower our multi-agent architecture.
-
----
-
-## 1. Codebase Graph & Architecture Intelligence
-
-### **Graphify**
-- **Repository:** https://github.com/Graphify-Labs/graphify
-- **Purpose:** Converts any codebase, docs, SQL schemas, and configs into a queryable knowledge graph. Uses local deterministic AST parsing without slow/costly vector stores.
-- **Harness Support:** Native `/graphify` skill for Claude Code, Cursor, Codex, and Antigravity.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/Graphify-Labs/graphify.git tools/graphify
-  ```
+A unified catalog of all GitHub repositories powering your full-stack development, AI agent workflows, and media automation across your machines. Fully categorized, de-duplicated, and integrated into your autonomous developer environment.
 
 ---
 
-## 2. Design, UI/UX & Layout Intelligence
+## 1. Autonomous AI Agents, Coding Harnesses & Memory
 
-### **UI-UX Pro Max Skill**
-- **Repository:** https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
-- **Purpose:** Comprehensive AI skill that injects professional design systems, component guidelines, color palettes, typography, and responsive UX patterns into agent code generation.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git tools/ui-ux-pro-max-skill
-  ```
+These repositories focus on local/cloud agent execution, persistent memory, and multi-provider routing for heavy development workflows.
 
-### **Apple Design Skill**
-- **Repository:** https://github.com/emilkowalski/skills
-- **Path:** `skills/apple-design/SKILL.md`
-- **Purpose:** Curated design intelligence following Apple's Human Interface Guidelines (HIG), motion physics, spacing, and typography.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/emilkowalski/skills.git tools/emilkowalski-skills
-  ```
-
-### **Open Design**
-- **Repository:** https://github.com/nexu-io/open-design
-- **Purpose:** Local-first, open-source collaborative AI design agent workspace. Generates UI motion, prototypes, websites, apps, and dashboards.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/nexu-io/open-design.git tools/open-design
-  ```
-
-### **Pretext**
-- **Repository:** https://github.com/chenglou/pretext
-- **Purpose:** High-performance, pure JavaScript/TypeScript multiline text measurement and layout engine. Bypasses DOM reflows (`getBoundingClientRect`), making text layout 10x faster for AI agent UIs, canvas, and SVG rendering.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/chenglou/pretext.git tools/pretext
-  ```
+| Repository | Purpose & Superpower | Local Status |
+| :--- | :--- | :--- |
+| [**`decolua/9router`**](https://github.com/decolua/9router) | **Free Multi-Provider Router**: Connects Claude Code, Cursor, Cline, and Antigravity to 40+ free AI providers with auto-fallback and -40% RTK token compression. | Installed (`tools/9router`) |
+| [**`ruvnet/ruflo`**](https://github.com/ruvnet/ruflo) | **Swarm Harness**: Multi-agent swarm coordinator with adaptive memory, vector RAG, and native Claude Code / Codex / Hermes integration. | Documented & Linked |
+| [**`google-antigravity/antigravity-sdk-python`**](https://github.com/google-antigravity/antigravity-sdk-python) | **Antigravity SDK**: Official Python SDK for building autonomous agents leveraging the Antigravity setup. | Documented & Linked |
+| [**`Gitlawb/openclaude`**](https://github.com/Gitlawb/openclaude) | **Open Claude Harness**: Model-agnostic terminal coding-agent harness allowing Claude Code-style workflows with any backend LLM. | Installed (`tools/openclaude`) |
+| [**`1jehuang/jcode`**](https://github.com/1jehuang/jcode) | **Rust Memory-Efficient Agent**: Ultra-low memory footprint coding agent harness ideal when running alongside local models. | Documented & Linked |
+| [**`Panniantong/agent-reach`**](https://github.com/Panniantong/agent-reach) | **Live Internet Eyes**: Gives AI agents zero-fee read and search access across YouTube, GitHub, Reddit, and X. | Installed (`tools/agent-reach`) |
+| [**`rohitg00/agentmemory`**](https://github.com/rohitg00/agentmemory) | **Persistent Agent Memory**: #1 benchmarked persistent memory layer retaining cross-session project context and bug patterns. | Installed (`tools/agentmemory`) |
+| [**`EfficientStreet/hindsight`**](https://github.com/EfficientStreet/hindsight) | **Agent Post-Mortem System**: Records past execution errors and root causes so coding agents don't repeat the same debugging mistakes. | Installed (`tools/hindsight`) |
+| [**`CopilotKit/OpenDots`**](https://github.com/CopilotKit/OpenDots) | **Autonomous AI Coworker**: Framework for embedding collaborative agentic workflows directly into applications. | Documented & Linked |
+| [**`templetongroup/radiant`**](https://github.com/templetongroup/radiant) | **Shared Conversation Swarms**: Enables multi-agent collaboration within a single shared conversation thread. | Documented & Linked |
+| [**`ChromeDevTools/chrome-devtools-mcp`**](https://github.com/ChromeDevTools/chrome-devtools-mcp) | **Chrome DevTools MCP**: Official MCP server giving coding agents live access to Chrome DevTools for DOM inspection and debugging. | Configured & Active |
 
 ---
 
-## 3. Web Browsing & Live Internet Intelligence
+## 2. AI Video Generation, Post-Production & Media Automation
 
-### **Agent-Reach**
-- **Repository:** https://github.com/Panniantong/agent-reach
-- **Purpose:** Gives agents live eyes across the entire web. Search and read Twitter/X, Reddit, YouTube transcripts, GitHub, and social platforms via a single CLI with zero API keys.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/Panniantong/agent-reach.git tools/agent-reach
-  ```
+Directly applicable to video editing, YouTube automation strategies, and promotional production for **Deoyani Movies**.
 
-### **Chrome DevTools MCP Server**
-- **Repository:** https://github.com/ChromeDevTools/chrome-devtools-mcp
-- **Purpose:** Official Chrome DevTools Model Context Protocol (MCP) server. Enables coding agents to directly inspect DOM, execute JavaScript, take screenshots, capture console logs, and analyze network traces in real time.
-- **Install Command:**
-  ```bash
-  npm install -g @chromadevtools/chrome-devtools-mcp
-  ```
+| Repository | Purpose & Superpower | Local Status |
+| :--- | :--- | :--- |
+| [**`WyattBlue/auto-editor`**](https://github.com/WyattBlue/auto-editor) | **Automated Rough Cuts**: Command-line tool for automatically analyzing audio/video to cut out dead air and silences instantly. | Installed (`uv tool: auto-editor`) |
+| [**`remotion-dev/remotion`**](https://github.com/remotion-dev/remotion) | **Programmatic Video via React**: Create automated motion graphics, video intros, captions, and YouTube intros using React and TypeScript. | Documented & Linked |
+| [**`wide-trace/open-higgsfield`**](https://github.com/wide-trace/open-higgsfield) | **AI Video Studio**: Open-source studio workspace for multi-model AI video generation and cinematic camera control. | Documented & Linked |
+| [**`navi3582/higgsfield-video`**](https://github.com/navi3582/higgsfield-video) | **Higgsfield Video Tooling**: Multi-model video generation pipeline for programmatic video rendering. | Documented & Linked |
+| [**`meituan-longcat/LongCat-Video`**](https://github.com/meituan-longcat/LongCat-Video) | **Long-Form Video Synthesis**: Foundational model for unified AI video generation. | Documented & Linked |
+| [**`smontlouis/bible-strong-avatar-lab`**](https://github.com/smontlouis/bible-strong-avatar-lab) | **Avatar & Character Lab**: Avatar generation workflow for faceless channels and character-driven storytelling. | Documented & Linked |
 
 ---
 
-## 4. Persistent Memory & Multi-Agent Swarms
+## 3. UI/UX, Frontend Design & Architecture Systems
 
-### **AgentMemory**
-- **Repository:** https://github.com/rohitg00/agentmemory
-- **Purpose:** #1 Benchmark-proven persistent memory system for AI coding agents. Retains cross-session project context, learned patterns, and bug history across agent sessions.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/rohitg00/agentmemory.git tools/agentmemory
-  ```
+Useful for polishing React/Vite frontends, designing high-end interfaces (**Aegis Health AI**, **Chate Prep Plus**, **Deoyani OTT**), and mapping system architectures.
 
-### **Ruflo Swarm Harness**
-- **Repository:** https://github.com/ruvnet/ruflo
-- **Purpose:** Multi-agent swarm coordinator with adaptive memory, self-learning intelligence, and native Claude Code / Codex / Hermes integration.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/ruvnet/ruflo.git tools/ruflo
-  ```
+| Repository | Purpose & Superpower | Local Status |
+| :--- | :--- | :--- |
+| [**`Graphify-Labs/graphify`**](https://github.com/Graphify-Labs/graphify) | **AST Knowledge Graph**: Converts codebases, SQL schemas, and docs into a queryable knowledge graph without vector stores. Works as a `/graphify` skill. | Installed (`tools/graphify`) |
+| [**`tt-a1i/archify`**](https://github.com/tt-a1i/archify) | **Interactive Architecture Diagrams**: Converts codebase analysis directly into interactive architecture diagrams for documentation. | Installed (`tools/archify`) |
+| [**`nextlevelbuilder/ui-ux-pro-max-skill`**](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | **Design Intelligence Skill**: Cross-platform design intelligence, typography, spacing, palettes, and component guidelines for coding agents. | Installed (Global Skill) |
+| [**`emilkowalski/skills`**](https://github.com/emilkowalski/skills) | **Apple Design & Animations**: Human Interface Guidelines (HIG), motion physics, spring curves, and UI polish. | Installed (Global Skill) |
+| [**`dickwu/apple-design-skill`**](https://github.com/dickwu/apple-design-skill) | **Apple HIG Reviewer Skill**: Dedicated skill for reviewing and polishing web/native interfaces against Apple design standards. | Installed (Global Skill) |
+| [**`nexu-io/open-design`**](https://github.com/nexu-io/open-design) | **Collaborative AI Design**: Local-first collaborative AI workspace for generating motion, prototypes, websites, and UI assets. | Installed (`tools/open-design`) |
+| [**`chenglou/pretext`**](https://github.com/chenglou/pretext) | **DOM-Less Text Layout**: Pure arithmetic text measurement bypassing DOM reflows for 10x faster canvas, markdown, and chat rendering. | Installed (`tools/pretext`) |
+| [**`Kayforkind/reimagine-it`**](https://github.com/Kayforkind/reimagine-it) | **Content-Derived UI Refactoring**: Reimagines and refactors existing web interfaces directly from page content. | Documented & Linked |
+| [**`lucasmarkes/hairline`**](https://github.com/lucasmarkes/hairline) | **Interactive Isometric Graphics**: Interactive pointer-reactive line figures for React and DOM applications. | Documented & Linked |
 
 ---
 
-## 5. Security, Reverse Engineering & Zero-Cost Routing
+## 4. Security, SEO, Time-Series & Specialized Research
 
-### **Strix AI Penetration Testing**
-- **Repository:** https://github.com/usestrix/strix
-- **Purpose:** Open-source AI security pentesting agent that autonomously tests applications for OWASP Top 10 vulnerabilities, unauthorized access, and logic flaws, providing verified patch diffs.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/usestrix/strix.git tools/strix
-  ```
+Tools for auditing deployments, training compact models, and specialized analytical workflows.
 
-### **Rea**
-- **Repository:** https://github.com/morluto/rea
-- **Purpose:** Agentic reverse engineering harness. Decompiles native binaries, inspects app behaviors, protocols, and undocumented APIs.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/morluto/rea.git tools/rea
-  ```
-
-### **9router**
-- **Repository:** https://github.com/decolua/9router
-- **Purpose:** Free AI coding router for Claude Code, Codex, Cursor, and Antigravity. Connects to 40+ providers with automatic failover and -40% RTK token compression.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/decolua/9router.git tools/9router
-  ```
+| Repository | Purpose & Superpower | Local Status |
+| :--- | :--- | :--- |
+| [**`usestrix/strix`**](https://github.com/usestrix/strix) | **AI Penetration Testing**: Autonomous security pentesting agent discovering OWASP vulnerabilities and generating verified patch diffs. | Installed (`tools/strix`) |
+| [**`every-app/open-seo`**](https://github.com/every-app/open-seo) | **Self-Hostable SEO Audit**: Automated SEO audit and optimization skills to boost organic discoverability for web platforms. | Installed (`tools/open-seo`) |
+| [**`morluto/rea`**](https://github.com/morluto/rea) | **Reverse Engineering**: Agentic decompilation of native binaries, protocols, and undocumented APIs. | Installed (`tools/rea`) |
+| [**`google-research/timesfm`**](https://github.com/google-research/timesfm) | **Time-Series Foundation Model**: Google Research foundation model for zero-shot time-series forecasting (vital signs & longitudinal trends for Aegis Health AI). | Skill Installed (`timesfm-forecasting`) |
+| [**`K-Dense-AI/scientific-agent-skills`**](https://github.com/K-Dense-AI/scientific-agent-skills) | **Scientific Agent Skills**: 50+ specialized scientific, clinical, and data pipeline skills (clinical reports, decision support, genomics). | Installed (`tools/scientific-agent-skills` & Global Skills) |
+| [**`THU-MAIC/OpenMAIC`**](https://github.com/THU-MAIC/OpenMAIC) | **AI-Native Classrooms**: Interactive multi-agent educational framework for modern LMS platforms (Chate Prep Plus). | Documented & Linked |
+| [**`jingyaogong/minimind`**](https://github.com/jingyaogong/minimind) | **Train Tiny LLMs**: Framework for training tiny language models from scratch on consumer hardware and local GPUs. | Documented & Linked |
+| [**`ruvnet/RuView`**](https://github.com/ruvnet/RuView) | **WiFi Spatial Sensing**: Real-time vital sign monitoring and presence detection using ambient WiFi signals without cameras. | Documented & Linked |
+| [**`bilawalsidhu/gods-eye-view`**](https://github.com/bilawalsidhu/gods-eye-view) | **3D Global Visualizer**: Real-time 3D global data feed visualization and spatial telemetry tracking. | Documented & Linked |
+| [**`omacom/omarchy`**](https://github.com/omacom/omarchy) | **Keyboard Developer Linux Setup**: DHH's keyboard-centric developer OS setup for maximum coding speed. | Documented & Linked |
+| [**`JetBrains/go-modern-guidelines`**](https://github.com/JetBrains/go-modern-guidelines) | **Modern Go Conventions**: Official guidelines and idiomatic practices for modern Go development. | Documented & Linked |
 
 ---
 
-## 6. Spatial Intelligence & Avatar Labs
+## 5. Personal Ecosystem Repositories
 
-### **RuView**
-- **Repository:** https://github.com/ruvnet/RuView
-- **Purpose:** Turns commodity WiFi signals into real-time spatial intelligence, vital sign monitoring, and human presence detection without any video cameras.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/ruvnet/RuView.git tools/RuView
-  ```
-
-### **Bible Strong Avatar Lab**
-- **Repository:** https://github.com/smontlouis/bible-strong-avatar-lab
-- **Purpose:** 3D avatar and spatial character laboratory.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/smontlouis/bible-strong-avatar-lab.git tools/bible-strong-avatar-lab
-  ```
-
-### **Antigravity Python SDK**
-- **Repository:** https://github.com/google-antigravity/antigravity-sdk-python
-- **Purpose:** Official Python library for building autonomous AI agents with native Antigravity SDK bindings.
-- **Install Command:**
-  ```bash
-  git clone https://github.com/google-antigravity/antigravity-sdk-python.git tools/antigravity-sdk-python
-  ```
+| Repository | Purpose & URL |
+| :--- | :--- |
+| **`dhurianiket/Aegis-health-ai-`** | Clinical-grade medical intelligence, SBAR/clinical report analysis, and longitudinal health platform ([GitHub](https://github.com/dhurianiket/Aegis-health-ai-)) |
+| **`dhurianiket/chate-prep-plus`** | Full-stack learning management platform with custom admin routing and secure media streaming |
+| **`dhurianiket/new-deoyani-ott`** | React/Vite single-page Web OTT streaming platform for Deoyani Movies featuring OLED-black UI and 3D hero banners ([GitHub](https://github.com/dhurianiket/new-deoyani-ott)) |
+| **`dhurianiket/aniket-living-cv`** | Interactive terminal-style portfolio and living CV (`aniket.aegishealthai.co.in`) ([GitHub](https://github.com/dhurianiket/aniket-living-cv)) |
+| **`dhurianiket/agent-workstation-setup`** | Universal cross-platform AI agent workstation setup with one-command installers for macOS & Windows ([GitHub](https://github.com/dhurianiket/agent-workstation-setup)) |
