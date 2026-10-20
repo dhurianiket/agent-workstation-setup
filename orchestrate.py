@@ -169,21 +169,10 @@ def get_graphify_context(cwd: str, task: str) -> str:
     Pre-Action Knowledge Graph Sensor (Graphify):
     Queries graphify-out/graph.json for relevant code symbols and line numbers
     so the coding agent starts with exact architectural context.
-    Auto-initializes the AST graph in any new project folder if missing.
+    Strictly isolated: only runs if graphify-out/graph.json already exists in cwd
+    (never pollutes external personal or private repositories).
     """
     graph_file = Path(cwd) / "graphify-out" / "graph.json"
-    if not graph_file.exists():
-        try:
-            subprocess.run(
-                [sys.executable, "-m", "graphify", "update", "."],
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                timeout=15,
-                check=False
-            )
-        except Exception:
-            pass
     if not graph_file.exists():
         return ""
     try:
@@ -221,11 +210,6 @@ def get_auto_routed_skills(task: str) -> tuple:
     try:
         script_dir = Path(__file__).resolve().parent
         tools_dir = script_dir / "tools"
-        if not (tools_dir / "skill_router.py").exists():
-            # Fallback to master workstation tools directory when called from another location
-            fallback_tools = Path(r"c:\Users\dhuri\Downloads\antigravity ai workspace\pc local work\tools")
-            if (fallback_tools / "skill_router.py").exists():
-                tools_dir = fallback_tools
         if str(tools_dir) not in sys.path:
             sys.path.insert(0, str(tools_dir))
         import skill_router
@@ -523,22 +507,23 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
             if not is_secure:
                 return False
 
-        # 4. Graphify Knowledge Graph Auto-Sync
-        try:
-            print("\n[GRAPHIFY] Synchronizing codebase knowledge graph...")
-            g_res = subprocess.run(
-                [sys.executable, "-m", "graphify", "update", "."],
-                cwd=target_cwd,
-                capture_output=True,
-                text=True,
-                timeout=45
-            )
-            if g_res.returncode == 0:
-                print("[GRAPHIFY OK] Knowledge graph synchronized.")
-            else:
-                print(f"[GRAPHIFY NOTICE] Graph sync exited with {g_res.returncode}.")
-        except Exception as e:
-            print(f"[GRAPHIFY NOTICE] Graph sync skipped: {e}")
+        # 4. Graphify Knowledge Graph Auto-Sync (only when graphify-out/graph.json already exists in target_cwd)
+        if (Path(target_cwd) / "graphify-out" / "graph.json").exists():
+            try:
+                print("\n[GRAPHIFY] Synchronizing codebase knowledge graph...")
+                g_res = subprocess.run(
+                    [sys.executable, "-m", "graphify", "update", "."],
+                    cwd=target_cwd,
+                    capture_output=True,
+                    text=True,
+                    timeout=45
+                )
+                if g_res.returncode == 0:
+                    print("[GRAPHIFY OK] Knowledge graph synchronized.")
+                else:
+                    print(f"[GRAPHIFY NOTICE] Graph sync exited with {g_res.returncode}.")
+            except Exception as e:
+                print(f"[GRAPHIFY NOTICE] Graph sync skipped: {e}")
 
         return True
 
@@ -556,6 +541,8 @@ if __name__ == "__main__":
     parser.add_argument("--agent", "-a", default="aider", choices=["aider", "claude", "codex", "opencode"], help="Agent harness to dispatch")
     parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "sonnet", "reasoner", "coder", "fast", "local"], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
+    parser.add_argument("--guide", action="store_true", help="Display 'How It Works & How It Functions' architecture & usage guide")
+    parser.add_argument("--setup", action="store_true", help="Run the interactive cross-platform hardware, Ollama, API key & 32-repo setup wizard")
     parser.add_argument("--judge", action="store_true", help="Run Frontier Critic model (DeepSeek R1) review pass on the diff")
     parser.add_argument("--judge-only", action="store_true", help="Run AST sensor, Frontier Critic, and ggshield audit on current workspace without invoking an editing agent")
     parser.add_argument("--no-verify", action="store_true", help="Skip post-execution AST/syntax verification")
@@ -564,6 +551,20 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    if args.guide:
+        tools_dir = Path(__file__).resolve().parent / "tools"
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        import setup_wizard
+        hw = setup_wizard.detect_hardware_profile()
+        setup_wizard.print_how_it_works_guide(hw)
+        sys.exit(0)
+
+    if args.setup:
+        tools_dir = Path(__file__).resolve().parent / "tools"
+        subprocess.run([sys.executable, str(tools_dir / "setup_wizard.py")], check=False)
+        sys.exit(0)
+
     if args.usage:
         show_usage()
         sys.exit(0)

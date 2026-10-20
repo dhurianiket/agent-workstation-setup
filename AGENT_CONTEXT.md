@@ -7,18 +7,19 @@ This document provides the foundational, high-fidelity context for any AI coding
 ## 1. System Architecture & Gateway
 
 * **Unified Local AI API Gateway**: `http://127.0.0.1:8000/v1`
-  * OpenAI-compatible `/v1/chat/completions` (with SSE streaming) & `/v1/models`.
-  * **Interactive Web Dashboard**: `http://127.0.0.1:8000/dashboard` (real-time telemetry, model latencies, token spend).
-  * **Local GPU Daemon**: Ollama running `llama3.2:1b` on AMD Radeon RX 5500M discrete GPU via Vulkan (**$0.00 / free**).
-  * **AWS Bedrock Integration**: Profile `msi-lappy`, Region `us-east-1` (Claude 4.5 Sonnet & Opus, DeepSeek R1, Llama 3.3 70B, Llama 4 Scout).
-  * **Bring Your Own Keys (BYOK)**: Native fallback to OpenRouter, NVIDIA NIM, DeepSeek, Groq, and OpenAI.
+  * OpenAI-compatible `/v1/chat/completions` (with `model="auto"` and SSE streaming) & `/v1/models`.
+  * **Interactive Web Dashboard**: `http://127.0.0.1:8000/dashboard` (real-time telemetry, model latencies, token spend, 1-click Graphify AST viewer).
+  * **Interactive Graphify AST Viewer**: `http://127.0.0.1:8000/graphify` & `/graphify/report`.
+  * **Hardware-Adaptive Local GPU Daemon**: Ollama (`http://127.0.0.1:11434`) running hardware-matched models (`llama3.2:1b`, `qwen2.5-coder:7b/14b/32b`) on Apple Metal, NVIDIA CUDA, or AMD Vulkan (**$0.00 / free**).
+  * **Bring Your Own Keys (BYOK) & AWS Bedrock**: Native 5-tier fallback across OpenRouter, NVIDIA NIM, DeepSeek, Groq, OpenAI, and optional AWS Bedrock (`$AWS_PROFILE`).
 
 ---
 
 ## 2. Knowledge Graph Context (Graphify)
 
 * **Location**: `graphify-out/` (`graph.json`, `graph.html`, `GRAPH_REPORT.md`).
-* **Scale**: 2,351+ nodes, 4,358+ edges, 141 detected communities across the workspace.
+* **Scale**: 2,351+ nodes, 4,358+ edges, 141 detected communities across the workstation repository.
+* **Isolation Policy**: `graphify-out/` is only queried or updated in workspaces where `graphify-out/graph.json` already exists. The workstation never auto-creates `graphify-out/` inside external personal or private repositories.
 * **Operating Protocol**:
   1. **Query Before Searching**: Before executing broad file greps or exploratory directory scans, always run:
      ```bash
@@ -28,11 +29,10 @@ This document provides the foundational, high-fidelity context for any AI coding
      ```bash
      python -m graphify path "<SourceModule>" "<TargetModule>"
      ```
-  3. **Auto-Synchronization**: After creating or refactoring code files, run:
+  3. **Auto-Synchronization**: After creating or refactoring code files in a Graphify-enabled workspace, run:
      ```bash
      python -m graphify update .
      ```
-     *(This is also automatically triggered by `orchestrate.py` post-execution sensors).*
 
 ---
 
@@ -53,21 +53,22 @@ When orchestrating multi-step workflows or autonomous browser/desktop actions, l
 
 ## 4. GitGuardian (`ggshield`) Zero-Leakage Policy
 
-* **CRITICAL**: Never expose or commit private API keys, AWS credentials, NVIDIA tokens, or passwords to git, logs, or external models.
+* **CRITICAL**: Never expose or commit private API keys, AWS credentials, NVIDIA tokens, personal repository names, or passwords to git, logs, or external models.
 * All modified files must be verified with `ggshield secret scan path --yes <files>` before git commit.
 * Sensitive files (`.env`, `secrets.*`, `*.pem`, `*.key`) are permanently ignored in `.gitignore`.
 
 ---
 
-## 5. Master Curated Tools Index (32 Curated Tools)
+## 5. Master Curated Tools Index (32 Curated Tools & 456+ Skills)
 
-All tools in `tools/` are verified and operational:
+All 32 repositories in `tools/` are automatically cloned and indexed by `python tools/setup_wizard.py`:
 * **Harnesses**: `9router`, `ruflo`, `openclaude`, `jcode`, `agent-reach`, `agentmemory`, `hindsight`, `OpenDots`, `radiant`
 * **Media & Video**: `auto-editor`, `open-higgsfield`, `higgsfield-video`, `LongCat-Video`, `bible-strong-avatar-lab`
 * **UI/UX & Design**: `graphify`, `archify`, `ui-ux-pro-max-skill`, `emilkowalski-skills`, `dickwu-apple-design-skill`, `open-design`, `pretext`, `reimagine-it`, `hairline`
 * **Security & Research**: `strix`, `open-seo`, `rea`, `timesfm`, `scientific-agent-skills`, `OpenMAIC`, `minimind`, `RuView`, `gods-eye-view`, `go-modern-guidelines`
 
-Tool verification command:
+Tool verification & zero-name skill router commands:
 ```bash
 python tools/manage_tools.py audit
+python tools/skill_router.py "<any task description>"
 ```

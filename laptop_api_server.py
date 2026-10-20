@@ -862,6 +862,68 @@ def dashboard():
       background: rgba(255, 255, 255, 0.015);
     }
 
+    .card-interactive {
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+    }
+
+    .card-interactive:hover {
+      transform: translateY(-2px);
+      border-color: var(--purple);
+      box-shadow: 0 8px 24px -6px rgba(168, 85, 247, 0.25);
+    }
+
+    .hw-banner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 980px) {
+      .hw-banner { grid-template-columns: 1fr; }
+    }
+
+    .hw-strip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.78rem;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(4, 7, 13, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-panel {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      max-width: 960px;
+      width: 100%;
+      max-height: 86vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -880,9 +942,9 @@ def dashboard():
       <div>
         <div class="brand-title">
           Antigravity Autonomous Workstation
-          <span class="version-pill mono">v3.3 OS</span>
+          <span class="version-pill mono">v3.4 OS</span>
         </div>
-        <div class="brand-sub">Unified 5-Tier AI Gateway • Graphify AST Engine • Zero-Name 32-Repo Skill Router</div>
+        <div class="brand-sub">Unified 5-Tier AI Gateway • Graphify AST Engine • Hardware-Adaptive Ollama • 32-Repo Auto-Router</div>
       </div>
     </div>
 
@@ -896,6 +958,14 @@ def dashboard():
         <span class="dot"></span>
         <span id="status-text">ONLINE • 127.0.0.1:8000</span>
       </div>
+      <button class="btn btn-ghost" onclick="window.open('/graphify', '_blank')" title="Open Interactive Graphify AST Graph (graphify-out/graph.html)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        Graphify AST ↗
+      </button>
+      <button class="btn btn-ghost" onclick="openGuideModal()" title="How It Works & Cross-PC Setup Guide">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        How It Works
+      </button>
       <button class="btn btn-ghost" onclick="togglePolling()" id="pause-btn" title="Pause or resume 5s live telemetry polling">
         <span id="pause-label">Live: 5s</span>
       </button>
@@ -907,6 +977,35 @@ def dashboard():
   </header>
 
   <main class="container">
+    <!-- Hardware Profile & Live Chat Auto-Router Strip -->
+    <section class="hw-banner" aria-label="Hardware Profile and Live Chat Auto-Router">
+      <div class="hw-strip">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="kpi-icon" style="background: var(--success-soft); color: var(--success); width: 28px; height: 28px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>
+          </span>
+          <div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Detected Host Hardware & Local Ollama Profile</div>
+            <div id="hw-summary" style="color: var(--text); font-weight: 600; margin-top: 1px;">Detecting PC/Mac GPU & RAM profile...</div>
+          </div>
+        </div>
+        <span class="mono" id="hw-model-pill" style="background: var(--success-soft); color: var(--success); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;">llama3.2:1b</span>
+      </div>
+
+      <div class="hw-strip">
+        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <span class="kpi-icon" style="background: var(--purple-soft); color: var(--purple); width: 28px; height: 28px; flex-shrink: 0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </span>
+          <div style="min-width: 0;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Live Chat PreInvocation Auto-Router</div>
+            <div id="live-route-summary" style="color: var(--text); font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Active on every prompt • Zero manual repo names needed</div>
+          </div>
+        </div>
+        <span class="mono" id="live-route-tier" style="background: var(--purple-soft); color: var(--purple); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; flex-shrink: 0;">AUTO ACTIVE</span>
+      </div>
+    </section>
+
     <!-- 5-Card Bento Telemetry Row -->
     <section class="kpi-grid" aria-label="Key Performance Telemetry">
       <div class="card">
@@ -953,16 +1052,17 @@ def dashboard():
         <div class="meter-track"><div class="meter-fill" id="token-bar" style="width: 85%; background: var(--warning);"></div></div>
       </div>
 
-      <div class="card">
+      <div class="card card-interactive" id="graphify-card" role="button" tabindex="0" onclick="window.open('/graphify', '_blank')" onkeydown="if(event.key==='Enter'||event.key===' ') window.open('/graphify', '_blank')" title="Click to open interactive Graphify AST Graph (graphify-out/graph.html)">
         <div class="kpi-header">
-          <span class="kpi-title">Graphify AST Graph</span>
+          <span class="kpi-title" style="color: var(--purple);">Graphify AST Graph ↗</span>
           <span class="kpi-icon" style="background: var(--purple-soft); color: var(--purple);" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           </span>
         </div>
         <div class="kpi-val tabular" style="color: var(--purple);" id="graph-nodes">2,397 Nodes</div>
         <div class="kpi-sub">
-          <span id="graph-sub" class="tabular">4,445 edges • 155 communities</span>
+          <span id="graph-sub" class="tabular">4,445 edges • Tap to open</span>
+          <span class="mono" style="color: var(--purple); font-weight: 600; text-decoration: underline;" onclick="event.stopPropagation(); window.open('/graphify/report', '_blank')" title="Open GRAPH_REPORT.md">Report ↗</span>
         </div>
         <div class="meter-track"><div class="meter-fill" style="width: 100%; background: var(--purple);"></div></div>
       </div>
@@ -1126,16 +1226,17 @@ def dashboard():
         </div>
       </div>
 
-      <!-- Column 3: Spend Breakdown & Post-Mortem Memory Tabs -->
+      <!-- Column 3: Spend Breakdown, Post-Mortems & Graphify AST Explorer -->
       <div class="card">
         <div class="section-bar">
           <div class="section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Telemetry Ledger & Memory
+            Telemetry, Memory & AST
           </div>
           <div class="tab-group" role="tablist">
-            <button type="button" class="tab-btn active" id="tab-spend-btn" onclick="switchTab('spend')">Model Spend</button>
+            <button type="button" class="tab-btn active" id="tab-spend-btn" onclick="switchTab('spend')">Spend</button>
             <button type="button" class="tab-btn" id="tab-pm-btn" onclick="switchTab('pm')">Post-Mortems</button>
+            <button type="button" class="tab-btn" id="tab-ast-btn" onclick="switchTab('ast')">Graphify AST</button>
           </div>
         </div>
 
@@ -1158,13 +1259,83 @@ def dashboard():
         <div id="tab-pm-view" style="display: none; max-height: 365px; overflow-y: auto;">
           <div id="pm-list" style="font-size: 0.78rem; color: var(--text-secondary);">No post-mortem regressions recorded.</div>
         </div>
+
+        <div id="tab-ast-view" style="display: none; max-height: 365px; overflow-y: auto;">
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button type="button" class="btn" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify', '_blank')">
+              Open Interactive Graph.html ↗
+            </button>
+            <button type="button" class="btn btn-ghost" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify/report', '_blank')">
+              Open GRAPH_REPORT.md ↗
+            </button>
+          </div>
+          <label class="field-label" for="ast-query-input">Query Graphify AST Knowledge Graph</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="ast-query-input" value="invoke_model_with_fallback" placeholder="Search symbol, function, or module..." style="margin-bottom: 0;">
+            <button type="button" class="btn btn-ghost" onclick="runAstQuery()">Query</button>
+          </div>
+          <div class="route-box mono" id="ast-query-output" style="font-size: 0.73rem; min-height: 150px; white-space: pre-wrap;">Tap "Query" or click "Open Interactive Graph.html ↗" above to explore the full 2,397-node AST graph.</div>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- How It Works & Cross-Platform Setup Guide Modal -->
+  <div class="modal-backdrop" id="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title" onclick="if(event.target===this) closeGuideModal()">
+    <div class="modal-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <div>
+          <h2 id="guide-modal-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text);">How the Antigravity Autonomous Workstation Works</h2>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Architecture, Automatic Chat Routing, Hardware-Adaptive Ollama & Personal Repo Isolation</div>
+        </div>
+        <button class="btn btn-ghost" onclick="closeGuideModal()">Close ✕</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55;">
+        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+          <div style="color: var(--accent); font-weight: 700; margin-bottom: 6px;">1. Zero-Name Automatic Request Routing</div>
+          Every prompt you type in Antigravity, Claude Code, Cursor, or Aider is intercepted by <code>tools/pre_invocation_hook.py</code> and <code>tools/skill_router.py</code>. It automatically classifies task complexity across <strong>5 Model Tiers</strong> and injects the top matching <code>SKILL.md</code> runbooks from all <strong>32 installed repositories (456+ skills)</strong> without you ever typing a repo name.
+        </div>
+
+        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+          <div style="color: var(--success); font-weight: 700; margin-bottom: 6px;">2. Hardware-Adaptive Ollama LLM Installer</div>
+          When installed on any PC or Mac via <code>.\\install.ps1</code> or <code>./install.sh</code>, <code>tools/setup_wizard.py</code> inspects your OS, CPU cores, RAM, and GPU (Apple Metal, NVIDIA CUDA, AMD Vulkan) and automatically pulls the optimal local Ollama model (<code>llama3.2:1b</code>, <code>qwen2.5-coder:7b</code>, <code>14b</code>, or <code>32b</code>).
+        </div>
+
+        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+          <div style="color: var(--purple); font-weight: 700; margin-bottom: 6px;">3. 1-Click Graphify AST Knowledge Graph</div>
+          Clicking the <strong>Graphify AST Graph</strong> card opens the interactive 2,397-node AST visualization (<code>/graphify</code> &rarr; <code>graphify-out/graph.html</code>) or the architecture report (<code>/graphify/report</code> &rarr; <code>GRAPH_REPORT.md</code>).
+        </div>
+
+        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+          <div style="color: var(--warning); font-weight: 700; margin-bottom: 6px;">4. Strict Personal & Private Repo Isolation</div>
+          All 32 curated repositories live strictly inside the workstation's <code>tools/</code> folder. The workstation never clones or writes <code>graphify-out/</code> files into your personal or private repositories, and <code>ggshield</code> blocks any secret leakage before <code>git commit</code>.
+        </div>
+      </div>
+
+      <div style="margin-top: 14px; background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px;">
+        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Quick Commands (Any Terminal)</div>
+        <div class="mono" style="font-size: 0.76rem; color: var(--text); display: grid; gap: 4px;">
+          <div><span style="color: var(--accent);">python tools/setup_wizard.py</span> — Interactive Hardware + Ollama + API Key + 32-Repo Setup Wizard</div>
+          <div><span style="color: var(--success);">python orchestrate.py --guide</span> — Print full architectural guide in terminal</div>
+          <div><span style="color: var(--purple);">python tools/skill_router.py "your task"</span> — Test Zero-Name 32-Repo Skill Router</div>
+          <div><span style="color: var(--warning);">python tools/manage_tools.py sync</span> — Clone or update all 32 GitHub repositories</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let pollingActive = true;
     let pollTimer = null;
+
+    function openGuideModal() {
+      document.getElementById('guide-modal').classList.add('open');
+    }
+
+    function closeGuideModal() {
+      document.getElementById('guide-modal').classList.remove('open');
+    }
 
     function togglePolling() {
       pollingActive = !pollingActive;
@@ -1186,11 +1357,26 @@ def dashboard():
     }
 
     function switchTab(tab) {
-      const isSpend = tab === 'spend';
-      document.getElementById('tab-spend-view').style.display = isSpend ? 'block' : 'none';
-      document.getElementById('tab-pm-view').style.display = isSpend ? 'none' : 'block';
-      document.getElementById('tab-spend-btn').classList.toggle('active', isSpend);
-      document.getElementById('tab-pm-btn').classList.toggle('active', !isSpend);
+      document.getElementById('tab-spend-view').style.display = tab === 'spend' ? 'block' : 'none';
+      document.getElementById('tab-pm-view').style.display = tab === 'pm' ? 'block' : 'none';
+      document.getElementById('tab-ast-view').style.display = tab === 'ast' ? 'block' : 'none';
+      document.getElementById('tab-spend-btn').classList.toggle('active', tab === 'spend');
+      document.getElementById('tab-pm-btn').classList.toggle('active', tab === 'pm');
+      document.getElementById('tab-ast-btn').classList.toggle('active', tab === 'ast');
+      if (tab === 'ast') runAstQuery();
+    }
+
+    async function runAstQuery() {
+      const q = document.getElementById('ast-query-input').value.trim();
+      const out = document.getElementById('ast-query-output');
+      out.innerText = 'Querying Graphify AST...';
+      try {
+        const r = await fetch('/v1/graphify/query?q=' + encodeURIComponent(q));
+        const d = await r.json();
+        out.innerText = d.output || 'No matching AST nodes found.';
+      } catch (e) {
+        out.innerText = 'Error querying Graphify AST: ' + e.message;
+      }
     }
 
     async function testSkillRoute(presetQuery) {
@@ -1288,7 +1474,26 @@ def dashboard():
         const gData = await gResp.json();
         if (gData.nodes) {
           document.getElementById('graph-nodes').innerText = `${gData.nodes.toLocaleString()} Nodes`;
-          document.getElementById('graph-sub').innerText = `${(gData.edges || 0).toLocaleString()} edges • ${gData.communities || 0} communities`;
+          document.getElementById('graph-sub').innerText = `${(gData.edges || 0).toLocaleString()} edges • Tap to open`;
+        }
+      } catch (e) {}
+
+      try {
+        const hwResp = await fetch('/v1/hardware');
+        const hw = await hwResp.json();
+        if (hw && hw.os) {
+          document.getElementById('hw-summary').innerText = `${hw.os} (${hw.arch}) • ${hw.cpu_cores} Cores • ${hw.ram_gb} GB RAM • ${hw.gpu_name}`;
+          document.getElementById('hw-model-pill').innerText = (hw.recommended_models || [hw.primary_local_model]).join(' + ');
+        }
+      } catch (e) {}
+
+      try {
+        const lrResp = await fetch('/v1/last-route');
+        const lr = await lrResp.json();
+        if (lr && lr.tier) {
+          const repos = (lr.matched_repos && lr.matched_repos.length > 0) ? lr.matched_repos.slice(0, 4).join(', ') : 'Core Engine';
+          document.getElementById('live-route-summary').innerText = `Repos: ${repos} • Prompt: "${(lr.prompt_preview || '').slice(0, 65)}..."`;
+          document.getElementById('live-route-tier').innerText = `TIER: ${lr.tier.toUpperCase()}`;
         }
       } catch (e) {}
 
@@ -1420,6 +1625,116 @@ def get_graph_summary():
         except Exception as e:
             return {"status": "error", "detail": str(e)}
     return {"status": "missing", "nodes": 0, "edges": 0, "communities": 0}
+
+
+@app.get("/graphify", response_class=HTMLResponse)
+def open_graphify_file():
+    """
+    Opens the interactive Graphify AST Graph HTML file (graphify-out/graph.html)
+    when the user taps on the Graphify card on /dashboard.
+    If graph.html is missing on a fresh install, auto-builds or renders an interactive AST explorer.
+    """
+    import sys
+    base_dir = Path(__file__).resolve().parent
+    html_file = base_dir / "graphify-out" / "graph.html"
+    if not html_file.exists():
+        html_file = Path.cwd() / "graphify-out" / "graph.html"
+    if not html_file.exists():
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "graphify", "update", "."],
+                cwd=str(base_dir),
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False
+            )
+        except Exception:
+            pass
+    if html_file.exists():
+        return HTMLResponse(content=html_file.read_text(encoding="utf-8", errors="replace"))
+    return open_graphify_report()
+
+
+@app.get("/graphify/report", response_class=HTMLResponse)
+def open_graphify_report():
+    """
+    Renders graphify-out/GRAPH_REPORT.md in a sleek dark-mode viewer with a link to /graphify.
+    """
+    import html as html_lib
+    base_dir = Path(__file__).resolve().parent
+    report_file = base_dir / "graphify-out" / "GRAPH_REPORT.md"
+    if not report_file.exists():
+        report_file = Path.cwd() / "graphify-out" / "GRAPH_REPORT.md"
+    raw_md = report_file.read_text(encoding="utf-8", errors="replace") if report_file.exists() else "# Graphify AST Report\nRun `python -m graphify update .` to build the knowledge graph."
+    escaped = html_lib.escape(raw_md)
+    page = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Graphify AST Architecture Report</title>
+<style>
+  body {{ background: #070a10; color: #f1f5f9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; margin: 0; padding: 28px; }}
+  .bar {{ max-width: 1100px; margin: 0 auto 18px; display: flex; justify-content: space-between; align-items: center; background: #0e131f; border: 1px solid rgba(148,163,184,0.18); padding: 14px 20px; border-radius: 12px; }}
+  a.btn {{ background: #a855f7; color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; }}
+  pre {{ max-width: 1100px; margin: 0 auto; background: #0e131f; border: 1px solid rgba(148,163,184,0.18); padding: 24px; border-radius: 12px; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 0.84rem; line-height: 1.6; color: #cbd5e1; }}
+</style></head>
+<body>
+  <div class="bar">
+    <div><strong>Graphify AST Architecture Report</strong> <span style="color:#94a3b8;font-size:0.82rem;">(graphify-out/GRAPH_REPORT.md)</span></div>
+    <div style="display:flex;gap:10px;">
+      <a class="btn" href="/graphify">Open Interactive 2D/3D Graph.html &rarr;</a>
+      <a class="btn" style="background:#1e293b;" href="/dashboard">&larr; Back to Dashboard</a>
+    </div>
+  </div>
+  <pre>{escaped}</pre>
+</body></html>"""
+    return HTMLResponse(content=page)
+
+
+@app.get("/v1/graphify/query")
+def query_graphify_ast(q: str = ""):
+    import sys
+    base_dir = Path(__file__).resolve().parent
+    if not q.strip():
+        return {"status": "ok", "output": "Enter a symbol, function, or concept to query graphify-out/graph.json."}
+    try:
+        res = subprocess.run(
+            [sys.executable, "-m", "graphify", "query", q.strip(), "--budget", "800"],
+            cwd=str(base_dir),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False
+        )
+        out = (res.stdout or res.stderr or "").strip()
+        return {"status": "ok", "query": q, "output": out or "No matching AST nodes found."}
+    except Exception as e:
+        return {"status": "error", "output": str(e)}
+
+
+@app.get("/v1/hardware")
+def get_hardware_endpoint():
+    import sys
+    try:
+        hw_cache = STATS_DIR / "hardware_profile.json"
+        if hw_cache.exists():
+            return json.loads(hw_cache.read_text(encoding="utf-8"))
+        tools_dir = Path(__file__).resolve().parent / "tools"
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        import setup_wizard
+        return setup_wizard.detect_hardware_profile()
+    except Exception as e:
+        return {"os": "Unknown", "detail": str(e)}
+
+
+@app.get("/v1/last-route")
+def get_last_route_endpoint():
+    route_file = STATS_DIR / "last_route.json"
+    if route_file.exists():
+        try:
+            return json.loads(route_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"tier": "auto", "matched_repos": [], "prompt_preview": "Waiting for next prompt..."}
 
 @app.get("/v1/skills/route")
 def route_skills_endpoint(q: str = ""):

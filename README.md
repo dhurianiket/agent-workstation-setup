@@ -101,7 +101,20 @@ flowchart TD
 
 ---
 
-## ⚡ 1-Command Universal Installers
+## ⚡ 1-Command Universal Installers (Hardware-Adaptive + Interactive Wizard)
+
+When you install or pull this repository on **any Windows PC, Mac (Apple Silicon / Intel), or Linux machine**, the installer automatically runs [`tools/setup_wizard.py`](tools/setup_wizard.py) which performs 6 zero-touch steps:
+
+1. **Auto-Detects Your Computer Hardware (`detect_hardware_profile`)**: Inspects OS, CPU cores, total RAM (GB), and GPU architecture (**Apple Metal Unified Memory**, **NVIDIA CUDA**, **AMD Radeon Vulkan**, or **CPU**).
+2. **Installs & Pulls the Optimal Local Ollama Model (`$0.00` Offline Tier)**:
+   - **$\le 8\text{GB}$ RAM**: Pulls `llama3.2:1b` (`1.3GB` instant local router)
+   - **$16\text{GB}$ RAM (Discrete GPU / Apple Silicon M1–M4)**: Pulls `llama3.2:1b` + `qwen2.5-coder:7b`
+   - **$32\text{GB}$ RAM (RTX Workstation / MacBook Pro M-Pro/Max)**: Pulls `llama3.2:1b` + `qwen2.5-coder:14b`
+   - **$64\text{GB}+$ RAM (Mac Studio / High-VRAM Server)**: Pulls `llama3.2:1b` + `qwen2.5-coder:32b`
+3. **Interactive API Key Setup Wizard**: Prompts you to optionally paste your `OPENROUTER_API_KEY`, `NVIDIA_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, or `AWS_PROFILE` (press `Enter` to skip any provider and run 100% free on local Ollama GPU) and writes a git-ignored `.env`.
+4. **Auto-Clones All 32 GitHub Repositories & Indexes 456+ Skills**: Runs `python tools/manage_tools.py sync` and `python tools/skill_router.py --index` so all 32 curated repositories are installed in `tools/`.
+5. **Registers Global Pre-Invocation Auto-Router Hook**: Installs `~/.gemini/config/plugins/antigravity-workstation/hooks.json` (`tools/pre_invocation_hook.py`), `~/.claude/CLAUDE.md`, and `~/.aider.conf.yml` while keeping **100% strict isolation from your personal/private repositories** (never writes workstation or `graphify-out/` files into your personal repos).
+6. **Prints the "How It Works & How It Functions" Guide**: Explains every endpoint, tier, and command upon install or `git pull`.
 
 ### 🍎 macOS (Apple Silicon M1/M2/M3/M4 & Intel) & 🐧 Linux
 ```bash
@@ -111,6 +124,15 @@ curl -sSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/
 ### 🪟 Windows (PowerShell 7+ / Windows Terminal)
 ```powershell
 irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.ps1 | iex
+```
+
+### 🔄 Already Cloned? Run the Interactive Setup or Guide Anytime
+```bash
+# Run interactive hardware detection + Ollama model installer + API key prompt + 32-repo sync:
+python tools/setup_wizard.py
+
+# Print the "How It Works & How It Functions" architectural walkthrough:
+python orchestrate.py --guide
 ```
 
 ### 🐳 Docker Sandbox (Isolated Multi-Platform Container)
@@ -228,7 +250,12 @@ Open **`http://127.0.0.1:8000/dashboard`** in any browser for real-time observab
 ```
 
 ### Gateway REST Endpoints
-- `GET /dashboard` — Interactive real-time telemetry UI & prompt playground
+- `GET /dashboard` — Interactive real-time telemetry UI, 5-tier selector, 32-repo skill inspector, and prompt playground
+- `GET /graphify` — Opens the interactive **Graphify AST Graph** (`graphify-out/graph.html`) when you tap the Graphify card on `/dashboard`
+- `GET /graphify/report` — Renders `graphify-out/GRAPH_REPORT.md` in a dark-mode architecture viewer
+- `GET /v1/graphify/query?q=<symbol>` — Queries the AST knowledge graph for symbols, callers, and relationships
+- `GET /v1/hardware` — Returns auto-detected PC/Mac hardware (OS, CPU, RAM, GPU) and recommended local Ollama models
+- `GET /v1/last-route` — Live chat `PreInvocation` auto-router telemetry (`~/.agent_workstation/last_route.json`)
 - `GET /health` — Provider status (`bedrock`, `ollama`, `openrouter`, `nvidia`, `deepseek`, `groq`, `openai`)
 - `GET /v1/models` — OpenAI-compatible model catalog (`22` aliases including `auto`)
 - `POST /v1/chat/completions` — OpenAI-compatible chat & streaming completions with `model="auto"` routing

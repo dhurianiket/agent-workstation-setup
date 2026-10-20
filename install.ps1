@@ -1,80 +1,77 @@
-# Universal AI Agent Workstation Installer for Windows
-# Run via: irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.ps1 | iex
+# Universal AI Agent Workstation Installer for Windows (v3.4)
+# Supports both 1-line remote install AND running inside a cloned repository:
+#   Remote: irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.ps1 | iex
+#   Local : .\install.ps1
 
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "    UNIVERSAL AI AGENT WORKSTATION INSTALLER (WINDOWS)    " -ForegroundColor Cyan
-Write-Host "==========================================================" -ForegroundColor Cyan
-
-$installDir = "$HOME\.agent-workstation"
-if (-not (Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir | Out-Null }
-Set-Location $installDir
+Write-Host "================================================================================" -ForegroundColor Cyan
+Write-Host "     ANTIGRAVITY AUTONOMOUS AI WORKSTATION — UNIVERSAL WINDOWS INSTALLER        " -ForegroundColor Cyan
+Write-Host "================================================================================" -ForegroundColor Cyan
 
 # 1. Package Management via Winget
-Write-Host "[+] Installing developer CLI tools via winget..." -ForegroundColor Yellow
-$wingetPackages = @("Git.Git", "astral-sh.uv", "OpenJS.NodeJS.LTS", "pnpm.pnpm", "Ollama.Ollama", "Amazon.AWSCLIV2", "GitHub.cli")
+Write-Host "[1/6] Checking & installing developer CLI dependencies (Git, uv, Node, Ollama)..." -ForegroundColor Yellow
+$wingetPackages = @("Git.Git", "astral-sh.uv", "OpenJS.NodeJS.LTS", "pnpm.pnpm", "Ollama.Ollama", "GitHub.cli")
 foreach ($pkg in $wingetPackages) {
-    winget install --id $pkg --silent --accept-package-agreements --accept-source-agreements --erroraction silentlycontinue
+    winget install --id $pkg --silent --accept-package-agreements --accept-source-agreements --erroraction silentlycontinue | Out-Null
 }
 
-# Refresh User PATH
+# Refresh PATH in current session
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 $sysPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-$env:Path = "$userPath;$sysPath"
+$env:Path = "$userPath;$sysPath;$HOME\.local\bin"
 
-# 2. Power Plan: Ultimate Performance
-Write-Host "[+] Activating Ultimate Performance Power Scheme..." -ForegroundColor Yellow
-powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-Null
-$schemes = powercfg -list
-$ultScheme = $schemes | Where-Object { $_ -match "Ultimate Performance" } | ForEach-Object { ($_ -split "\s+")[3] }
-if ($ultScheme) { powercfg /setactive $ultScheme }
-
-# 3. Install Agent Harnesses & GitGuardian Security Shield
-Write-Host "[+] Installing agent harnesses (Aider, Claude Code, Codex) & GitGuardian (ggshield)..." -ForegroundColor Yellow
-uv tool install aider-chat
-uv tool install ggshield
-npm install -g @anthropic-ai/claude-code @openai/codex
-
-# 4. Pull baseline Ollama model
-Start-Process -FilePath "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" -ArgumentList "serve" -WindowStyle Hidden
-Start-Sleep -Seconds 3
-ollama pull llama3.2:1b
-
-# 5. Clone Workstation Repo & Setup Virtual Environment
-$repoDir = "$installDir\repo"
-if (-not (Test-Path $repoDir)) {
-    git clone https://github.com/dhurianiket/agent-workstation-setup.git $repoDir
+# 2. Resolve Repository Directory (use current folder if already cloned, else clone to ~/.agent-workstation/repo)
+if (Test-Path (Join-Path (Get-Location) "tools\setup_wizard.py")) {
+    $repoDir = (Get-Location).Path
+    Write-Host "[2/6] Using existing cloned repository at: $repoDir" -ForegroundColor Green
+} else {
+    $installDir = "$HOME\.agent-workstation"
+    if (-not (Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir -Force | Out-Null }
+    $repoDir = "$installDir\repo"
+    if (-not (Test-Path "$repoDir\.git")) {
+        Write-Host "[2/6] Cloning agent-workstation-setup repository..." -ForegroundColor Yellow
+        git clone https://github.com/dhurianiket/agent-workstation-setup.git $repoDir
+    } else {
+        Write-Host "[2/6] Updating existing workstation repository at $repoDir..." -ForegroundColor Yellow
+        git -C $repoDir pull --ff-only
+    }
 }
 Set-Location $repoDir
 
-uv venv .venv
-& "$repoDir\.venv\Scripts\activate.ps1"
-uv pip install fastapi uvicorn boto3 requests
-
-# 6. Install Global Antigravity Rules & Skills
-$rulesTarget = "$HOME\.gemini\config\rules"
-if (-not (Test-Path $rulesTarget)) { New-Item -ItemType Directory -Path $rulesTarget -Force | Out-Null }
-if (Test-Path "$repoDir\rules") {
-    Copy-Item -Recurse -Force "$repoDir\rules\*" $rulesTarget
+# 3. Install Agent Harnesses & GitGuardian Security Shield
+Write-Host "[3/6] Installing AI agent harnesses (Aider, GitGuardian ggshield, Claude Code, Codex)..." -ForegroundColor Yellow
+uv tool install aider-chat 2>$null
+uv tool install ggshield 2>$null
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    npm install -g @anthropic-ai/claude-code @openai/codex 2>$null
 }
 
-$skillsTarget = "$HOME\.agents\skills"
-if (-not (Test-Path $skillsTarget)) { New-Item -ItemType Directory -Path $skillsTarget -Force | Out-Null }
-$builtinSkillsTarget = "$HOME\.gemini\antigravity\builtin\skills"
-if (-not (Test-Path $builtinSkillsTarget)) { New-Item -ItemType Directory -Path $builtinSkillsTarget -Force | Out-Null }
-
-if (Test-Path "$repoDir\skills") {
-    Copy-Item -Recurse -Force "$repoDir\skills\*" $skillsTarget
-    Copy-Item -Recurse -Force "$repoDir\skills\*" $builtinSkillsTarget
+# 4. Create Python Virtual Environment & Install Gateway + MCP + Graphify Packages
+Write-Host "[4/6] Creating Python virtual environment (.venv) and installing Gateway + Graphify + MCP..." -ForegroundColor Yellow
+if (-not (Test-Path "$repoDir\.venv")) {
+    uv venv .venv
 }
+$venvPy = "$repoDir\.venv\Scripts\python.exe"
+uv pip install --python $venvPy fastapi uvicorn boto3 pydantic requests mcp graphifyy ggshield
 
-# 7. Register Startup VBScript
-$startupDir = [Environment]::GetFolderPath('Startup')
-Copy-Item -Force "$repoDir\StartAIStack.vbs" "$startupDir\StartAIStack.vbs"
+# 5. Run Cross-Platform Hardware Detector, Ollama Auto-Model Selector, API Key Wizard & 32-Repo Cloner
+Write-Host "[5/6] Launching Hardware-Adaptive Setup Wizard (Ollama Model + API Keys + 32 GitHub Repos)..." -ForegroundColor Cyan
+& $venvPy "$repoDir\tools\setup_wizard.py"
 
-Write-Host "`n==========================================================" -ForegroundColor Green
-Write-Host " [OK] UNIVERSAL AGENT WORKSTATION INSTALLED SUCCESSFULLY! " -ForegroundColor Green
-Write-Host "==========================================================" -ForegroundColor Green
-Write-Host " - Local AI API Server : http://127.0.0.1:8000"
-Write-Host " - Orchestrator CLI    : python orchestrate.py --task '...'"
-Write-Host " - Next step: Run 'aws login --profile msi-lappy' to link credits."
-Write-Host "==========================================================" -ForegroundColor Cyan
+# 6. Register Auto-Start Service & Launch Unified AI Gateway on port 8000
+Write-Host "[6/6] Starting Unified 5-Tier AI Gateway on http://127.0.0.1:8000 ..." -ForegroundColor Yellow
+try {
+    $startupDir = [Environment]::GetFolderPath('Startup')
+    if (Test-Path "$repoDir\StartAIStack.vbs") {
+        Copy-Item -Force "$repoDir\StartAIStack.vbs" "$startupDir\StartAIStack.vbs" -ErrorAction SilentlyContinue
+    }
+    if (Test-Path "$repoDir\start_laptop_api_silent.ps1") {
+        powershell.exe -ExecutionPolicy Bypass -File "$repoDir\start_laptop_api_silent.ps1"
+    }
+} catch {}
+
+Write-Host "`n================================================================================" -ForegroundColor Green
+Write-Host " [OK] ANTIGRAVITY AUTONOMOUS WORKSTATION IS READY!" -ForegroundColor Green
+Write-Host "  • Live Web Dashboard        : http://127.0.0.1:8000/dashboard" -ForegroundColor Cyan
+Write-Host "  • Interactive Graphify File : http://127.0.0.1:8000/graphify" -ForegroundColor Cyan
+Write-Host "  • How It Works Guide        : python orchestrate.py --guide" -ForegroundColor Cyan
+Write-Host "================================================================================" -ForegroundColor Green

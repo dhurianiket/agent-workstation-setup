@@ -1,11 +1,11 @@
 # Master AI Developer Tools, Repositories & Agent Ecosystem Manifest
 
-A unified catalog of all 32 curated GitHub repositories powering your full-stack development, AI agent workflows, and media automation across your machines. Fully categorized, de-duplicated, and verified ready in your autonomous developer environment.
+A unified catalog of all 32 curated GitHub repositories powering full-stack development, AI agent workflows, UI/UX engineering, and media automation across your machines. Automatically cloned and indexed into 456+ `SKILL.md` runbooks by `python tools/setup_wizard.py` and `python tools/manage_tools.py sync`.
 
 All curated tools can be audited or synchronized at any time with:
 ```bash
 python tools/manage_tools.py audit
-# or to clone/update all:
+# or to clone/update all 32 repositories:
 python tools/manage_tools.py sync
 ```
 
@@ -33,22 +33,22 @@ These repositories focus on local/cloud agent execution, persistent memory, and 
 
 ## 2. AI Video Generation, Post-Production & Media Automation
 
-Directly applicable to video editing, YouTube automation strategies, and promotional production for **Deoyani Movies**.
+Directly applicable to programmatic video editing, media pipelines, and automated post-production workflows.
 
 | Repository | Purpose & Superpower | Local Status |
 | :--- | :--- | :--- |
 | [**`WyattBlue/auto-editor`**](https://github.com/WyattBlue/auto-editor) | **Automated Rough Cuts**: Command-line tool for automatically analyzing audio/video to cut out dead air and silences instantly. | Installed (`uv tool: auto-editor`) |
-| [**`remotion-dev/remotion`**](https://github.com/remotion-dev/remotion) | **Programmatic Video via React**: Create automated motion graphics, video intros, captions, and YouTube intros using React and TypeScript. | Documented & Linked |
+| [**`remotion-dev/remotion`**](https://github.com/remotion-dev/remotion) | **Programmatic Video via React**: Create automated motion graphics, video intros, captions, and dynamic video renders using React and TypeScript. | Documented & Linked |
 | [**`wide-trace/open-higgsfield`**](https://github.com/wide-trace/open-higgsfield) | **AI Video Studio**: Open-source studio workspace for multi-model AI video generation and cinematic camera control. | Installed (`tools/open-higgsfield`) |
 | [**`navi3582/higgsfield-video`**](https://github.com/navi3582/higgsfield-video) | **Higgsfield Video Tooling**: Multi-model video generation pipeline for programmatic video rendering. | Installed (`tools/higgsfield-video`) |
 | [**`meituan-longcat/LongCat-Video`**](https://github.com/meituan-longcat/LongCat-Video) | **Long-Form Video Synthesis**: Foundational model for unified AI video generation. | Installed (`tools/LongCat-Video`) |
-| [**`smontlouis/bible-strong-avatar-lab`**](https://github.com/smontlouis/bible-strong-avatar-lab) | **Avatar & Character Lab**: Avatar generation workflow for faceless channels and character-driven storytelling. | Installed (`tools/bible-strong-avatar-lab`) |
+| [**`smontlouis/bible-strong-avatar-lab`**](https://github.com/smontlouis/bible-strong-avatar-lab) | **Avatar & Character Lab**: Avatar generation workflow for character-driven video and media storytelling. | Installed (`tools/bible-strong-avatar-lab`) |
 
 ---
 
 ## 3. UI/UX, Frontend Design & Architecture Systems
 
-Useful for polishing React/Vite frontends, designing high-end interfaces (**Aegis Health AI**, **Chate Prep Plus**, **Deoyani OTT**), and mapping system architectures.
+Useful for polishing React/Next.js/Vite frontends, designing high-craft interfaces, and mapping system architectures.
 
 | Repository | Purpose & Superpower | Local Status |
 | :--- | :--- | :--- |
