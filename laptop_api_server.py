@@ -1423,6 +1423,7 @@ def get_graph_summary():
 
 @app.get("/v1/skills/route")
 def route_skills_endpoint(q: str = ""):
+    import sys
     try:
         tools_dir = Path(__file__).resolve().parent / "tools"
         if str(tools_dir) not in sys.path:
