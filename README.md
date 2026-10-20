@@ -1,8 +1,8 @@
-# Agent Workstation OS
+# Agent Workstation OS (v2.0)
 
-> Turn any Mac, Windows, or Linux machine into an autonomous, multi-agent AI development powerhouse with one command.
+> Turn any Mac, Windows, or Linux machine into an autonomous, cost-protected AI development powerhouse with one command.
 
-Brings together frontier cloud models (**Claude 4.5 Sonnet/Opus, DeepSeek R1, Llama 3.3 70B** via AWS Startup credits), local discrete GPU inference (**Ollama on AMD/NVIDIA/Metal**), and battle-tested agent harnesses (**Aider, Claude Code, Codex, OpenCode**) behind a single, zero-maintenance OpenAI-compatible gateway.
+Brings together frontier cloud models (**Claude 4.5 Sonnet/Opus, DeepSeek R1, Llama 3.3 70B, Llama 4 Scout** via AWS Startup credits), local discrete GPU inference (**Ollama on AMD/NVIDIA/Metal**), and battle-tested agent harnesses (**Aider, Claude Code, Codex, OpenCode**) behind a zero-maintenance OpenAI-compatible gateway with **automatic credit protection and fallback**.
 
 ---
 
@@ -20,9 +20,32 @@ irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/i
 
 ---
 
-## 🧠 What It Is & How It Works
+## 🛡️ New in v2.0: Credit Guard & Anti-Depletion Architecture
 
-Instead of juggling separate API keys, port configurations, and model quotas across different tools, this system unifies everything into a local autonomous pipeline:
+1. **Smart Auto-Tiered Routing (`--model auto` by default)**:
+   - Evaluates task complexity automatically.
+   - Routes routine tasks (formatting, linting, docs, boilerplate, unit tests) to **Local GPU ($0.00)** or **Llama 4 Scout ($0.08/M tokens)**.
+   - Routes general full-stack coding to **Llama 3.3 70B ($0.72/M tokens)**.
+   - Reserves **DeepSeek R1** and **Claude Sonnet 4.5** exclusively for deep reasoning, architectural design, and complex debugging.
+   - **Result**: Reduces credit burn by up to 90% while improving iteration speed.
+
+2. **Zero-Downtime Auto-Fallback**:
+   - If a high-tier model hits rate limits, quotas, or credit exhaustion, the gateway immediately cascades:
+     `Opus` ➔ `Sonnet` ➔ `DeepSeek R1` ➔ `Llama 3.3 70B` ➔ `Llama 4 Scout` ➔ `Local Ollama`
+   - Agent workflows never crash with 500 errors.
+
+3. **High-Craft Engineering Directives**:
+   - System prompts automatically enforce Principal Engineer standards: zero placeholder code (no `// rest unchanged`), complete drop-in implementations, strict TypeScript/Python typing, and defensive error boundaries.
+
+4. **Live Usage & Credit Analytics**:
+   ```bash
+   python orchestrate.py --usage
+   ```
+   Inspect total token consumption, per-model request counts, and estimated USD spend tracked in `~/.agent_workstation/usage_stats.json`.
+
+---
+
+## 🧠 Architecture
 
 ```
                   ┌─────────────────────────────────────────┐
@@ -32,13 +55,13 @@ Instead of juggling separate API keys, port configurations, and model quotas acr
                                        ▼
                   ┌─────────────────────────────────────────┐
                   │       Antigravity / Orchestrator        │
-                  │   (Selects agent harness & strategy)    │
+                  │   (Task Classifier & Model Router)      │
                   └────────────────────┬────────────────────┘
                                        │
                                        ▼
                   ┌─────────────────────────────────────────┐
                   │      Local AI Gateway (:8000)           │
-                  │   (OpenAI-compatible + SSE streaming)   │
+                  │   (OpenAI API + Cost Guard & Fallback)  │
                   └────────────┬───────────────┬────────────┘
                                │               │
             ┌──────────────────┘               └──────────────────┐
@@ -47,42 +70,44 @@ Instead of juggling separate API keys, port configurations, and model quotas acr
 │       AWS Bedrock Models      │               │          Local GPU Engine         │
 │  (Funded by Startup Credits)  │               │      (AMD / NVIDIA / Metal)       │
 │                               │               │                                   │
-│ • Claude Sonnet 4.5  (Coding) │               │ • Llama 3.2 1B (59 tokens/sec)    │
-│ • Claude Opus 4.5    (Arch)   │               │ • Fully offline, zero API cost    │
-│ • DeepSeek R1 671B   (Math)   │               └───────────────────────────────────┘
-│ • Llama 3.3 70B      (Fast)   │
+│ • Claude Sonnet 4.5 (Frontier)│               │ • Llama 3.2 1B (59 tokens/sec)    │
+│ • DeepSeek R1 671B  (Logic)   │               │ • Fully offline, $0.00 cost       │
+│ • Llama 3.3 70B     (Coder)   │               └───────────────────────────────────┘
+│ • Llama 4 Scout     (Fast)    │
 └───────────────────────────────┘
 ```
 
-### Real-World Example
-1. **You ask**: *"Refactor the authentication handler to use OAuth2 PKCE and write unit tests."*
-2. **The Orchestrator**: Automatically selects **Aider** paired with **Claude Sonnet 4.5**.
-3. **The Gateway**: Directs the request through `http://127.0.0.1:8000/v1` authenticated by your AWS Startup credits with live SSE streaming.
-4. **Execution**: The agent indexes your repository AST, performs the refactoring, executes the test suite, and commits clean Git diffs.
-5. **Result**: Completed in seconds. No API keys exposed, zero manual environment configuration.
+---
+
+## 🎛️ Tiered Model Routing Matrix
+
+| Tier | Alias | Real Model ID | Latency | Est. Cost / 1M Toks | Best Use Case |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Local (Free)** | `local` | `llama3.2:1b` (Ollama GPU) | ~17ms | **$0.00** | Formatting, linting, comments, offline work |
+| **Scout** | `fast` | `us.meta.llama4-scout-17b-instruct-v1:0` | ~190ms | **~$0.08 in / $0.30 out** | Unit tests, boilerplate, HTML/CSS, configs |
+| **Workhorse** | `coder` | `us.meta.llama3-3-70b-instruct-v1:0` | ~300ms | **~$0.72 in / $0.72 out** | Full-stack features, API endpoints, refactoring |
+| **Reasoning** | `reasoner` | `us.deepseek.r1-v1:0` | ~1.1s | **~$1.35 in / $2.19 out** | Algorithms, complex bug triage, math |
+| **Frontier** | `claude` | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | ~2.0s | **~$3.00 in / $15.00 out** | High-level system architecture & security review |
 
 ---
 
-## 🛡️ The Zero-Friction Guarantee
+## 🚀 CLI Usage
 
-**You never have to configure or explain this setup again.**
+```bash
+# Auto-tiering (Default: intelligent routing based on task)
+python orchestrate.py -t "Refactor the authentication flow with JWT refresh tokens"
 
-* **No Manual Server Starts**: Boots invisibly in the background on system login (`launchd` on macOS, silent VBScript on Windows).
-* **Self-Healing Guard**: If the gateway is ever offline, the orchestrator detects it and brings it up in 2 seconds.
-* **Global Agent Skill**: Pre-configured global skill (`agent-orchestrator`) teaches Antigravity, Claude Code, and Codex how to route and build across every workspace automatically.
+# Target specific agent harnesses
+python orchestrate.py -a aider -t "Fix null pointer in user profile component"
+python orchestrate.py -a claude -t "Audit API security and rate limiting"
 
----
+# Force specific model tier
+python orchestrate.py -m fast -t "Generate unit tests for auth middleware"
+python orchestrate.py -m reasoner -t "Debug memory leak in WebSocket stream"
 
-## 🎛️ Model Routing Matrix
-
-| Alias | Engine / Real Model ID | Best For | Latency |
-| :--- | :--- | :--- | :--- |
-| **`claude`** | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | **Default / SOTA Coding**: Multi-file repository edits & tools | ~2.0s |
-| **`opus`** | `us.anthropic.claude-opus-4-5-20251101-v1:0` | **Systems Architecture**: Deep analytical planning & security | ~2.0s |
-| **`reasoner`** | `us.deepseek.r1-v1:0` | **Logic & Math**: 671B MoE with full reasoning chains | ~1.1s |
-| **`coder`** | `us.meta.llama3-3-70b-instruct-v1:0` | **Rapid Iterations**: High-throughput 70B parameter coding | ~300ms |
-| **`fast`** | `us.meta.llama4-scout-17b-instruct-v1:0` | **Inner Loops**: Sub-200ms completions and summaries | ~190ms |
-| **`local`** | `llama3.2:1b` (Ollama GPU) | **Offline / Privacy**: Free, zero-API local execution | ~17ms |
+# Check token consumption and credit spend
+python orchestrate.py --usage
+```
 
 ---
 
@@ -99,18 +124,5 @@ Instead of juggling separate API keys, port configurations, and model quotas acr
 
 ---
 
-## 💻 CLI Quick Commands
-
-```bash
-# Run task using Claude Sonnet 4.5
-python orchestrate.py --task "Add healthcheck endpoint" --agent aider --model claude
-
-# Run complex architecture using Claude Opus 4.5
-python orchestrate.py --task "Design distributed caching system" --agent aider --model opus
-
-# Use local GPU offline model
-python orchestrate.py --task "Scan project dependencies" --agent codex --model local
-
-# Check full system & agent health
-powershell -ExecutionPolicy Bypass -File .\ai_agent_status.ps1
-```
+## 📄 License
+MIT License. Built for modern, high-speed autonomous software engineering.
