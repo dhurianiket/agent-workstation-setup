@@ -20,62 +20,55 @@ irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/i
 
 ---
 
-## 🛡️ New in v2.0: Credit Guard & Anti-Depletion Architecture
+## 🚀 Native Antigravity Pro Integration: Zero-Prompt Auto-Orchestration
+
+You **never** have to manually prompt `"orchestrate task X using aider"` or re-explain your environment across sessions or projects. When paired with your **Antigravity Pro subscription**, the orchestration stack is **always active by default**:
+
+```
+           [Your Natural Request in Antigravity]
+           "Build a WebSocket reconnect handler for our OTT player"
+                             │
+                             ▼
+ ┌──────────────────────────────────────────────────────────────┐
+ │     Antigravity Pro Autonomous Orchestration Engine          │
+ │                                                              │
+ │  1. AST & Dependency Analysis (graphify AST scan)            │
+ │  2. Smart 5-Tier Model Selection (preserves AWS credits)     │
+ │  3. Principal Engineer Standard (100% complete code,         │
+ │     zero lazy placeholders, strict TypeScript/Python types)  │
+ │  4. Closed-Loop Auto-Verification (syntax, tests, git diff)   │
+ └──────────────────────────────┬───────────────────────────────┘
+                                │
+                                ▼
+               [Verified, Production-Ready Code]
+```
+
+### What This Gives You:
+1. **Always-On Autonomous Orchestration**: Antigravity automatically manages triage, planning, multi-file edits, and testing without requiring manual invocation phrases.
+2. **Principal Engineer Code Quality**: Eliminates lazy completions (`// rest unchanged` or `/* existing code */`). Every code modification is 100% complete, defensively typed, and wrapped with error boundaries.
+3. **Closed-Loop Auto-Verification**: Never leaves broken builds. Automatically validates syntax (`python -m py_compile`, `tsc --noEmit`), runs test suites, and audits `git status -s` before declaring done.
+
+---
+
+## 🛡️ Credit Guard & Anti-Depletion Architecture
 
 1. **Smart Auto-Tiered Routing (`--model auto` by default)**:
    - Evaluates task complexity automatically.
    - Routes routine tasks (formatting, linting, docs, boilerplate, unit tests) to **Local GPU ($0.00)** or **Llama 4 Scout ($0.08/M tokens)**.
    - Routes general full-stack coding to **Llama 3.3 70B ($0.72/M tokens)**.
    - Reserves **DeepSeek R1** and **Claude Sonnet 4.5** exclusively for deep reasoning, architectural design, and complex debugging.
-   - **Result**: Reduces credit burn by up to 90% while improving iteration speed.
+   - **Result**: Reduces credit burn by up to 90% while providing sub-300ms iteration speed.
 
 2. **Zero-Downtime Auto-Fallback**:
    - If a high-tier model hits rate limits, quotas, or credit exhaustion, the gateway immediately cascades:
-     `Opus` ➔ `Sonnet` ➔ `DeepSeek R1` ➔ `Llama 3.3 70B` ➔ `Llama 4 Scout` ➔ `Local Ollama`
-   - Agent workflows never crash with 500 errors.
+     $$\text{Opus} \longrightarrow \text{Sonnet} \longrightarrow \text{DeepSeek R1} \longrightarrow \text{Llama 3.3 70B} \longrightarrow \text{Llama 4 Scout} \longrightarrow \text{Local Ollama}$$
+   - Workflows never crash with 500 errors.
 
-3. **High-Craft Engineering Directives**:
-   - System prompts automatically enforce Principal Engineer standards: zero placeholder code (no `// rest unchanged`), complete drop-in implementations, strict TypeScript/Python typing, and defensive error boundaries.
-
-4. **Live Usage & Credit Analytics**:
+3. **Live Usage & Credit Analytics**:
    ```bash
    python orchestrate.py --usage
    ```
    Inspect total token consumption, per-model request counts, and estimated USD spend tracked in `~/.agent_workstation/usage_stats.json`.
-
----
-
-## 🧠 Architecture
-
-```
-                  ┌─────────────────────────────────────────┐
-                  │          Your Prompt / Task             │
-                  └────────────────────┬────────────────────┘
-                                       │
-                                       ▼
-                  ┌─────────────────────────────────────────┐
-                  │       Antigravity / Orchestrator        │
-                  │   (Task Classifier & Model Router)      │
-                  └────────────────────┬────────────────────┘
-                                       │
-                                       ▼
-                  ┌─────────────────────────────────────────┐
-                  │      Local AI Gateway (:8000)           │
-                  │   (OpenAI API + Cost Guard & Fallback)  │
-                  └────────────┬───────────────┬────────────┘
-                               │               │
-            ┌──────────────────┘               └──────────────────┐
-            ▼                                                     ▼
-┌───────────────────────────────┐               ┌───────────────────────────────────┐
-│       AWS Bedrock Models      │               │          Local GPU Engine         │
-│  (Funded by Startup Credits)  │               │      (AMD / NVIDIA / Metal)       │
-│                               │               │                                   │
-│ • Claude Sonnet 4.5 (Frontier)│               │ • Llama 3.2 1B (59 tokens/sec)    │
-│ • DeepSeek R1 671B  (Logic)   │               │ • Fully offline, $0.00 cost       │
-│ • Llama 3.3 70B     (Coder)   │               └───────────────────────────────────┘
-│ • Llama 4 Scout     (Fast)    │
-└───────────────────────────────┘
-```
 
 ---
 
@@ -91,7 +84,7 @@ irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/i
 
 ---
 
-## 🚀 CLI Usage
+## 🚀 CLI Usage (Optional Manual Control)
 
 ```bash
 # Auto-tiering (Default: intelligent routing based on task)

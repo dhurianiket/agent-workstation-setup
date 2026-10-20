@@ -49,11 +49,21 @@ uv venv .venv
 & "$repoDir\.venv\Scripts\activate.ps1"
 uv pip install fastapi uvicorn boto3 requests
 
-# 6. Copy global skills
+# 6. Install Global Antigravity Rules & Skills
+$rulesTarget = "$HOME\.gemini\config\rules"
+if (-not (Test-Path $rulesTarget)) { New-Item -ItemType Directory -Path $rulesTarget -Force | Out-Null }
+if (Test-Path "$repoDir\rules") {
+    Copy-Item -Recurse -Force "$repoDir\rules\*" $rulesTarget
+}
+
 $skillsTarget = "$HOME\.agents\skills"
-if (-not (Test-Path $skillsTarget)) { New-Item -ItemType Directory -Path $skillsTarget | Out-Null }
+if (-not (Test-Path $skillsTarget)) { New-Item -ItemType Directory -Path $skillsTarget -Force | Out-Null }
+$builtinSkillsTarget = "$HOME\.gemini\antigravity\builtin\skills"
+if (-not (Test-Path $builtinSkillsTarget)) { New-Item -ItemType Directory -Path $builtinSkillsTarget -Force | Out-Null }
+
 if (Test-Path "$repoDir\skills") {
     Copy-Item -Recurse -Force "$repoDir\skills\*" $skillsTarget
+    Copy-Item -Recurse -Force "$repoDir\skills\*" $builtinSkillsTarget
 }
 
 # 7. Register Startup VBScript

@@ -70,12 +70,23 @@ uv venv .venv
 source .venv/bin/activate
 uv pip install fastapi uvicorn boto3 requests
 
-# 5. Install Global Agent Skills (~/.agents/skills)
+# 5. Install Global Antigravity Rules & Skills
+RULES_DIR="$HOME/.gemini/config/rules"
+mkdir -p "$RULES_DIR"
+if [ -d "$REPO_DIR/rules" ]; then
+    echo "[+] Installing global Antigravity rules into $RULES_DIR..."
+    cp -r "$REPO_DIR/rules/"* "$RULES_DIR/"
+fi
+
 SKILLS_DIR="$HOME/.agents/skills"
 mkdir -p "$SKILLS_DIR"
+BUILTIN_SKILLS_DIR="$HOME/.gemini/antigravity/builtin/skills"
+mkdir -p "$BUILTIN_SKILLS_DIR"
+
 if [ -d "$REPO_DIR/skills" ]; then
-    echo "[+] Installing global skills into $SKILLS_DIR..."
+    echo "[+] Installing global skills into $SKILLS_DIR and $BUILTIN_SKILLS_DIR..."
     cp -r "$REPO_DIR/skills/"* "$SKILLS_DIR/"
+    cp -r "$REPO_DIR/skills/"* "$BUILTIN_SKILLS_DIR/"
 fi
 
 # 6. Create Launchd (macOS) or Systemd (Linux) background daemon for API Server
