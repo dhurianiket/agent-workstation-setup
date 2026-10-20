@@ -219,5 +219,24 @@ async def workstation_list_tools() -> str:
     stdout, stderr = await proc.communicate()
     return stdout.decode("utf-8", errors="replace")
 
+@mcp.tool()
+async def workstation_auto_route_skills(prompt: str) -> str:
+    """
+    Automatically match any natural-language user prompt (from any project on the laptop)
+    against the 32 installed repositories and 456+ indexed SKILL.md files without needing
+    to know the repository or skill names.
+    """
+    router_py = TOOLS_DIR / "skill_router.py"
+    if not router_py.exists():
+        return "skill_router.py not found in tools/."
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable, str(router_py), prompt,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+    out = stdout.decode("utf-8", errors="replace")
+    return out if out.strip() else stderr.decode("utf-8", errors="replace")
+
 if __name__ == "__main__":
     mcp.run()

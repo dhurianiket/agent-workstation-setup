@@ -169,8 +169,21 @@ def get_graphify_context(cwd: str, task: str) -> str:
     Pre-Action Knowledge Graph Sensor (Graphify):
     Queries graphify-out/graph.json for relevant code symbols and line numbers
     so the coding agent starts with exact architectural context.
+    Auto-initializes the AST graph in any new project folder if missing.
     """
     graph_file = Path(cwd) / "graphify-out" / "graph.json"
+    if not graph_file.exists():
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "graphify", "update", "."],
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False
+            )
+        except Exception:
+            pass
     if not graph_file.exists():
         return ""
     try:
@@ -197,6 +210,33 @@ def get_graphify_context(cwd: str, task: str) -> str:
     except Exception:
         pass
     return ""
+
+def get_auto_routed_skills(task: str) -> tuple:
+    """
+    Zero-Name Automatic Repository & Skill Router:
+    Automatically matches the user's task intent against the 32 installed repositories
+    and 456+ indexed SKILL.md files in tools/ without requiring the user to name them.
+    Returns: (context_block: str, matched_repos: list, matched_skills: list)
+    """
+    try:
+        script_dir = Path(__file__).resolve().parent
+        tools_dir = script_dir / "tools"
+        if not (tools_dir / "skill_router.py").exists():
+            # Fallback to master workstation tools directory when called from another location
+            fallback_tools = Path(r"c:\Users\dhuri\Downloads\antigravity ai workspace\pc local work\tools")
+            if (fallback_tools / "skill_router.py").exists():
+                tools_dir = fallback_tools
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        import skill_router
+        routed = skill_router.auto_route_domain_tools(task, max_skills=3, max_chars=1500)
+        return (
+            routed.get("context_block", ""),
+            routed.get("matched_repos", []),
+            routed.get("matched_skills", [])
+        )
+    except Exception:
+        return ("", [], [])
 
 def run_ggshield_audit(cwd: str, files: list = None) -> bool:
     """
@@ -397,10 +437,11 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
     target_cwd = cwd or os.getcwd()
     ensure_services_running()
     
-    # Check for past post-mortems and Graphify AST knowledge graph context
+    # Check for past post-mortems, Graphify AST knowledge graph, and Auto-Routed Domain Skills
     historical_hint = get_recent_postmortems(target_cwd)
     graph_hint = get_graphify_context(target_cwd, task)
-    augmented_task = task + historical_hint + graph_hint
+    skill_context, matched_repos, matched_skills = get_auto_routed_skills(task)
+    augmented_task = task + historical_hint + graph_hint + skill_context
     
     resolved_model = resolve_smart_model(task, model)
     tier_label = {
@@ -418,6 +459,7 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
     print(f"  GATEWAY             : {LOCAL_API_BASE}")
     print(f"  WORKING DIRECTORY   : {target_cwd}")
     print(f"  GRAPHIFY CONTEXT    : {'Injected' if graph_hint else 'None'}")
+    print(f"  AUTO-ROUTED REPOS   : {', '.join(matched_repos[:5]) if matched_repos else 'Standard Core'}")
     print(f"  TASK                : {task}")
     print(f"=======================================================\n")
 

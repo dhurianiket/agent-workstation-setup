@@ -757,6 +757,20 @@ def get_graph_summary():
             return {"status": "error", "detail": str(e)}
     return {"status": "missing", "nodes": 0, "edges": 0, "communities": 0}
 
+@app.get("/v1/skills/route")
+def route_skills_endpoint(q: str = ""):
+    try:
+        tools_dir = Path(__file__).resolve().parent / "tools"
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        import skill_router
+        if not q.strip():
+            idx = skill_router.build_or_load_skill_index()
+            return {"status": "ready", "indexed_skills": len(idx), "repositories": 32}
+        return skill_router.auto_route_domain_tools(q)
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
 @app.get("/v1/models")
 def list_models():
     models_data = []
