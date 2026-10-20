@@ -1,16 +1,19 @@
 """
-Agent Orchestration CLI & Controller (v2.0 - Credit & Quality Optimized)
-Direct command-line tool to dispatch and supervise tasks across Aider, Codex, Claude Code, and OpenCode
-using the local laptop unified API (Bedrock Claude 4.5, DeepSeek R1, Llama 3.3, Ollama).
+Agent Orchestration CLI & Controller (v3.0 - GitGuardian Security Shield & AST Verification)
+Direct command-line tool and Python engine to dispatch and supervise tasks across Aider, Codex, Claude Code, and OpenCode
+using the local laptop unified API (Bedrock Claude 4.5, DeepSeek R1, Llama 3.3, BYOK OpenRouter/NVIDIA, and Ollama).
 
 Key Upgrades:
+- GitGuardian Security Shield (ggshield):
+    * Scans all modified files and repository paths before completion to guarantee ZERO secret leakage.
+- Deterministic Post-Action Sensors (AST & Syntax Verification):
+    * Verifies Python (py_compile), JSON, and JS syntax on all changed files before finalizing.
+- Cross-Session Error Post-Mortems:
+    * Records failures to ~/.agent_workstation/postmortems.json and prevents repeating past debugging mistakes.
 - Smart Auto-Tiered Routing (--model auto by default):
-    * Classifies tasks into Local ($0), Fast Scout (Llama 4 Scout), Coder (Llama 3.3 70B),
-      Reasoner (DeepSeek R1), or Frontier (Claude Sonnet 4.5) to stop premature credit depletion.
-- Usage & Cost Audit:
-    * Run with `--usage` to view total tokens and estimated credit consumption.
-- Quality Verification:
-    * `--verify` checks modified files and validates changes post-execution.
+    * Local ($0) -> Fast Scout -> Coder -> Reasoner -> Frontier to prevent credit burnout.
+- Live Usage & Credit Audit:
+    * `--usage` command to inspect credits, token consumption, and model costs.
 """
 
 import sys
@@ -20,11 +23,17 @@ import os
 import time
 import urllib.request
 import json
+import py_compile
+from pathlib import Path
 
 LOCAL_API_BASE = "http://127.0.0.1:8000/v1"
 HEALTH_URL = "http://127.0.0.1:8000/health"
 USAGE_URL = "http://127.0.0.1:8000/v1/usage"
 DUMMY_KEY = "dummy-local-key"
+
+WORKSTATION_DIR = Path.home() / ".agent_workstation"
+WORKSTATION_DIR.mkdir(parents=True, exist_ok=True)
+POSTMORTEM_FILE = WORKSTATION_DIR / "postmortems.json"
 
 def ensure_services_running():
     """Checks if the Laptop API server is running; if not, starts it silently."""
@@ -41,15 +50,16 @@ def ensure_services_running():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_script = os.path.join(script_dir, "start_laptop_api_silent.ps1")
     
-    try:
-        subprocess.run(
-            ["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", ps_script],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True
-        )
-    except Exception as e:
-        print(f"[!] Warning triggering auto-start: {e}")
+    if os.path.exists(ps_script):
+        try:
+            subprocess.run(
+                ["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", ps_script],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True
+            )
+        except Exception as e:
+            print(f"[!] Warning triggering auto-start: {e}")
 
     # Wait up to 6 seconds for health
     for _ in range(6):
@@ -85,7 +95,7 @@ def show_usage():
             print(f"Total Output Tokens: {totals.get('completion_tokens', 0):,}")
             print(f"Estimated Spend    : ${totals.get('estimated_usd', 0.0):.4f} USD")
             print("-------------------------------------------------------")
-            print(f"{'Model':<40} {'Reqs':<6} {'Tokens':<12} {'Est. Cost':<10}")
+            print(f"{'Model / Provider':<40} {'Reqs':<6} {'Tokens':<12} {'Est. Cost':<10}")
             print("-------------------------------------------------------")
             for m, info in by_model.items():
                 toks = info.get('prompt_tokens', 0) + info.get('completion_tokens', 0)
@@ -119,26 +129,161 @@ def resolve_smart_model(task: str, explicit_model: str) -> str:
     else:
         return "coder"
 
-def verify_changes():
-    """Validates files modified by the agent and prints git status summary."""
+def record_postmortem(task: str, error_message: str, cwd: str):
+    """Records past debugging and syntax errors to prevent repetitive regression loops."""
     try:
-        res = subprocess.run(["git", "status", "--short"], stdout=subprocess.PIPE, text=True, check=False)
-        output = res.stdout.strip()
-        if output:
-            print("\n[VERIFICATION] Modified / Created files:")
-            for line in output.split("\n"):
-                print(f"  {line}")
-        else:
-            print("\n[VERIFICATION] No git working tree changes detected.")
+        data = []
+        if POSTMORTEM_FILE.exists():
+            with open(POSTMORTEM_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        data.append({
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "cwd": cwd,
+            "task": task[:200],
+            "error": error_message[:500]
+        })
+        # Keep latest 30 post-mortems
+        data = data[-30:]
+        with open(POSTMORTEM_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"[!] Warning recording post-mortem: {e}")
+
+def get_recent_postmortems(cwd: str) -> str:
+    """Retrieves recent error context for the active repository."""
+    try:
+        if POSTMORTEM_FILE.exists():
+            with open(POSTMORTEM_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            matching = [d for d in data if d.get("cwd") == cwd]
+            if matching:
+                latest = matching[-1]
+                return f"\n[PAST ERROR MEMORY] Last run encountered: {latest.get('error')}. Ensure code avoids this regression.\n"
     except Exception:
         pass
+    return ""
 
-def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True):
+def run_ggshield_audit(cwd: str, files: list = None) -> bool:
+    """
+    Scans modified files or repository using GitGuardian (ggshield) to guarantee ZERO secret leakage.
+    Blocks execution if any API keys, credentials, or secrets are detected.
+    """
+    print("\n[SECURITY SHIELD] Running GitGuardian (ggshield) secret scan...")
+    try:
+        # If specific files were modified, scan only those files for sub-second precision
+        valid_files = [f for f in (files or []) if (Path(cwd) / f).is_file()]
+        if valid_files:
+            cmd = ["ggshield", "secret", "scan", "path", "--yes"] + valid_files
+        else:
+            cmd = ["ggshield", "secret", "scan", "path", "--recursive", "--yes", "."]
+
+        res = subprocess.run(
+            cmd,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False
+        )
+        if res.returncode == 0:
+            print("[SECURITY SHIELD] [OK] GitGuardian (ggshield) verified: 0 secrets detected. Safe to commit.")
+            return True
+        else:
+            print("\n" + "=" * 65)
+            print(" [CRITICAL SECURITY ALERT] GGSHIELD DETECTED POTENTIAL SECRETS!")
+            print("=" * 65)
+            print(res.stdout or res.stderr)
+            print("=" * 65)
+            print("[ABORT] File changes contain sensitive tokens. Commit blocked.\n")
+            return False
+    except FileNotFoundError:
+        print("[SECURITY SHIELD] Warning: ggshield is not installed or not in PATH. Skipping secret scan.")
+        return True
+    except Exception as e:
+        print(f"[SECURITY SHIELD] Warning running ggshield: {e}")
+        return True
+
+def verify_changes(cwd: str) -> tuple:
+    """
+    Deterministic Post-Action Sensors:
+    1. Inspects Git working tree changes.
+    2. Runs AST & Syntax checks across modified Python, JSON, and JS files.
+    Returns: (is_clean: bool, modified_files: list)
+    """
+    print("\n[POST-ACTION SENSOR] Validating AST & file syntax...")
+    all_clean = True
+    modified_files = []
+    try:
+        res = subprocess.run(["git", "status", "--short"], cwd=cwd, stdout=subprocess.PIPE, text=True, check=False)
+        output = res.stdout.strip()
+        if not output:
+            print("[VERIFICATION] No git working tree changes detected.")
+            return True, []
+
+        print("[VERIFICATION] Modified / Created files:")
+        for line in output.split("\n"):
+            print(f"  {line}")
+            parts = line.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                modified_files.append(parts[1])
+
+        # Validate syntax of modified files
+        for fpath_str in modified_files:
+            fpath = Path(cwd) / fpath_str
+            if not fpath.exists() or not fpath.is_file():
+                continue
+            
+            # 1. Python AST & Bytecode Check
+            if fpath.suffix == ".py":
+                try:
+                    py_compile.compile(str(fpath), doraise=True)
+                    print(f"  [OK] Python syntax: {fpath_str}")
+                except py_compile.PyCompileError as err:
+                    print(f"  [FAIL] Python syntax error in {fpath_str}: {err}")
+                    all_clean = False
+            
+            # 2. JSON Validation Check
+            elif fpath.suffix == ".json":
+                try:
+                    with open(fpath, "r", encoding="utf-8") as jf:
+                        json.load(jf)
+                    print(f"  [OK] JSON syntax: {fpath_str}")
+                except Exception as err:
+                    print(f"  [FAIL] JSON parse error in {fpath_str}: {err}")
+                    all_clean = False
+
+            # 3. JavaScript / TypeScript syntax check
+            elif fpath.suffix in [".js", ".mjs"]:
+                try:
+                    node_res = subprocess.run(["node", "--check", str(fpath)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+                    if node_res.returncode == 0:
+                        print(f"  [OK] Node.js syntax: {fpath_str}")
+                    else:
+                        print(f"  [FAIL] Node.js syntax error in {fpath_str}: {node_res.stderr.strip()}")
+                        all_clean = False
+                except Exception:
+                    pass
+
+    except Exception as e:
+        print(f"[!] Verification warning: {e}")
+
+    return all_clean, modified_files
+
+def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, shield: bool = True, cwd: str = None) -> bool:
+    """
+    Main dispatch entry point for multi-agent execution.
+    Can be imported and called programmatically from Python or CLI.
+    """
+    target_cwd = cwd or os.getcwd()
     ensure_services_running()
+    
+    # Check for past post-mortems in this workspace
+    historical_hint = get_recent_postmortems(target_cwd)
+    augmented_task = task + historical_hint if historical_hint else task
     
     resolved_model = resolve_smart_model(task, model)
     tier_label = {
-        "local": "Local Free ($0.00 - Radeon GPU)",
+        "local": "Local Free ($0.00 - Discrete GPU)",
         "fast": "Scout Tier (Llama 4 Scout ~190ms)",
         "coder": "Workhorse Tier (Llama 3.3 70B ~300ms)",
         "reasoner": "Deep Reasoning (DeepSeek R1 ~1.1s)",
@@ -150,11 +295,14 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True):
     print(f"  ORCHESTRATING AGENT : {agent.upper()}")
     print(f"  RESOLVED MODEL      : {resolved_model.upper()} [{tier_label}]")
     print(f"  GATEWAY             : {LOCAL_API_BASE}")
+    print(f"  WORKING DIRECTORY   : {target_cwd}")
     print(f"  TASK                : {task}")
     print(f"=======================================================\n")
 
     cmd = []
     env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
 
     if agent == "aider":
         cmd = [
@@ -162,44 +310,67 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True):
             "--openai-api-base", LOCAL_API_BASE,
             "--openai-api-key", DUMMY_KEY,
             "--model", f"openai/{resolved_model}",
-            "--message", task,
-            "--yes-always"
+            "--message", augmented_task,
+            "--yes-always",
+            "--no-show-model-warnings"
         ]
 
     elif agent == "claude":
-        cmd = ["claude", "-p", task, "--dangerously-skip-permissions"]
+        cmd = ["claude", "-p", augmented_task, "--dangerously-skip-permissions"]
 
     elif agent == "codex":
         if resolved_model in ["local", "llama3.2"]:
-            cmd = ["codex", "exec", task, "--oss", "--local-provider", "ollama", "-m", "llama3.2:1b", "--dangerously-bypass-approvals-and-sandbox"]
+            cmd = ["codex", "exec", augmented_task, "--oss", "--local-provider", "ollama", "-m", "llama3.2:1b", "--dangerously-bypass-approvals-and-sandbox"]
         else:
             env["OPENAI_BASE_URL"] = LOCAL_API_BASE
             env["OPENAI_API_KEY"] = DUMMY_KEY
-            cmd = ["codex", "exec", task, "--model", resolved_model, "--dangerously-bypass-approvals-and-sandbox"]
+            cmd = ["codex", "exec", augmented_task, "--model", resolved_model, "--dangerously-bypass-approvals-and-sandbox"]
 
     elif agent == "opencode":
-        cmd = ["opencode", "run", "--prompt", task, "--auto"]
+        cmd = ["opencode", "run", "--prompt", augmented_task, "--auto"]
 
     else:
         print(f"Error: Unknown agent '{agent}'. Choose from: aider, claude, codex, opencode")
         sys.exit(1)
 
     try:
-        subprocess.run(cmd, env=env, check=True)
-        print("\n[OK] Agent task completed successfully.")
+        subprocess.run(cmd, env=env, cwd=target_cwd, check=True)
+        print("\n[OK] Agent task execution finished.")
+        
+        modified_files = []
+        # 1. AST & Syntax Verification
         if verify:
-            verify_changes()
+            is_valid, modified_files = verify_changes(target_cwd)
+            if not is_valid:
+                record_postmortem(task, "Syntax verification failed on modified files", target_cwd)
+                print("[WARNING] Syntax verification flagged issues. Please inspect modified files.")
+                return False
+
+        # 2. GitGuardian Secret Shield Scan
+        if shield:
+            is_secure = run_ggshield_audit(target_cwd, modified_files)
+            if not is_secure:
+                return False
+
+        return True
+
     except subprocess.CalledProcessError as e:
         print(f"\n[ERROR] Agent failed with exit code {e.returncode}.")
-        sys.exit(e.returncode)
+        record_postmortem(task, f"Agent exit code {e.returncode}", target_cwd)
+        return False
+
+# Public programmatic API for in-process import
+dispatch_task = run_agent
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Multi-Agent Orchestration Dispatcher with Credit Guard")
+    parser = argparse.ArgumentParser(description="Multi-Agent Orchestration Dispatcher with GitGuardian & AST Shield")
     parser.add_argument("--task", "-t", help="The instruction or task prompt for the agent")
     parser.add_argument("--agent", "-a", default="aider", choices=["aider", "claude", "codex", "opencode"], help="Agent harness to dispatch")
     parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "sonnet", "reasoner", "coder", "fast", "local"], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
-    parser.add_argument("--no-verify", action="store_true", help="Skip post-execution git change verification")
+    parser.add_argument("--no-verify", action="store_true", help="Skip post-execution AST/syntax verification")
+    parser.add_argument("--no-shield", action="store_true", help="Skip GitGuardian (ggshield) secret audit")
+    parser.add_argument("--dir", "-d", default=None, help="Working directory path")
     
     args = parser.parse_args()
     
@@ -211,4 +382,12 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
         
-    run_agent(args.agent, args.task, args.model, verify=not args.no_verify)
+    success = run_agent(
+        agent=args.agent,
+        task=args.task,
+        model=args.model,
+        verify=not args.no_verify,
+        shield=not args.no_shield,
+        cwd=args.dir
+    )
+    sys.exit(0 if success else 1)

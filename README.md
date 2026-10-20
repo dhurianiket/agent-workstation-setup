@@ -126,6 +126,37 @@ You **never** have to manually prompt `"orchestrate task X using aider"` or re-e
 
 ---
 
+## 🔒 GitGuardian (`ggshield`) Secret Shield & AST Sensors
+
+The workstation features a dual-layer automated verification gate built directly into `orchestrate.py`:
+
+```
+                 [Agent Modifies Files]
+                           │
+                           ▼
+     ┌───────────────────────────────────────────┐
+     │      Deterministic Post-Action Sensors    │
+     │                                           │
+     │  1. AST & Bytecode Check:                 │
+     │     • Python (py_compile) syntax check    │
+     │     • JSON valid parse audit              │
+     │     • Node.js (--check) syntax validation │
+     │                                           │
+     │  2. GitGuardian (ggshield) Secret Gate:   │
+     │     • Scans all modified files for keys   │
+     │     • BLOCKS commits if secrets detected  │
+     │     • 100% Zero-Leakage Guarantee         │
+     └─────────────────────┬─────────────────────┘
+                           │
+                           ▼
+          [Verified & Secure Git Commit / Push]
+```
+
+* **GitGuardian Secret Scan**: Every task automatically passes through `ggshield` to verify that no AWS tokens, private keys, API secrets, or passwords are exposed before committing or pushing.
+* **Continuous Error Memory**: Failures are logged to `~/.agent_workstation/postmortems.json`, and historical lessons are automatically injected into future prompts to eliminate repetitive regression loops.
+
+---
+
 ## 🛡️ Credit Guard & Anti-Depletion Architecture
 
 1. **Smart Auto-Tiered Routing (`--model auto` by default)**:

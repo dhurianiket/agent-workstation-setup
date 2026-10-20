@@ -42,10 +42,11 @@ fi
 # Ensure uv, node, pnpm are in PATH
 export PATH="$HOME/.local/bin:$HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# 2. Install Agent Harnesses
-echo "[+] Installing AI Agent Harnesses..."
-# Aider
+# 2. Install Agent Harnesses & GitGuardian Security Shield
+echo "[+] Installing AI Agent Harnesses & GitGuardian Shield..."
+# Aider & GitGuardian ggshield
 uv tool install aider-chat || true
+uv tool install ggshield || true
 # Claude Code & Codex
 npm install -g @anthropic-ai/claude-code @openai/codex || true
 

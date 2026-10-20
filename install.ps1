@@ -28,9 +28,10 @@ $schemes = powercfg -list
 $ultScheme = $schemes | Where-Object { $_ -match "Ultimate Performance" } | ForEach-Object { ($_ -split "\s+")[3] }
 if ($ultScheme) { powercfg /setactive $ultScheme }
 
-# 3. Install Agent Harnesses
-Write-Host "[+] Installing agent harnesses (Aider, Claude Code, Codex)..." -ForegroundColor Yellow
+# 3. Install Agent Harnesses & GitGuardian Security Shield
+Write-Host "[+] Installing agent harnesses (Aider, Claude Code, Codex) & GitGuardian (ggshield)..." -ForegroundColor Yellow
 uv tool install aider-chat
+uv tool install ggshield
 npm install -g @anthropic-ai/claude-code @openai/codex
 
 # 4. Pull baseline Ollama model
