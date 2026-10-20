@@ -2,13 +2,13 @@
 
 > Turn any Mac, Windows, or Linux machine into an autonomous, cost-protected AI development powerhouse with one command.
 
-Brings together frontier cloud models (**Claude 4.5 Sonnet/Opus, DeepSeek R1, Llama 3.3 70B, Llama 4 Scout** via AWS Startup credits), local discrete GPU inference (**Ollama on AMD/NVIDIA/Metal**), and battle-tested agent harnesses (**Aider, Claude Code, Codex, OpenCode**) behind a zero-maintenance OpenAI-compatible gateway with **automatic credit protection and fallback**.
+Brings together frontier cloud models (**Claude 4.5 Sonnet/Opus, DeepSeek R1, Llama 3.3 70B, Llama 4 Scout** via AWS Startup credits or custom credentials), local discrete GPU inference (**Ollama on Apple Metal / AMD / NVIDIA**), and battle-tested agent harnesses (**Aider, Claude Code, Codex, OpenCode**) behind a zero-maintenance OpenAI-compatible gateway with **automatic credit protection and fallback**.
 
 ---
 
 ## ⚡ 1-Command Setup
 
-### macOS (Apple Silicon / Intel) & Linux
+### macOS (Apple Silicon M1-M4 / Intel) & Linux
 ```bash
 curl -sSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.sh | bash
 ```
@@ -17,6 +17,65 @@ curl -sSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/
 ```powershell
 irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.ps1 | iex
 ```
+
+---
+
+## 💻 Multi-Device Setup Guide (Mac, iMac, Mac Studio, Windows PC & Linux)
+
+This setup is 100% portable. You can spin it up on your **Office Mac, iMac, Mac Studio (M1/M2/M3/M4), Windows workstation, or Linux cloud instance** with your own AWS subscription, provider credentials, or offline local GPUs.
+
+### 1. Zero-Secret-Leakage Configuration
+We strictly enforce a **Zero-Leakage Security Policy**. Credentials, API keys, and session tokens must never be committed to git or printed in logs.
+
+1. Clone or navigate to the workstation directory:
+   ```bash
+   git clone https://github.com/dhurianiket/agent-workstation-setup.git
+   cd agent-workstation-setup
+   ```
+2. Copy the safe configuration template to `.env` (`.gitignore` protects `.env` from ever being tracked):
+   ```bash
+   cp .env.example .env
+   ```
+
+---
+
+### 2. Configure Your AI Backends & Subscriptions
+
+#### Option A: AWS Bedrock (Claude 4.5, DeepSeek R1, Llama 3.3)
+If you have AWS Startup credits or an existing AWS account:
+1. Configure your AWS profile using the AWS CLI:
+   ```bash
+   aws configure --profile my-profile
+   # Or using AWS IAM Identity Center (SSO):
+   aws sso login --profile my-profile
+   ```
+2. In your `.env` file, specify your profile and region:
+   ```env
+   AWS_PROFILE=my-profile
+   AWS_DEFAULT_REGION=us-east-1
+   ```
+
+#### Option B: Apple Silicon Unified GPU (Mac, iMac, Mac Studio)
+Macs with M-series chips (M1/M2/M3/M4 Pro/Max/Ultra) use unified memory and Metal acceleration, making local inference exceptionally fast and **100% free ($0.00)**:
+1. Start Ollama:
+   ```bash
+   brew install ollama
+   ollama serve
+   ```
+2. Pull your preferred local models:
+   ```bash
+   # Lightweight & ultra-fast (8GB+ RAM):
+   ollama pull llama3.2:1b
+
+   # Heavyweight local coder (16GB - 64GB+ RAM on Mac Studio / MacBook Pro):
+   ollama pull qwen2.5-coder:7b
+   ollama pull qwen2.5-coder:14b
+   ```
+
+#### Option C: Windows / Linux PC with Discrete GPU
+- **NVIDIA GPU**: Ollama auto-detects CUDA acceleration.
+- **AMD Radeon GPU**: Offloaded automatically via Vulkan / ROCm.
+- Set Windows power plan to **Ultimate Performance** for peak throughput.
 
 ---
 
@@ -36,7 +95,7 @@ You **never** have to manually prompt `"orchestrate task X using aider"` or re-e
  │  2. Smart 5-Tier Model Selection (preserves AWS credits)     │
  │  3. Principal Engineer Standard (100% complete code,         │
  │     zero lazy placeholders, strict TypeScript/Python types)  │
- │  4. Closed-Loop Auto-Verification (syntax, tests, git diff)   │
+ │  4. Closed-Loop Auto-Verification (syntax, tests, git diff)  │
  └──────────────────────────────┬───────────────────────────────┘
                                 │
                                 ▼

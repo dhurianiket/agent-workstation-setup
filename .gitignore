@@ -33,6 +33,7 @@ ENV/
 # Secrets and credentials (MANDATORY ZERO LEAKAGE)
 .env
 .env.*
+!.env.example
 secrets.*
 *.key
 *.pem

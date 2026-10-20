@@ -44,6 +44,22 @@ STATS_DIR = Path.home() / ".agent_workstation"
 STATS_DIR.mkdir(parents=True, exist_ok=True)
 STATS_FILE = STATS_DIR / "usage_stats.json"
 
+# Load local .env if present (Zero-leakage local configuration)
+def load_local_env():
+    env_path = Path(__file__).resolve().parent / ".env"
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("\"'")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+
+load_local_env()
+
 # Bedrock Pricing per 1,000,000 tokens (USD)
 PRICING_PER_M = {
     "us.anthropic.claude-opus-4-5-20251101-v1:0": {"input": 15.00, "output": 75.00},
@@ -82,9 +98,15 @@ QUALITY_DIRECTIVE = (
     "4. Concise Explanations: Be ultra-concise in text, prioritizing working code and exact diffs."
 )
 
-# Initialize AWS Bedrock client
+# Initialize AWS Bedrock client with profile & region flexibility
+aws_profile = os.environ.get("AWS_PROFILE")
+aws_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+
 try:
-    session = boto3.Session(region_name="us-east-1")
+    if aws_profile:
+        session = boto3.Session(profile_name=aws_profile, region_name=aws_region)
+    else:
+        session = boto3.Session(region_name=aws_region)
     bedrock = session.client("bedrock-runtime")
 except Exception as e:
     print(f"Warning initializing Bedrock: {e}")
