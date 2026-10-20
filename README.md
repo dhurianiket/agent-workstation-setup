@@ -55,7 +55,24 @@ If you have AWS Startup credits or an existing AWS account:
    AWS_DEFAULT_REGION=us-east-1
    ```
 
-#### Option B: Apple Silicon Unified GPU (Mac, iMac, Mac Studio)
+#### Option B: Bring Your Own Keys (BYOK) - OpenRouter, NVIDIA, DeepSeek, Groq, OpenAI
+No AWS account? You can use direct provider keys with zero code changes:
+1. Open `.env` and set any key(s) you possess:
+   ```env
+   # Access Claude 3.5, DeepSeek R1, and Llama 3.3 with 1 key:
+   OPENROUTER_API_KEY=sk-or-v1-...
+
+   # Or free/cloud inference via NVIDIA NIM:
+   NVIDIA_API_KEY=nvapi-...
+
+   # Or direct API keys:
+   DEEPSEEK_API_KEY=sk-...
+   GROQ_API_KEY=gsk_...
+   OPENAI_API_KEY=sk-proj-...
+   ```
+2. The gateway auto-detects configured keys and routes models automatically.
+
+#### Option C: Apple Silicon Unified GPU (Mac, iMac, Mac Studio)
 Macs with M-series chips (M1/M2/M3/M4 Pro/Max/Ultra) use unified memory and Metal acceleration, making local inference exceptionally fast and **100% free ($0.00)**:
 1. Start Ollama:
    ```bash
@@ -72,7 +89,7 @@ Macs with M-series chips (M1/M2/M3/M4 Pro/Max/Ultra) use unified memory and Meta
    ollama pull qwen2.5-coder:14b
    ```
 
-#### Option C: Windows / Linux PC with Discrete GPU
+#### Option D: Windows / Linux PC with Discrete GPU
 - **NVIDIA GPU**: Ollama auto-detects CUDA acceleration.
 - **AMD Radeon GPU**: Offloaded automatically via Vulkan / ROCm.
 - Set Windows power plan to **Ultimate Performance** for peak throughput.
