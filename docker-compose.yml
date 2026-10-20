@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agent-workstation-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    volumes:
+      - ~/.aws:/root/.aws:ro
+      - ~/.agent_workstation:/root/.agent_workstation
+      - ./workspace:/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

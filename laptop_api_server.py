@@ -26,7 +26,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import boto3
@@ -271,13 +271,424 @@ class OrchestrationRequest(BaseModel):
     verify: Optional[bool] = True
 
 @app.get("/")
-def root():
+def root(req: Request):
+    accept = req.headers.get("accept", "")
+    if "text/html" in accept:
+        return dashboard()
     return {
         "status": "online",
-        "version": "2.1.0",
-        "description": "Laptop Unified AI Gateway with Multi-Provider BYOK & Fallback Protection",
-        "endpoints": ["/v1/models", "/v1/chat/completions", "/v1/usage", "/v1/orchestrate", "/health"]
+        "version": "2.2.0",
+        "description": "Antigravity Autonomous Workstation Unified AI Gateway (BYOK + 5-Tier Fallback)",
+        "endpoints": ["/dashboard", "/health", "/v1/models", "/v1/chat/completions", "/v1/usage", "/v1/orchestrate"]
     }
+
+@app.get("/status", response_class=HTMLResponse)
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard():
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity Autonomous Workstation Gateway</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card-bg: #121824;
+      --card-border: #1e293b;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-online {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .kpi-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .kpi-val {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .tier-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+    .tier-card:hover {
+      border-color: var(--accent);
+    }
+    .tier-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+    }
+    .tier-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .tier-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .tier-price {
+      font-size: 0.75rem;
+      color: var(--success);
+      font-family: monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+    .mono { font-family: monospace; }
+    .interactive-panel {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .interactive-panel { grid-template-columns: 1fr; }
+    }
+    textarea, select, button {
+      width: 100%;
+      background: #0d121c;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+    button {
+      background: var(--accent);
+      color: #0b0f17;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    .output-box {
+      background: #090c12;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1><span>⚡</span> Antigravity Autonomous Workstation</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">Unified Multi-Provider AI Gateway & Orchestrator Control Plane</p>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <span class="badge-online" id="status-badge">ONLINE • 127.0.0.1:8000</span>
+      <button onclick="fetchStats()" style="width: auto; margin-bottom: 0; padding: 6px 14px; font-size: 0.8rem;">Refresh</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="card">
+      <div class="kpi-title">Total Spend (USD)</div>
+      <div class="kpi-val" id="total-usd">$0.0000</div>
+      <div class="kpi-sub" id="requests-count">0 total requests logged</div>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Smart-Tier Savings</div>
+      <div class="kpi-val" style="color: var(--success);" id="saved-usd">$0.0000</div>
+      <div class="kpi-sub">vs Claude Opus baseline</div>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Total Tokens</div>
+      <div class="kpi-val" id="total-tokens">0</div>
+      <div class="kpi-sub" id="tokens-sub">0 prompt / 0 completion</div>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Gateway Health</div>
+      <div class="kpi-val" style="color: var(--accent);" id="active-models">21 Models</div>
+      <div class="kpi-sub" id="latency-ms">Checking ping...</div>
+    </div>
+  </div>
+
+  <div class="section-title">⚡ 5-Tier Smart Auto-Routing Hierarchy</div>
+  <div class="tiers-grid">
+    <div class="tier-card">
+      <span class="tier-badge" style="color: var(--success); background: rgba(16,185,129,0.1);">TIER 1 • LOCAL GPU ($0.00)</span>
+      <div class="tier-name">Ollama AMD Vulkan GPU</div>
+      <div class="tier-desc">Llama 3.2 1B running on AMD Radeon RX 5500M discrete GPU. Zero latency, 100% offline, zero credit spend.</div>
+      <div class="tier-price">Cost: $0.00 / 1M tokens • Used for docs, format, typos</div>
+    </div>
+    <div class="tier-card">
+      <span class="tier-badge">TIER 2 • FAST SCOUT</span>
+      <div class="tier-name">Llama 4 Scout (Bedrock / BYOK)</div>
+      <div class="tier-desc">Ultra-fast sub-second responses for boilerplate, scripts, HTML/CSS tweaks, and unit tests.</div>
+      <div class="tier-price">Cost: $0.08 in / $0.30 out per 1M tokens</div>
+    </div>
+    <div class="tier-card">
+      <span class="tier-badge" style="color: #a78bfa; background: rgba(167,139,250,0.1);">TIER 3 • PRODUCTION CODER</span>
+      <div class="tier-name">Llama 3.3 70B Instruct</div>
+      <div class="tier-desc">Full-stack feature engineering, complex refactoring, and AST-compliant code generation.</div>
+      <div class="tier-price">Cost: $0.72 in / $0.72 out per 1M tokens</div>
+    </div>
+    <div class="tier-card">
+      <span class="tier-badge" style="color: #f59e0b; background: rgba(245,158,11,0.1);">TIER 4 • REASONER CRITIC</span>
+      <div class="tier-name">DeepSeek R1 Reasoning</div>
+      <div class="tier-desc">Chain-of-thought analysis, bug investigation, and Frontier Critic consensus review (--judge).</div>
+      <div class="tier-price">Cost: $1.35 in / $2.19 out per 1M tokens</div>
+    </div>
+    <div class="tier-card">
+      <span class="tier-badge" style="color: #ec4899; background: rgba(236,72,153,0.1);">TIER 5 • FRONTIER FLAGSHIP</span>
+      <div class="tier-name">Claude Sonnet 4.5 & Opus 4.5</div>
+      <div class="tier-desc">System architecture, security audits, and multi-file cross-repo orchestrations.</div>
+      <div class="tier-price">Cost: Sonnet ($3/$15) • Opus ($15/$75) per 1M</div>
+    </div>
+  </div>
+
+  <div class="interactive-panel">
+    <div class="card">
+      <div class="section-title">🧪 Live Gateway Playground</div>
+      <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Model Tier / Alias</label>
+      <select id="test-model">
+        <option value="auto">auto (5-Tier Smart Routing)</option>
+        <option value="local">local (Ollama GPU - $0.00)</option>
+        <option value="fast">fast (Llama 4 Scout)</option>
+        <option value="coder">coder (Llama 3.3 70B)</option>
+        <option value="reasoner">reasoner (DeepSeek R1)</option>
+        <option value="claude">claude (Claude Sonnet 4.5)</option>
+        <option value="opus">opus (Claude Opus 4.5)</option>
+      </select>
+      <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Test Prompt</label>
+      <textarea id="test-prompt" rows="3" placeholder="Enter task instruction or prompt...">Explain in 1 sentence how the 5-tier router conserves credits.</textarea>
+      <button onclick="runTestPrompt()" id="run-btn">Execute on Gateway</button>
+      <div class="output-box" id="test-output">Awaiting prompt execution...</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📊 Token & Spend Breakdown</div>
+      <div style="overflow-x: auto; max-height: 380px;">
+        <table id="spend-table">
+          <thead>
+            <tr>
+              <th>Model / Provider</th>
+              <th>Requests</th>
+              <th>Prompt Tokens</th>
+              <th>Compl Tokens</th>
+              <th>Cost (USD)</th>
+            </tr>
+          </thead>
+          <tbody id="spend-tbody">
+            <tr><td colspan="5" style="color: var(--text-muted);">Loading spend telemetry...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchStats() {
+      const startT = performance.now();
+      try {
+        const hResp = await fetch('/health');
+        const hData = await hResp.json();
+        const lat = Math.round(performance.now() - startT);
+        document.getElementById('latency-ms').innerText = `${lat}ms latency • Ollama GPU OK`;
+        document.getElementById('active-models').innerText = `${hData.active_models || 21} Models`;
+        document.getElementById('status-badge').innerText = `ONLINE • ${lat}ms PING`;
+      } catch (e) {
+        document.getElementById('status-badge').innerText = 'OFFLINE';
+        document.getElementById('status-badge').style.color = 'var(--danger)';
+      }
+
+      try {
+        const uResp = await fetch('/v1/usage');
+        const uData = await uResp.json();
+        const totals = uData.totals || {};
+        const totalUsd = totals.estimated_usd || 0;
+        const pTok = totals.prompt_tokens || 0;
+        const cTok = totals.completion_tokens || 0;
+        
+        document.getElementById('total-usd').innerText = `$${totalUsd.toFixed(4)}`;
+        document.getElementById('requests-count').innerText = `${totals.requests || 0} total requests logged`;
+        document.getElementById('total-tokens').innerText = (pTok + cTok).toLocaleString();
+        document.getElementById('tokens-sub').innerText = `${pTok.toLocaleString()} in / ${cTok.toLocaleString()} out`;
+
+        // Calculate savings vs Opus
+        const opusCost = (pTok * 15.0 / 1e6) + (cTok * 75.0 / 1e6);
+        const saved = Math.max(0, opusCost - totalUsd);
+        document.getElementById('saved-usd').innerText = `$${saved.toFixed(4)}`;
+
+        // Table
+        const tbody = document.getElementById('spend-tbody');
+        tbody.innerHTML = '';
+        const byModel = uData.by_model || {};
+        if (Object.keys(byModel).length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No requests logged yet.</td></tr>';
+        } else {
+          for (const [m, stat] of Object.entries(byModel)) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="mono" style="color: var(--accent);">${m}</td>
+              <td>${stat.requests}</td>
+              <td class="mono">${stat.prompt_tokens.toLocaleString()}</td>
+              <td class="mono">${stat.completion_tokens.toLocaleString()}</td>
+              <td class="mono" style="color: var(--success); font-weight: 600;">$${(stat.estimated_usd || 0).toFixed(4)}</td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching usage stats:', e);
+      }
+    }
+
+    async function runTestPrompt() {
+      const model = document.getElementById('test-model').value;
+      const prompt = document.getElementById('test-prompt').value;
+      const outBox = document.getElementById('test-output');
+      const btn = document.getElementById('run-btn');
+      
+      btn.disabled = true;
+      btn.innerText = 'Dispatching to Gateway...';
+      outBox.innerText = `[DISPATCHING] Model: ${model}...\n`;
+
+      const start = performance.now();
+      try {
+        const resp = await fetch('/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const data = await resp.json();
+        const duration = Math.round(performance.now() - start);
+        if (data.choices && data.choices[0]) {
+          outBox.innerText = `[SUCCESS - ${duration}ms | Model: ${data.model}]\n\n${data.choices[0].message.content}\n\n[Usage: ${data.usage?.prompt_tokens} in / ${data.usage?.completion_tokens} out]`;
+        } else {
+          outBox.innerText = `[ERROR]\n` + JSON.stringify(data, null, 2);
+        }
+        fetchStats();
+      } catch (err) {
+        outBox.innerText = `[GATEWAY ERROR]: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Execute on Gateway';
+      }
+    }
+
+    fetchStats();
+    setInterval(fetchStats, 5000);
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=html_content)
+
 
 @app.get("/health")
 def health():

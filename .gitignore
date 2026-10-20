@@ -41,7 +41,10 @@ credentials*
 *.p12
 *.crt
 
-# IDE and OS files
+# Aider & Agent Caches
+.aider*
+*.tags.cache*
+
 .vscode/
 .idea/
 .DS_Store

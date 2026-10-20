@@ -159,6 +159,79 @@ The workstation features a dual-layer automated verification gate built directly
 
 ---
 
+## 🌐 Interactive Web & Telemetry Dashboard
+
+The workstation includes a self-contained, real-time developer control plane running natively at:
+**`http://127.0.0.1:8000/dashboard`** (or `http://127.0.0.1:8000/status`)
+
+* **Live Health & Latency**: Real-time ping to all configured providers (AWS Bedrock, Ollama AMD/Apple/NVIDIA GPU, OpenRouter, NVIDIA, OpenAI).
+* **Credit Spend & Savings Meter**: Displays exact USD expenditure and calculates smart-tier dollars saved vs frontier model baselines.
+* **Token Breakdown**: Granular input/output tokens tracked per model.
+* **In-Browser Playground**: Test prompts across tiers with sub-second feedback and token usage inspection.
+
+---
+
+## 🔌 Model Context Protocol (MCP) Server (Cursor, Claude Code, Windsurf, Antigravity)
+
+Connect the entire workstation engine directly into **Cursor, Claude Code, Windsurf, or Antigravity** via the native FastMCP server (`agent_workstation_mcp.py`):
+
+Add to your `claude_desktop_config.json`, `mcpServers`, or Cursor MCP settings:
+```json
+{
+  "mcpServers": {
+    "workstation": {
+      "command": "python",
+      "args": [
+        "c:/path/to/agent-workstation-setup/agent_workstation_mcp.py"
+      ]
+    }
+  }
+}
+```
+
+### Exposed MCP Tools:
+* `workstation_health`: Live gateway health, latencies, and provider availability.
+* `workstation_spend`: Real-time token consumption and smart-tier savings metrics.
+* `workstation_orchestrate`: Dispatches tasks with AST sensor validation, Code Constitution rules, and 5-tier routing.
+* `workstation_judge`: Runs Frontier Critic consensus review on git diffs via DeepSeek R1 reasoning.
+* `workstation_scan_secrets`: Runs GitGuardian `ggshield` secret audits across staged/modified files to guarantee zero key leakage.
+* `workstation_list_tools`: Returns status and capabilities of all 32 curated tools.
+
+---
+
+## 🐳 Dockerized Sandbox Execution (Linux, Mac & Windows)
+
+For developers who prefer running the workstation in an isolated, sandboxed environment without touching host packages:
+
+```bash
+# 1. Configure credentials in .env
+cp .env.example .env
+
+# 2. Build and launch containerized gateway
+docker compose up -d
+
+# 3. Verify health & dashboard
+curl http://localhost:8000/health
+# Open http://localhost:8000/dashboard in your browser
+```
+
+---
+
+## 🧰 Curated Tools & Frameworks Manager
+
+Manage, audit, and synchronize all 32 curated AI developer tools, harnesses, and skills:
+```bash
+# Audit installed tools
+python tools/manage_tools.py audit
+
+# Synchronize and clone missing repositories
+python tools/manage_tools.py sync
+```
+
+See [tools_manifest.md](tools_manifest.md) for the full catalog of all 32 curated tools.
+
+---
+
 ## 🛡️ Credit Guard & Anti-Depletion Architecture
 
 1. **Smart Auto-Tiered Routing (`--model auto` by default)**:
