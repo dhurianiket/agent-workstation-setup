@@ -435,6 +435,23 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
             if not is_secure:
                 return False
 
+        # 4. Graphify Knowledge Graph Auto-Sync
+        try:
+            print("\n[GRAPHIFY] Synchronizing codebase knowledge graph...")
+            g_res = subprocess.run(
+                [sys.executable, "-m", "graphify", "update", "."],
+                cwd=target_cwd,
+                capture_output=True,
+                text=True,
+                timeout=45
+            )
+            if g_res.returncode == 0:
+                print("[GRAPHIFY OK] Knowledge graph synchronized.")
+            else:
+                print(f"[GRAPHIFY NOTICE] Graph sync exited with {g_res.returncode}.")
+        except Exception as e:
+            print(f"[GRAPHIFY NOTICE] Graph sync skipped: {e}")
+
         return True
 
     except subprocess.CalledProcessError as e:

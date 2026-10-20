@@ -1,0 +1,12 @@
+# Graphify Codebase Ignore Rules
+# Exclude external tool checkouts, virtual environments, and heavy node_modules
+Skyvern/
+tools/
+.venv/
+venv/
+node_modules/
+dist/
+build/
+.git/
+.aider*
+*.log

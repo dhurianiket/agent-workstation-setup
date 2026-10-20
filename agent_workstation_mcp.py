@@ -164,6 +164,37 @@ async def workstation_scan_secrets(files: Optional[List[str]] = None) -> str:
         return f"[FAILED - SECRETS DETECTED]\n{out}\n{stderr.decode('utf-8', errors='replace')}"
 
 @mcp.tool()
+async def workstation_sync_graph() -> str:
+    """Synchronize the Graphify AST knowledge graph across the codebase (graphify update .)."""
+    cmd = [sys.executable, "-m", "graphify", "update", "."]
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        cwd=str(WORKSPACE_DIR),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+    out = stdout.decode("utf-8", errors="replace")
+    if proc.returncode == 0:
+        return f"[GRAPHIFY SYNC SUCCESS]\n{out}"
+    return f"[GRAPHIFY SYNC ERROR]\n{stderr.decode('utf-8', errors='replace')}\n{out}"
+
+@mcp.tool()
+async def workstation_query_graph(query: str) -> str:
+    """Query the Graphify AST knowledge graph to trace symbols, relationships, and call flow."""
+    cmd = [sys.executable, "-m", "graphify", "query", query]
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        cwd=str(WORKSPACE_DIR),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+    out = stdout.decode("utf-8", errors="replace")
+    err = stderr.decode("utf-8", errors="replace")
+    return out if out.strip() else err
+
+@mcp.tool()
 async def workstation_list_tools() -> str:
     """List all curated developer tools, harnesses, and frameworks available in the workstation."""
     manage_py = TOOLS_DIR / "manage_tools.py"
