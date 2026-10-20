@@ -164,6 +164,40 @@ def get_recent_postmortems(cwd: str) -> str:
         pass
     return ""
 
+def get_graphify_context(cwd: str, task: str) -> str:
+    """
+    Pre-Action Knowledge Graph Sensor (Graphify):
+    Queries graphify-out/graph.json for relevant code symbols and line numbers
+    so the coding agent starts with exact architectural context.
+    """
+    graph_file = Path(cwd) / "graphify-out" / "graph.json"
+    if not graph_file.exists():
+        return ""
+    try:
+        stop_words = {"the", "and", "for", "with", "that", "this", "from", "into", "update", "check", "make", "please", "file", "code"}
+        words = [
+            w.strip(".,:;()[]\"'")
+            for w in task.split()
+            if len(w.strip(".,:;()[]\"'")) >= 3 and w.lower() not in stop_words
+        ]
+        if not words:
+            return ""
+        query_str = " ".join(words[:6])
+        res = subprocess.run(
+            [sys.executable, "-m", "graphify", "query", query_str, "--budget", "600"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False
+        )
+        out = (res.stdout or "").strip()
+        if res.returncode == 0 and out and "No matching" not in out:
+            return f"\n[GRAPHIFY AST CONTEXT]\n{out[:900]}\n"
+    except Exception:
+        pass
+    return ""
+
 def run_ggshield_audit(cwd: str, files: list = None) -> bool:
     """
     Scans modified files or repository using GitGuardian (ggshield) to guarantee ZERO secret leakage.
@@ -206,14 +240,15 @@ def run_ggshield_audit(cwd: str, files: list = None) -> bool:
 
 def inspect_python_code_constitution(fpath: Path) -> list:
     """
-    Enforces Code Constitutional rules via Python AST inspection:
+    Enforces Code Constitutional rules via Python AST & source inspection:
     1. Forbids bare 'except:' (must specify an explicit exception class).
     2. Forbids mutable default arguments (e.g. def fn(arg=[]):).
+    3. Forbids lazy placeholder truncation comments (e.g. '# rest unchanged').
     """
     violations = []
     try:
-        with open(fpath, "r", encoding="utf-8") as f:
-            tree = ast.parse(f.read(), filename=str(fpath))
+        source_text = fpath.read_text(encoding="utf-8")
+        tree = ast.parse(source_text, filename=str(fpath))
         
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler) and node.type is None:
@@ -222,6 +257,12 @@ def inspect_python_code_constitution(fpath: Path) -> list:
                 for default in node.args.defaults + node.args.kw_defaults:
                     if default and isinstance(default, (ast.List, ast.Dict, ast.Set)):
                         violations.append(f"Line {node.lineno}: Mutable default argument in '{node.name}'. Use None and initialize inside.")
+
+        forbidden_markers = ("# rest unchanged", "// rest unchanged", "# ... existing code", "# todo: implement")
+        for idx, line in enumerate(source_text.splitlines(), start=1):
+            stripped = line.strip().lower()
+            if stripped.startswith(("#", "//")) and any(m in stripped for m in forbidden_markers):
+                violations.append(f"Line {idx}: Forbidden placeholder comment '{line.strip()}' detected.")
     except Exception as e:
         violations.append(f"AST Parsing error: {e}")
     return violations
@@ -356,9 +397,10 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
     target_cwd = cwd or os.getcwd()
     ensure_services_running()
     
-    # Check for past post-mortems in this workspace
+    # Check for past post-mortems and Graphify AST knowledge graph context
     historical_hint = get_recent_postmortems(target_cwd)
-    augmented_task = task + historical_hint if historical_hint else task
+    graph_hint = get_graphify_context(target_cwd, task)
+    augmented_task = task + historical_hint + graph_hint
     
     resolved_model = resolve_smart_model(task, model)
     tier_label = {
@@ -375,6 +417,7 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
     print(f"  RESOLVED MODEL      : {resolved_model.upper()} [{tier_label}]")
     print(f"  GATEWAY             : {LOCAL_API_BASE}")
     print(f"  WORKING DIRECTORY   : {target_cwd}")
+    print(f"  GRAPHIFY CONTEXT    : {'Injected' if graph_hint else 'None'}")
     print(f"  TASK                : {task}")
     print(f"=======================================================\n")
 
@@ -427,7 +470,10 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
 
         # 2. Frontier Critic Review (if requested or complex task)
         if judge:
-            run_frontier_critic(target_cwd, task)
+            critic_ok = run_frontier_critic(target_cwd, task)
+            if not critic_ok:
+                record_postmortem(task, "Frontier Critic rejected diff", target_cwd)
+                return False
 
         # 3. GitGuardian Secret Shield Scan
         if shield:
@@ -469,6 +515,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "sonnet", "reasoner", "coder", "fast", "local"], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
     parser.add_argument("--judge", action="store_true", help="Run Frontier Critic model (DeepSeek R1) review pass on the diff")
+    parser.add_argument("--judge-only", action="store_true", help="Run AST sensor, Frontier Critic, and ggshield audit on current workspace without invoking an editing agent")
     parser.add_argument("--no-verify", action="store_true", help="Skip post-execution AST/syntax verification")
     parser.add_argument("--no-shield", action="store_true", help="Skip GitGuardian (ggshield) secret audit")
     parser.add_argument("--dir", "-d", default=None, help="Working directory path")
@@ -479,6 +526,14 @@ if __name__ == "__main__":
         show_usage()
         sys.exit(0)
         
+    if args.judge_only:
+        ensure_services_running()
+        target_dir = args.dir or os.getcwd()
+        valid_ok, mod_files = verify_changes(target_dir)
+        critic_ok = run_frontier_critic(target_dir, args.task or "Audit current repository changes")
+        shield_ok = run_ggshield_audit(target_dir, mod_files) if not args.no_shield else True
+        sys.exit(0 if (valid_ok and critic_ok and shield_ok) else 1)
+
     if not args.task:
         parser.print_help()
         sys.exit(1)

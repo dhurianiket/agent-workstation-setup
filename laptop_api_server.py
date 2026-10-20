@@ -187,6 +187,8 @@ BYOK_PROVIDERS = {
 }
 
 MODEL_MAP = {
+    # Smart 5-Tier Auto Router
+    "auto": {"provider": "router", "id": "smart-5-tier-router", "tier": "auto_router"},
     # Frontier Claude
     "claude": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
     "claude-sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
@@ -509,8 +511,13 @@ def dashboard():
     </div>
     <div class="card">
       <div class="kpi-title">Gateway Health</div>
-      <div class="kpi-val" style="color: var(--accent);" id="active-models">21 Models</div>
+      <div class="kpi-val" style="color: var(--accent);" id="active-models">22 Models</div>
       <div class="kpi-sub" id="latency-ms">Checking ping...</div>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Graphify AST Graph</div>
+      <div class="kpi-val" style="color: #a78bfa;" id="graph-nodes">2,351 Nodes</div>
+      <div class="kpi-sub" id="graph-sub">4,358 edges • 141 communities</div>
     </div>
   </div>
 
@@ -643,6 +650,15 @@ def dashboard():
       } catch (e) {
         console.error('Error fetching usage stats:', e);
       }
+
+      try {
+        const gResp = await fetch('/v1/graph');
+        const gData = await gResp.json();
+        if (gData.nodes) {
+          document.getElementById('graph-nodes').innerText = `${gData.nodes.toLocaleString()} Nodes`;
+          document.getElementById('graph-sub').innerText = `${(gData.edges || 0).toLocaleString()} edges • ${gData.communities || 0} communities`;
+        }
+      } catch (e) {}
     }
 
     async function runTestPrompt() {
@@ -712,6 +728,34 @@ def get_usage():
         with open(STATS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {"totals": {"requests": 0, "prompt_tokens": 0, "completion_tokens": 0, "estimated_usd": 0.0}, "by_model": {}}
+
+@app.get("/v1/postmortems")
+def get_postmortems():
+    pm_file = STATS_DIR / "postmortems.json"
+    if pm_file.exists():
+        try:
+            with open(pm_file, "r", encoding="utf-8") as f:
+                return {"postmortems": json.load(f)}
+        except Exception:
+            pass
+    return {"postmortems": []}
+
+@app.get("/v1/graph")
+def get_graph_summary():
+    graph_path = Path(__file__).resolve().parent / "graphify-out" / "graph.json"
+    if not graph_path.exists():
+        graph_path = Path.cwd() / "graphify-out" / "graph.json"
+    if graph_path.exists():
+        try:
+            with open(graph_path, "r", encoding="utf-8") as f:
+                g = json.load(f)
+            nodes = len(g.get("nodes", []))
+            edges = len(g.get("links", g.get("edges", [])))
+            communities = len({n.get("community") for n in g.get("nodes", []) if n.get("community") is not None})
+            return {"status": "synced", "nodes": nodes, "edges": edges, "communities": communities}
+        except Exception as e:
+            return {"status": "error", "detail": str(e)}
+    return {"status": "missing", "nodes": 0, "edges": 0, "communities": 0}
 
 @app.get("/v1/models")
 def list_models():
@@ -955,7 +999,7 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                     continue
 
         # 3. Local Ollama Execution ($0.00 / Free)
-        if target["provider"] == "ollama" or alias == "local" or True:
+        if target["provider"] == "ollama" or alias == "local":
             try:
                 ollama_messages = []
                 for sp in system_prompts:
@@ -964,7 +1008,7 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                     ollama_messages.append({"role": cm["role"], "content": cm["content"][0]["text"]})
                 
                 ollama_body = {
-                    "model": target.get("id", "llama3.2:1b"),
+                    "model": target.get("id", "llama3.2:1b") if target.get("provider") == "ollama" else "llama3.2:1b",
                     "messages": ollama_messages,
                     "stream": req.stream,
                     "options": {
@@ -1016,9 +1060,25 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
     raise HTTPException(status_code=500, detail=f"All models & BYOK providers failed. Last error: {str(last_exception)}")
 
 
+def resolve_auto_model_from_messages(messages: List[ChatMessage]) -> str:
+    """Smart 5-Tier router for /v1/chat/completions when model='auto'."""
+    user_text = " ".join(str(m.content) for m in messages if m.role == "user").lower()
+    if any(k in user_text for k in ["format", "lint", "docstring", "comment", "typo", "spelling", "1 sentence"]):
+        return "local"
+    if any(k in user_text for k in ["test", "unit test", "boilerplate", "config", "readme", "commit", "html", "css", "rename"]):
+        return "fast"
+    if any(k in user_text for k in ["debug", "why", "algorithm", "race condition", "memory leak", "root cause", "critique", "diff"]):
+        return "reasoner"
+    if any(k in user_text for k in ["architect", "security audit", "system design", "crypto", "auth overhaul"]):
+        return "claude"
+    return "coder"
+
+
 @app.post("/v1/chat/completions")
 async def chat_completions(req: ChatCompletionRequest):
     clean_model_name = req.model.replace("openai/", "").replace("bedrock/", "").replace("ollama/", "")
+    if clean_model_name == "auto":
+        clean_model_name = resolve_auto_model_from_messages(req.messages)
     return await invoke_model_with_fallback(req, clean_model_name)
 
 

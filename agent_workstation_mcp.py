@@ -54,10 +54,12 @@ async def workstation_spend() -> str:
         return "No usage statistics recorded yet (~/.agent_workstation/usage_stats.json)."
     try:
         data = json.loads(STATS_FILE.read_text(encoding="utf-8"))
-        total_spent = data.get("total_cost_usd", 0.0)
-        reqs = data.get("total_requests", 0)
-        prompt_t = data.get("total_prompt_tokens", 0)
-        compl_t = data.get("total_completion_tokens", 0)
+        totals = data.get("totals", {})
+        by_model = data.get("by_model", {})
+        total_spent = totals.get("estimated_usd", data.get("total_cost_usd", 0.0))
+        reqs = totals.get("requests", data.get("total_requests", 0))
+        prompt_t = totals.get("prompt_tokens", data.get("total_prompt_tokens", 0))
+        compl_t = totals.get("completion_tokens", data.get("total_completion_tokens", 0))
         
         # Estimate savings: if all tokens ran on Claude Opus ($15/$75 per M) vs what was actually spent
         opus_equiv = (prompt_t / 1e6 * 15.0) + (compl_t / 1e6 * 75.0)
@@ -71,8 +73,14 @@ async def workstation_spend() -> str:
             f"Total Cost (USD):     ${total_spent:.4f}",
             f"Frontier Cost Equiv:  ${opus_equiv:.4f}",
             f"Smart-Tier Savings:   ${saved:.4f} USD saved",
-            "========================================"
+            "----------------------------------------"
         ]
+        for m_id, m_stat in by_model.items():
+            m_reqs = m_stat.get("requests", 0)
+            m_toks = m_stat.get("prompt_tokens", 0) + m_stat.get("completion_tokens", 0)
+            m_usd = m_stat.get("estimated_usd", 0.0)
+            output.append(f"  {m_id:<34} | {m_reqs:>3} reqs | {m_toks:>7,} toks | ${m_usd:.4f}")
+        output.append("========================================")
         return "\n".join(output)
     except Exception as e:
         return f"Error reading stats: {e}"
@@ -109,8 +117,8 @@ async def workstation_orchestrate(task: str, model: str = "auto", agent: str = "
 
 @mcp.tool()
 async def workstation_judge() -> str:
-    """Run Frontier Critic consensus review on uncommitted git diffs using DeepSeek R1 reasoning."""
-    cmd = [sys.executable, str(ORCHESTRATE_PY), "--task", "Validate current diff", "--judge"]
+    """Run Frontier Critic consensus review + AST Constitution + ggshield audit on current git diff without modifying files."""
+    cmd = [sys.executable, str(ORCHESTRATE_PY), "--judge-only"]
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
@@ -123,7 +131,9 @@ async def workstation_judge() -> str:
         env=env
     )
     stdout, stderr = await proc.communicate()
-    return stdout.decode("utf-8", errors="replace")
+    out_str = stdout.decode("utf-8", errors="replace")
+    err_str = stderr.decode("utf-8", errors="replace")
+    return out_str if out_str.strip() else err_str
 
 @mcp.tool()
 async def workstation_scan_secrets(files: Optional[List[str]] = None) -> str:
@@ -210,5 +220,4 @@ async def workstation_list_tools() -> str:
     return stdout.decode("utf-8", errors="replace")
 
 if __name__ == "__main__":
-    import shutil
     mcp.run()
