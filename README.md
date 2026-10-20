@@ -1,47 +1,119 @@
-# Antigravity Autonomous AI Developer Workstation OS (v3.2)
+<div align="center">
 
-[![Gateway Status](https://img.shields.io/badge/Gateway-Active%20(Port%208000)-10b981?style=for-the-badge&logo=fastapi)](http://127.0.0.1:8000/dashboard)
-[![MCP Protocol](https://img.shields.io/badge/MCP-FastMCP%20Ready-38bdf8?style=for-the-badge&logo=anthropic)](https://github.com/dhurianiket/agent-workstation-setup)
-[![Security](https://img.shields.io/badge/Security-GitGuardian%20ggshield%20Verified-purple?style=for-the-badge&logo=gitguardian)](https://gitguardian.com)
-[![Routing](https://img.shields.io/badge/Smart%20Routing-5--Tier%20Credit%20Guard-f59e0b?style=for-the-badge)](https://github.com/dhurianiket/agent-workstation-setup)
-[![Docker](https://img.shields.io/badge/Docker-Sandbox%20Ready-2496ed?style=for-the-badge&logo=docker)](https://github.com/dhurianiket/agent-workstation-setup)
-[![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)](LICENSE)
+# ⚡ Antigravity Autonomous AI Developer Workstation OS (`v3.3`)
 
-> **Turn any Mac, Windows, or Linux machine into a private, cost-protected, autonomous AI engineering workstation with one command.**
+**Turn any Mac, Windows PC, or Linux machine into a self-verifying, cost-protected, multi-agent engineering OS.**
 
-The **Antigravity Autonomous Workstation** bridges frontier cloud reasoning (**Claude 4.5 Sonnet & Opus, DeepSeek R1, Llama 3.3 70B, Llama 4 Scout** via AWS Bedrock or direct BYOK keys), local discrete GPU acceleration (**Ollama on Apple Metal / AMD Radeon Vulkan / NVIDIA CUDA**), and battle-tested coding agent harnesses (**Aider, Claude Code, Codex, OpenCode**). All unified behind an OpenAI-compatible gateway with **Smart 5-Tier Auto-Routing, GitGuardian zero-leakage security gates, deterministic AST validation, and a real-time web telemetry dashboard**.
+[![Gateway](https://img.shields.io/badge/Gateway_v2.3-Port_8000_Online-10b981?style=for-the-badge&logo=fastapi&logoColor=white)](http://127.0.0.1:8000/dashboard)
+[![Smart Router](https://img.shields.io/badge/Credit_Guard-97.8%25_Cost_Saved-f59e0b?style=for-the-badge&logo=lightning&logoColor=white)](#-5-tier-smart-auto-routing--credit-guard)
+[![Graphify AST](https://img.shields.io/badge/Graphify_AST-2%2C397_Nodes_%7C_4%2C445_Edges-6366f1?style=for-the-badge&logo=graphql&logoColor=white)](#-graphify-ast-knowledge-graph--agentcontext)
+[![Skill Router](https://img.shields.io/badge/Zero--Name_Router-32_Repos_%7C_1%2C041_Skills-ec4899?style=for-the-badge&logo=sparkles&logoColor=white)](#-zero-name-32-repo--1041-skill-auto-router)
+[![MCP Server](https://img.shields.io/badge/Protocol-FastMCP_Ready-0ea5e9?style=for-the-badge&logo=anthropic&logoColor=white)](#-model-context-protocol-mcp-server)
+[![Security](https://img.shields.io/badge/Security-GitGuardian_ggshield-8b5cf6?style=for-the-badge&logo=gitguardian&logoColor=white)](#-deterministic-verification--gitguardian-shield)
+[![Docker](https://img.shields.io/badge/Docker-Sandbox_Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#-dockerized-sandbox-execution)
+[![License](https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge)](LICENSE)
+
+<p align="center">
+  <a href="#-1-command-universal-installers"><b>Quick Start</b></a> •
+  <a href="#-system-architecture"><b>Architecture</b></a> •
+  <a href="#-why-this-workstation-live-benchmarks"><b>Benchmarks</b></a> •
+  <a href="#-5-tier-smart-auto-routing--credit-guard"><b>5-Tier Router</b></a> •
+  <a href="#-zero-name-32-repo--1041-skill-auto-router"><b>32-Repo Auto-Router</b></a> •
+  <a href="#-graphify-ast-knowledge-graph--agentcontext"><b>Graphify AST</b></a> •
+  <a href="#-interactive-web--telemetry-dashboard"><b>Dashboard</b></a> •
+  <a href="#-multi-device-hardware--byok-setup"><b>Hardware & BYOK</b></a>
+</p>
+
+</div>
 
 ---
 
-## 📑 Table of Contents
+## 🎯 Overview
 
-1. [⚡ 1-Command Universal Installers](#-1-command-universal-installers)
-2. [🌐 Interactive Web & Telemetry Dashboard](#-interactive-web--telemetry-dashboard)
-3. [🔌 Model Context Protocol (MCP) Server for Cursor & Claude Code](#-model-context-protocol-mcp-server)
-4. [🔒 GitGuardian (`ggshield`) Zero-Leakage & AST Sensors](#-gitguardian-ggshield-zero-leakage--ast-sensors)
-5. [🎛️ 5-Tier Smart Auto-Routing & Credit Guard](#️-5-tier-smart-auto-routing--credit-guard)
-6. [🐳 Dockerized Sandbox Execution](#-dockerized-sandbox-execution)
-7. [💻 Multi-Device Hardware Optimization Setup](#-multi-device-hardware-optimization-setup)
-8. [🔑 Bring Your Own Key (BYOK) & Cloud Backends](#-bring-your-own-key-byok--cloud-backends)
-9. [🧰 Master Curated Tools Ecosystem (32 of 32 Ready)](#-master-curated-tools-ecosystem)
-10. [🚀 Antigravity Pro Always-On Orchestration Policy](#-antigravity-pro-always-on-orchestration-policy)
-11. [📊 CLI Usage & Manual Orchestration](#-cli-usage--manual-orchestration)
+Most AI coding setups suffer from three fatal flaws: **runaway frontier API costs** on trivial edits, **blind grep searches** across large repositories, and **unverified code mutations** that leak secrets or break builds.
+
+The **Antigravity Autonomous Workstation** solves all three by wrapping **Aider, Claude Code, Codex, OpenCode, Cursor, and Google Antigravity** inside a unified, local-first control plane:
+
+- **🎛️ 5-Tier Smart Auto-Router**: Dynamically routes prompts across **Local Discrete GPU (`$0.00`) $\rightarrow$ Llama 4 Scout $\rightarrow$ Llama 3.3 70B $\rightarrow$ DeepSeek R1 $\rightarrow$ Claude 4.5 Sonnet/Opus**, cutting token spend by **97.8%**.
+- **🧠 Pre-Action Graphify AST Context**: Queries a persistent 2,397-node AST knowledge graph (`graphify-out/graph.json`) before editing code, injecting exact symbol definitions and call-chain locations.
+- **✨ Zero-Name 32-Repo Skill Router**: Automatically matches any natural-language prompt in **any project folder on your laptop** against **32 installed tool repositories and 1,041 `SKILL.md` runbooks**—without you ever naming a repo.
+- **🛡️ 4-Stage Post-Action Verification Gate**: Enforces Python AST Code Constitution checks, bytecode compilation, **DeepSeek R1 Frontier Critic** diff review, and **GitGuardian (`ggshield`)** zero-leakage secret scanning before any commit.
+
+---
+
+## 📊 Why This Workstation? (Live Benchmarks)
+
+Measured across real multi-agent development sessions (`94,122` total tokens processed across `22` orchestrated requests):
+
+| Capability Pillar | Standard IDE Agent (Cursor / Windsurf) | Standalone CLI (Aider / Claude Code) | ⚡ Antigravity Workstation (`v3.3`) | Measured Advantage |
+| :--- | :--- | :--- | :--- | :--- |
+| **Token Cost & Credit Guard** | Fixed frontier billing on every turn | 1–2 static models per session | **5-Tier Smart Auto-Router** (`model="auto"`) | **`$0.0410` actual** vs `$1.9232` Frontier Equiv (**97.8% saved**) |
+| **Provider Resilience** | Single-vendor cloud lock-in | Fails on rate-limit or outage | **7-Provider BYOK + 6-Step Fallback Cascade** | Auto-fails over to **Local GPU (`148.5ms`, `$0.00`)** |
+| **Codebase Navigation** | Ephemeral grep / vector RAG | Per-session ctags repo-map | **Persistent Graphify AST Graph** (`BFS depth=2`) | **2,397 nodes / 4,445 edges** synced in `<2s` (zero LLM cost) |
+| **Domain Specialization** | Manual `@skill` or prompt pasting | Manual config per project | **Zero-Name Auto-Router (`tools/skill_router.py`)** | Auto-injects **32 repos / 1,041 `SKILL.md` files** in `<5ms` |
+| **Pre-Commit Safety Gate** | IDE lint warnings only | Optional test command | **AST Constitution + DeepSeek R1 Critic + `ggshield`** | **0 secret leaks**, 0 bare `except:`, 0 `# rest unchanged` |
+| **Cross-Project Scope** | Per-workspace rules | Per-directory config | **Global Plugin (`~/.gemini`, `~/.claude`, `~/.aider`)** | Automatically active in **every folder on your machine** |
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TD
+    User(["👨‍💻 Developer Prompt (Any Project Directory on Machine)"])
+    
+    subgraph PreAction["1. Pre-Action Context & Intent Sensors"]
+        Router["✨ Zero-Name Skill Router<br/>(32 Repos • 1,041 SKILL.md Runbooks)"]
+        Graphify["🧠 Graphify AST Knowledge Graph<br/>(BFS depth=2 Symbol & Line Lookup)"]
+        Memory["📓 Post-Mortem & AgentContext Memory<br/>(~/.agent_workstation/postmortems.json)"]
+    end
+
+    subgraph Gateway["2. Unified Local AI Gateway (http://127.0.0.1:8000/v1)"]
+        SmartTier{"🎛️ 5-Tier Smart Auto-Router<br/>(resolve_smart_model)"}
+        T1["🟢 Tier 1: Local GPU<br/>Ollama Llama 3.2 1B<br/>$0.00 • ~148ms"]
+        T2["🔵 Tier 2: Fast Scout<br/>Llama 4 Scout 17B<br/>$0.08/1M • ~190ms"]
+        T3["🟣 Tier 3: Workhorse Coder<br/>Llama 3.3 70B Instruct<br/>$0.72/1M • ~300ms"]
+        T4["🟠 Tier 4: Deep Reasoner<br/>DeepSeek R1<br/>$1.35/1M • ~1.1s"]
+        T5["🔴 Tier 5: Frontier Flagship<br/>Claude Sonnet 4.5 / Opus 4.5<br/>$3.00–$15.00/1M"]
+    end
+
+    subgraph Harnesses["3. Coding Agent Execution"]
+        Agents["🤖 Dispatched Agent Harness<br/>Aider • Claude Code • Codex • OpenCode • Antigravity MCP"]
+    end
+
+    subgraph PostAction["4. Deterministic Post-Action Verification Gate"]
+        AST["🔍 Bytecode & AST Constitution<br/>(No bare except • No mutable defaults • No placeholders)"]
+        Critic["⚖️ Frontier Critic (--judge)<br/>(DeepSeek R1 Diff Consensus)"]
+        Shield["🔒 GitGuardian Security Shield<br/>(ggshield Secret Scan • 0 Leaks)"]
+        Sync["🔄 Graphify Auto-Sync<br/>(graphify update . in <2s)"]
+    end
+
+    User --> PreAction
+    Router & Graphify & Memory --> SmartTier
+    SmartTier -->|Lint / Docstrings / Typos| T1
+    SmartTier -->|Unit Tests / Config / HTML| T2
+    SmartTier -->|Full-Stack Features / APIs| T3
+    SmartTier -->|Debugging / Race Conditions| T4
+    SmartTier -->|System Architecture / Crypto| T5
+    T1 & T2 & T3 & T4 & T5 --> Agents
+    Agents --> AST --> Critic --> Shield --> Sync
+```
 
 ---
 
 ## ⚡ 1-Command Universal Installers
 
-### macOS (Apple Silicon M1/M2/M3/M4 & Intel) & Linux
+### 🍎 macOS (Apple Silicon M1/M2/M3/M4 & Intel) & 🐧 Linux
 ```bash
 curl -sSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.sh | bash
 ```
 
-### Windows (PowerShell 7+ / Windows Terminal)
+### 🪟 Windows (PowerShell 7+ / Windows Terminal)
 ```powershell
 irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.ps1 | iex
 ```
 
-### Docker Sandbox (Isolated Multi-Platform Container)
+### 🐳 Docker Sandbox (Isolated Multi-Platform Container)
 ```bash
 git clone https://github.com/dhurianiket/agent-workstation-setup.git
 cd agent-workstation-setup
@@ -51,234 +123,194 @@ docker compose up -d
 
 ---
 
-## 🌐 Interactive Web & Telemetry Dashboard
+## ✨ Zero-Name 32-Repo & 1,041-Skill Auto-Router
 
-The workstation includes an embedded, high-performance web dashboard running natively at:
-**`http://127.0.0.1:8000/dashboard`** (or `/status`)
+> [!IMPORTANT]
+> **You never need to type a repository or skill name—even when working in a brand-new project directory.**
 
-```
- ┌────────────────────────────────────────────────────────────────────────┐
- │ ⚡ Antigravity Workstation Control Plane          ONLINE • 16ms Latency │
- ├────────────────┬─────────────────┬─────────────────┬───────────────────┤
- │ Total Spend    │ Smart Savings   │ Total Tokens    │ Active Models     │
- │ $0.0410 USD    │ $0.2310 USD     │ 93,500          │ 21 Models Active  │
- ├────────────────┴─────────────────┴─────────────────┴───────────────────┤
- │ ⚡ 5-Tier Hierarchy: Local GPU ($0) ➔ Scout ➔ Coder ➔ Reasoner ➔ Claude│
- ├──────────────────────────────────┬─────────────────────────────────────┤
- │ 🧪 In-Browser Prompt Runner      │ 📊 Granular Model Spend Table       │
- │ [Select Tier: auto / coder / r1] │ • llama3.2:1b (GPU): 0.0000 USD     │
- │ [Enter Prompt & Run Live]        │ • llama-3.3-70b:     0.0120 USD     │
- │ [Streaming Output with Badges]   │ • deepseek-r1:       0.0290 USD     │
- └──────────────────────────────────┴─────────────────────────────────────┘
-```
+All **32 curated developer repositories** (containing **1,041 `SKILL.md` files** and **456 indexed runbooks**) are centrally installed in `tools/` and indexed by [`tools/skill_router.py`](tools/skill_router.py). Whenever you submit a prompt from **any directory on your laptop**, the router inspects your prompt's intent in `<5ms`, selects the top matching domain runbooks (round-robin across matched domains), and injects their architectural rules automatically.
 
-* **Live Latency & Health Pulse**: Continuous verification of AWS Bedrock, local GPU daemons, and BYOK providers.
-* **Credit Spend & Savings Meter**: Tracks exact credit consumption and calculates real dollar savings compared to frontier model baselines.
-* **Granular Usage Breakdown**: Token telemetry (input vs output) logged persistently in `~/.agent_workstation/usage_stats.json`.
-* **In-Browser Playground**: Test any prompt against any model tier with sub-second feedback before dispatching heavy coding tasks.
+### Live Auto-Routing Examples
 
----
-
-## 🔌 Model Context Protocol (MCP) Server
-
-Connect the workstation engine natively into **Cursor, Claude Code, Windsurf, or Google Antigravity** via the built-in FastMCP server (`agent_workstation_mcp.py`).
-
-### 1. Configuration (`claude_desktop_config.json`, Cursor MCP, or Antigravity Settings)
-```json
-{
-  "mcpServers": {
-    "workstation": {
-      "command": "python",
-      "args": [
-        "C:/Users/dhuri/Downloads/antigravity ai workspace/pc local work/agent-workstation-setup/agent_workstation_mcp.py"
-      ]
-    }
-  }
-}
-```
-
-### 2. Native MCP Tool Catalog
-| Tool Name | Parameters | Purpose |
+| What You Prompt (In Any Project Folder) | Repositories Automatically Activated | Injected `SKILL.md` Runbooks |
 | :--- | :--- | :--- |
-| **`workstation_health`** | None | Returns gateway online status, active providers, and server latency. |
-| **`workstation_spend`** | None | Displays real-time request counts, token breakdown, and smart-tier USD savings. |
-| **`workstation_orchestrate`** | `task`, `model` ("auto"), `agent` ("aider"), `judge` (bool) | Dispatches an autonomous task through 5-tier routing with AST sensors and post-action verification. |
-| **`workstation_judge`** | None | Dispatches current git diff to DeepSeek R1 for Frontier Critic consensus review. |
-| **`workstation_scan_secrets`** | `files` (optional list) | Runs GitGuardian (`ggshield`) across modified files with a 100% zero-leak guarantee. |
-| **`workstation_list_tools`** | None | Audits and returns the operational status of all 32 curated developer tools. |
+| *"Build a responsive macOS dashboard card with spring animations"* | `dickwu-apple-design-skill`, `emilkowalski-skills`, `ui-ux-pro-max-skill`, `hairline`, `reimagine-it` | `dickwu-apple-design-skill/SKILL.md`<br/>`emil-design-eng/SKILL.md`<br/>`ui-ux-pro-max/SKILL.md` |
+| *"Write a Golang HTTP API server and check for XSS vulnerabilities"* | `go-modern-guidelines`, `strix` | `use-modern-go/SKILL.md`<br/>`fix-security-vulnerabilities-with-strix/SKILL.md` |
+| *"Audit our landing page SEO and remove AI slop from the copy"* | `open-seo` | `deslop/SKILL.md`<br/>`ai-visibility-audit/SKILL.md`<br/>`competitor-analysis/SKILL.md` |
+| *"Simplify our module boundaries and generate an architecture diagram"* | `archify`, `graphify`, `rea` | `archify/SKILL.md`<br/>`simplify-codebase/SKILL.md`<br/>`graphify/skill.md` |
+
+### Complete 32-Repository Ecosystem (`32 / 32 READY`)
+
+<details open>
+<summary><b>📂 Click to inspect all 32 Installed Repositories by Domain</b></summary>
+
+| Domain | Installed Repositories (`tools/`) | `SKILL.md` Count | Primary Capability |
+| :--- | :--- | :---: | :--- |
+| **UI/UX, Apple HIG & Motion** | `dickwu-apple-design-skill`, `emilkowalski-skills`, `ui-ux-pro-max-skill`, `reimagine-it`, `hairline`, `open-design`, `pretext`, `OpenDots` | `36` | Apple HIG compliance, WWDC spring physics, 79 UI style systems, DOM-less text layout |
+| **Architecture & AST Graphs** | `graphify`, `archify`, `rea` | `11` | Persistent Tree-sitter AST graphs, Leiden community clustering, interactive diagrams |
+| **Agent Swarms & Routers** | `ruflo`, `radiant`, `9router`, `agent-reach`, `openclaude`, `jcode` | `666` | Multi-agent swarms, 40+ provider routing, live web/GitHub/X research |
+| **Memory & Retrospectives** | `agentmemory`, `hindsight` | `18` | Cross-session episodic recall, commit context, and automated error post-mortems |
+| **Security & SEO** | `strix`, `open-seo` | `48` | Autonomous OWASP pentesting & patch validation, technical SEO audits, prose deslop |
+| **Science, Time-Series & Go** | `scientific-agent-skills`, `timesfm`, `OpenMAIC`, `go-modern-guidelines` | `205` | 177 bioinformatics/research skills, Google TimesFM forecasting, JetBrains Modern Go |
+| **Video, Avatars & Spatial** | `open-higgsfield`, `higgsfield-video`, `LongCat-Video`, `bible-strong-avatar-lab`, `RuView`, `gods-eye-view`, `minimind` | `57` | AI video synthesis, avatar lip-sync, WiFi spatial sensing, 3D telemetry |
+
+</details>
+
+```bash
+# Audit all 32 repositories
+python tools/manage_tools.py audit
+
+# Test the Zero-Name Skill Router on any prompt
+python tools/skill_router.py "Design a glassmorphic iOS sheet with spring physics"
+```
 
 ---
 
-## 🔒 GitGuardian (`ggshield`) Zero-Leakage & AST Sensors
+## 🧠 Graphify AST Knowledge Graph & `AgentContext`
 
-The workstation enforces a **Dual-Layer Deterministic Verification Gate** built directly into `orchestrate.py`:
+Instead of burning thousands of tokens grepping raw files, the workstation maintains a structural **Tree-sitter AST Knowledge Graph** (`graphify-out/graph.json`) alongside structured execution memory ([`AGENT_CONTEXT.md`](AGENT_CONTEXT.md)):
 
-```
-                 [Agent Modifies Workspace Files]
-                                │
-                                ▼
-      ┌───────────────────────────────────────────────────┐
-      │        Deterministic Post-Action Sensors          │
-      │                                                   │
-      │  1. AST & Bytecode Syntax Gate:                   │
-      │     • Python bytecode compilation (py_compile)    │
-      │     • JSON schema & structure parsing             │
-      │     • Node.js JavaScript/TypeScript syntax verify │
-      │                                                   │
-      │  2. Code Constitution AST Sensor:                 │
-      │     • Blocks bare `except:` anti-patterns         │
-      │     • Traps mutable default arguments (e.g. `[]`) │
-      │     • Enforces 100% complete implementations      │
-      │                                                   │
-      │  3. GitGuardian (ggshield) Secret Shield:         │
-      │     • Scans modified files for API keys & tokens  │
-      │     • BLOCKS commits immediately if leaks found   │
-      │                                                   │
-      │  4. Frontier Critic Consensus (--judge):          │
-      │     • Dispatches git diff to DeepSeek R1          │
-      │     • Rejects logic flaws & docstring mismatches  │
-      └─────────────────────────┬─────────────────────────┘
-                                │
-                                ▼
-              [Verified & Clean Git Commit / Push]
-```
-
-* **Zero Secret Leakage Guarantee**: AWS access keys, OpenAI/OpenRouter tokens, private certificates, and passwords can never enter git history or external model contexts.
-* **Persistent Post-Mortem Memory**: Failed runs, syntax errors, and edge-case exceptions are saved to `~/.agent_workstation/postmortems.json` and injected into future tasks so the orchestrator never repeats a past mistake.
+1. **Pre-Action Symbol Injection (`get_graphify_context`)**: Before dispatching any coding agent, [`orchestrate.py`](orchestrate.py) runs a `BFS depth=2` traversal over `graphify-out/graph.json` and injects the exact file paths and line numbers of relevant functions, classes, and callers.
+2. **Auto-Initialization in New Projects**: If you run [`orchestrate.py`](orchestrate.py) inside a new project folder that doesn't have a graph yet, it automatically builds `graphify-out/graph.json` on the fly.
+3. **Sub-2-Second Post-Edit Sync**: Every code modification triggers `python -m graphify update .` (pure AST extraction, `$0.00` LLM cost), keeping all **2,397 nodes, 4,445 edges, and 155 communities** synchronized.
 
 ---
 
 ## 🎛️ 5-Tier Smart Auto-Routing & Credit Guard
 
-Frontier models are expensive. Routine tasks do not need a \$75/million token model. The orchestrator's smart auto-router (`--model auto` by default) dynamically delegates each prompt based on semantic intent:
+Both `/v1/chat/completions` and `orchestrate.py` support `model="auto"` out of the box, delegating tasks to the most cost-effective model tier capable of solving them:
 
-```
-                          [User Prompt / Task]
-                                   │
-       ┌───────────────────────────┼───────────────────────────┐
-       ▼                           ▼                           ▼
-[Docstring / Lint]        [Boilerplate / Test]        [Feature / Refactor]
-       │                           │                           │
-       ▼                           ▼                           ▼
- TIER 1: Local GPU         TIER 2: Fast Scout          TIER 3: Coder
-  (Llama 3.2 1B)            (Llama 4 Scout)           (Llama 3.3 70B)
-    $0.00 / 1M                $0.08 / 1M                 $0.72 / 1M
-                                                               │
-                                   ┌───────────────────────────┘
-                                   ▼
-                         [Reasoning / Critique]
-                                   │
-                                   ▼
-                            TIER 4: Reasoner
-                             (DeepSeek R1)
-                               $1.35 / 1M
-                                   │
-                                   ▼
-                         [System Architecture]
-                                   │
-                                   ▼
-                            TIER 5: Frontier
-                        (Claude Sonnet/Opus 4.5)
-                              $3.00 / 1M
+```mermaid
+flowchart LR
+    P["Incoming Request<br/>(model='auto')"] --> R{"Complexity<br/>Classifier"}
+    R -->|"Typos / Format / Docstrings"| L["Tier 1: Local GPU<br/>llama3.2:1b ($0.00)"]
+    R -->|"Tests / Config / HTML / Git"| S["Tier 2: Scout<br/>Llama 4 Scout ($0.08/M)"]
+    R -->|"CRUD / Components / APIs"| C["Tier 3: Coder<br/>Llama 3.3 70B ($0.72/M)"]
+    R -->|"Race Conditions / Root Cause"| D["Tier 4: Reasoner<br/>DeepSeek R1 ($1.35/M)"]
+    R -->|"System Design / Security / Auth"| F["Tier 5: Frontier<br/>Claude 4.5 ($3–$15/M)"]
 ```
 
-### Zero-Downtime Auto-Fallback Cascade
-If a cloud provider hits rate limits or depletes credits, the gateway cascades instantly without crashing:
-$$\text{Opus} \longrightarrow \text{Sonnet} \longrightarrow \text{DeepSeek R1} \longrightarrow \text{Llama 3.3 70B} \longrightarrow \text{Llama 4 Scout} \longrightarrow \text{Local GPU ($0.00)}$$
+### Zero-Downtime Fallback Cascade
+If any cloud model hits a rate limit, quota ceiling, or network timeout, [`invoke_model_with_fallback`](laptop_api_server.py) cascades down the chain automatically without dropping the agent session:
 
-| Tier | Alias | Model Backend | Latency | Pricing / 1M Tokens | Best Use Case |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Tier 1: Local Free** | `local` | `llama3.2:1b` (Ollama GPU) | ~17ms | **$0.00** | Linting, docstrings, typos, 100% offline |
-| **Tier 2: Fast Scout** | `fast` | `llama4-scout-17b` | ~190ms | **$0.08 in / $0.30 out** | Unit tests, boilerplate, HTML/CSS tweaks |
-| **Tier 3: Production Coder** | `coder` | `llama3-3-70b-instruct` | ~300ms | **$0.72 in / $0.72 out** | Full-stack APIs, React components, bug fixes |
-| **Tier 4: Deep Reasoner** | `reasoner` | `deepseek.r1-v1:0` | ~1.1s | **$1.35 in / $2.19 out** | Algorithmic logic, concurrency, critic review |
-| **Tier 5: Frontier Flagship**| `claude` | `claude-sonnet-4-5` | ~2.0s | **$3.00 in / $15.00 out** | High-level system architecture, security |
-| **Tier 5+: Frontier Opus** | `opus` | `claude-opus-4-5` | ~4.2s | **$15.00 in / $75.00 out**| Strategic multi-repository refactoring |
+$$\text{Claude Opus 4.5} \longrightarrow \text{Claude Sonnet 4.5} \longrightarrow \text{DeepSeek R1} \longrightarrow \text{Llama 3.3 70B} \longrightarrow \text{Llama 4 Scout} \longrightarrow \text{Local GPU (Ollama \$0.00)}$$
+
+| Tier | Alias | Primary Engine | Measured Latency | Cost / 1M Tokens | Ideal Workload |
+| :--- | :--- | :--- | :---: | :---: | :--- |
+| **Tier 1: Local Free** | `local` | `llama3.2:1b` (Local GPU) | **`148ms`** | **`$0.00`** | Docstrings, formatting, commit messages, offline mode |
+| **Tier 2: Fast Scout** | `fast` | `Llama 4 Scout 17B` | `~190ms` | `$0.08 in / $0.30 out` | Unit tests, config files, boilerplate, CSS tweaks |
+| **Tier 3: Workhorse** | `coder` | `Llama 3.3 70B Instruct` | `~300ms` | `$0.72 in / $0.72 out` | Full-stack features, React/TS components, REST APIs |
+| **Tier 4: Reasoner** | `reasoner` | `DeepSeek R1` | `~1.1s` | `$1.35 in / $2.19 out` | Complex debugging, concurrency, Frontier Critic review |
+| **Tier 5: Frontier** | `claude` | `Claude Sonnet 4.5` | `~2.0s` | `$3.00 in / $15.00 out` | High-stakes architecture, cryptography, auth flows |
+| **Tier 5+: Flagship** | `opus` | `Claude Opus 4.5` | `~4.2s` | `$15.00 in / $75.00 out` | Multi-repository design and deep security audits |
 
 ---
 
-## 🐳 Dockerized Sandbox Execution
+## 🌐 Interactive Web & Telemetry Dashboard
 
-To run the entire developer workstation in a secure, sandboxed container without touching your host Python or Node environment:
+Open **`http://127.0.0.1:8000/dashboard`** in any browser for real-time observability across your entire AI stack:
 
-```bash
-# 1. Clone repository
-git clone https://github.com/dhurianiket/agent-workstation-setup.git
-cd agent-workstation-setup
-
-# 2. Configure credentials safely
-cp .env.example .env
-
-# 3. Spin up the containerized gateway
-docker compose up -d
-
-# 4. Verify status
-curl http://localhost:8000/health
-# Open http://localhost:8000/dashboard in your browser
+```text
+ ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+ │ ⚡ Antigravity Workstation Control Plane (v2.3)                   HEALTHY • 49ms Latency │
+ ├──────────────────┬──────────────────┬──────────────────┬────────────────┬────────────────┤
+ │ Total Spend      │ Smart Savings    │ Total Tokens     │ Active Models  │ Graphify AST   │
+ │ $0.0410 USD      │ $1.8822 Saved    │ 94,122 Tokens    │ 22 Aliases     │ 2,397 Nodes    │
+ ├──────────────────┴──────────────────┴──────────────────┴────────────────┴────────────────┤
+ │ ⚡ 5-Tier Pipeline: Local GPU ($0) ➔ Scout ($0.08) ➔ Coder ($0.72) ➔ R1 ➔ Claude 4.5     │
+ ├───────────────────────────────────────────┬──────────────────────────────────────────────┤
+ │ 🧪 In-Browser Live Prompt Playground      │ 📊 Per-Model Spend & Request Breakdown       │
+ │ [Tier: auto (Smart 5-Tier Router)      ▼] │ • llama4-scout-17b   │ 12 reqs │ $0.0077 USD │
+ │ [Prompt: Write unit test config check   ] │ • llama3-3-70b       │  5 reqs │ $0.0056 USD │
+ │ [▶ Execute on Gateway]                    │ • deepseek.r1-v1     │  2 reqs │ $0.0041 USD │
+ │ ➔ Routed: fast (148ms) | Output: "PASS"   │ • llama3.2:1b (GPU)  │  2 reqs │ $0.0000 USD │
+ └───────────────────────────────────────────┴──────────────────────────────────────────────┘
 ```
+
+### Gateway REST Endpoints
+- `GET /dashboard` — Interactive real-time telemetry UI & prompt playground
+- `GET /health` — Provider status (`bedrock`, `ollama`, `openrouter`, `nvidia`, `deepseek`, `groq`, `openai`)
+- `GET /v1/models` — OpenAI-compatible model catalog (`22` aliases including `auto`)
+- `POST /v1/chat/completions` — OpenAI-compatible chat & streaming completions with `model="auto"` routing
+- `GET /v1/usage` — Persistent token and USD cost ledger (`~/.agent_workstation/usage_stats.json`)
+- `GET /v1/graph` — Live Graphify AST node, edge, and Leiden community counts
+- `GET /v1/skills/route?q=<prompt>` — Live Zero-Name 32-Repo Skill Router inspection
+- `GET /v1/postmortems` — Cross-session failure memory log
 
 ---
 
-## 💻 Multi-Device Hardware Optimization Setup
+## 🔌 Model Context Protocol (MCP) Server
 
-### 1. Apple Silicon (MacBook Pro, iMac, Mac Studio M1/M2/M3/M4)
-Apple Silicon chips feature unified memory shared between CPU and Metal GPU cores.
-1. Install and start Ollama:
-   ```bash
-   brew install ollama
-   ollama serve
-   ```
-2. Pull recommended local models:
-   ```bash
-   # Lightweight (8GB-16GB RAM):
-   ollama pull llama3.2:1b
+[`agent_workstation_mcp.py`](agent_workstation_mcp.py) exposes the workstation natively to **Google Antigravity, Cursor, Windsurf, and Claude Code** via FastMCP.
 
-   # Heavyweight local coder (32GB-128GB Unified RAM on Mac Studio):
-   ollama pull qwen2.5-coder:14b
-   ollama pull qwen2.5-coder:32b
-   ```
-
-### 2. Windows PC with Discrete GPU
-- **AMD Radeon Discrete GPU**: Ollama auto-detects Vulkan GPU offloading. Verified on AMD Radeon RX 5500M with ~17ms sub-second generation.
-- **NVIDIA GeForce / RTX**: Ollama auto-detects CUDA cores.
-- Set Windows power plan to **Ultimate Performance** to eliminate idle sleep throttling during long agent orchestrations.
-
-### 3. Linux Servers & Workstations
-Install system packages and start the background daemon:
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama run llama3.2:1b
+### Global Registration (`~/.gemini/config/mcp_config.json` or `claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "agent_workstation_mcp": {
+      "command": "python",
+      "args": ["/absolute/path/to/agent-workstation-setup/agent_workstation_mcp.py"]
+    }
+  }
+}
 ```
+
+### Available MCP Tools (8 Native Tools)
+| MCP Tool | Arguments | What It Does |
+| :--- | :--- | :--- |
+| **`workstation_health`** | *None* | Checks gateway health, active cloud/GPU providers, and response latency. |
+| **`workstation_spend`** | *None* | Returns total requests, per-model token usage, actual spend, and USD saved vs Opus. |
+| **`workstation_orchestrate`** | `task`, `model="auto"`, `agent="aider"`, `judge=False` | Runs full closed-loop orchestration (Skill Router + Graphify + Agent + AST Gate + `ggshield`). |
+| **`workstation_auto_route_skills`**| `prompt` | Matches any natural-language task against the 32 repos and 456+ indexed `SKILL.md` runbooks. |
+| **`workstation_judge`** | *None* | Runs read-only `--judge-only` verification (AST Constitution + DeepSeek R1 Critic + `ggshield`). |
+| **`workstation_scan_secrets`** | `files` *(optional)* | Scans modified working-tree files with GitGuardian (`ggshield`) to block secret leaks. |
+| **`workstation_sync_graph`** | *None* | Executes `python -m graphify update .` to refresh the codebase AST knowledge graph. |
+| **`workstation_query_graph`** | `query` | Traverses `graphify-out/graph.json` to locate symbols, callers, and architectural paths. |
+| **`workstation_list_tools`** | *None* | Audits all 32 curated repositories in `tools/`. |
 
 ---
 
-## 🔑 Bring Your Own Key (BYOK) & Cloud Backends
+## 🔒 Deterministic Verification & GitGuardian Shield
 
-The workstation operates seamlessly with your existing cloud accounts or API keys:
+Every task executed via [`orchestrate.py`](orchestrate.py) must pass four deterministic gates before completion:
 
-### Option A: AWS Bedrock (Claude 4.5, DeepSeek R1, Llama 3.3)
-If you have AWS Startup credits, Activate credits, or an enterprise AWS account:
-```bash
-aws configure --profile my-profile
-# Or using AWS IAM Identity Center SSO:
-aws sso login --profile my-profile
-```
-In your `.env` file:
-```env
+1. **Bytecode & Syntax Compilation**: Automatically compiles modified `.py` (`py_compile`), `.json`, and `.js`/`.mjs` (`node --check`) files.
+2. **Python AST Code Constitution (`inspect_python_code_constitution`)**: Parses the abstract syntax tree of modified Python files to forbid:
+   - Bare `except:` blocks (must specify explicit `Exception` classes)
+   - Mutable default arguments (`def fn(items=[]):`)
+   - Lazy truncation comments (`# rest unchanged`, `// rest unchanged`, `# TODO: implement`)
+3. **Frontier Critic Review (`--judge` / `--judge-only`)**: Sends the `git diff` to **DeepSeek R1** (`reasoner`) for an independent Principal Reviewer verdict (`APPROVED` or `REJECTED`).
+4. **GitGuardian Secret Shield (`ggshield`)**: Scans modified files prior to commit. Any leaked AWS key, API token, or private certificate immediately aborts the workflow.
+
+---
+
+## 💻 Multi-Device Hardware & BYOK Setup
+
+### 1. Hardware Acceleration by Platform
+- **🍎 Apple Silicon (`M1 / M2 / M3 / M4` MacBook Pro, iMac, Mac Studio)**:
+  ```bash
+  brew install ollama && ollama serve
+  ollama pull llama3.2:1b          # 8GB–16GB Unified Memory (instant local tier)
+  ollama pull qwen2.5-coder:14b    # 32GB+ Unified Memory
+  ```
+- **🪟 Windows PC with Discrete GPU (AMD Radeon Vulkan / NVIDIA RTX CUDA)**:
+  - Verified on **AMD Radeon RX 5500M** (`148.5ms` local inference) and NVIDIA RTX GPUs.
+- **🐧 Linux Workstations**:
+  ```bash
+  curl -fsSL https://ollama.com/install.sh | sh && ollama run llama3.2:1b
+  ```
+
+### 2. Bring Your Own Key (BYOK) — Works With or Without AWS
+Copy [`.env.example`](.env.example) to `.env` and enable **any** combination of providers:
+
+```ini
+# Option A: AWS Bedrock (Startup Activate Credits / Enterprise IAM Profile)
 AWS_PROFILE=my-profile
 AWS_DEFAULT_REGION=us-east-1
-```
 
-### Option B: Direct BYOK Provider Keys (No AWS Needed)
-Set any key in `.env`; the gateway auto-detects it with zero configuration changes:
-```env
-# Access Claude, DeepSeek, and Llama via OpenRouter with 1 key:
+# Option B: Direct BYOK API Keys (No AWS Account Required)
 OPENROUTER_API_KEY=sk-or-v1-...
-
-# Free / cloud inference via NVIDIA NIM:
 NVIDIA_API_KEY=nvapi-...
-
-# Direct Provider Keys:
 DEEPSEEK_API_KEY=sk-...
 GROQ_API_KEY=gsk_...
 OPENAI_API_KEY=sk-proj-...
@@ -286,95 +318,27 @@ OPENAI_API_KEY=sk-proj-...
 
 ---
 
-## 🧰 Master Curated Tools Ecosystem
-
-All 32 curated AI developer tools, harnesses, and skills can be verified and managed in one command:
-```bash
-# Check audit status of all tools
-python tools/manage_tools.py audit
-
-# Synchronize and clone missing repositories (blobless single-branch clones)
-python tools/manage_tools.py sync
-```
-
-### Curated Repositories Summary:
-
-#### 1. Autonomous Harnesses & Memory
-* **`9router`**: Connects coding agents to 40+ free AI providers with -40% RTK token compression.
-* **`ruflo`**: Multi-agent swarm coordinator with adaptive memory and vector RAG.
-* **`openclaude`**: Model-agnostic terminal coding agent harness.
-* **`jcode`**: Memory-efficient Rust-powered coding agent.
-* **`agent-reach`**: Live internet research across YouTube, GitHub, Reddit, and X.
-* **`agentmemory`**: #1 benchmarked persistent memory layer for coding agents.
-* **`hindsight`**: Cross-session post-mortem error prevention memory.
-* **`OpenDots`**: Autonomous AI coworker framework.
-* **`radiant`**: Shared conversation swarms for multi-agent threads.
-
-#### 2. Media Automation & Video Generation
-* **`auto-editor`**: Automatic dead-air and silence cutting for rough video cuts.
-* **`open-higgsfield`**: Open-source AI video studio workspace.
-* **`higgsfield-video`**: Programmatic video generation pipelines.
-* **`LongCat-Video`**: Long-form video synthesis foundation model.
-* **`bible-strong-avatar-lab`**: Avatar and character generation lab for video channels.
-
-#### 3. UI/UX & Architecture Design
-* **`graphify`**: Codebase AST knowledge graph without vector databases.
-* **`archify`**: Interactive codebase architecture diagrams.
-* **`ui-ux-pro-max-skill`**: Cross-platform design intelligence, typography, and palettes.
-* **`emilkowalski-skills`**: Apple HIG physics-based motion and spring animations.
-* **`dickwu-apple-design-skill`**: Dedicated Apple design standards reviewer.
-* **`open-design`**: Local-first collaborative AI design system.
-* **`pretext`**: Pure arithmetic DOM-less text measurement (10x faster canvas rendering).
-* **`reimagine-it`**: Content-derived UI refactoring.
-* **`hairline`**: Interactive pointer-reactive isometric line figures.
-
-#### 4. Security, Research & Specialized Models
-* **`strix`**: AI penetration testing discovering OWASP vulnerabilities with patch diffs.
-* **`open-seo`**: Automated SEO audit and ranking optimization.
-* **`rea`**: Agentic reverse engineering and binary decompilation.
-* **`timesfm`**: Google Research foundation model for zero-shot time-series forecasting.
-* **`scientific-agent-skills`**: 50+ specialized scientific, clinical, and data pipeline skills.
-* **`OpenMAIC`**: Interactive AI-native classroom framework for LMS platforms.
-* **`minimind`**: Framework for training tiny language models from scratch on consumer GPUs.
-* **`RuView`**: Ambient WiFi spatial sensing and vital sign monitoring without cameras.
-* **`gods-eye-view`**: Real-time 3D global data feed spatial telemetry tracker.
-* **`go-modern-guidelines`**: Idiomatic conventions for modern Go engineering.
-
----
-
-## 🚀 Antigravity Pro Always-On Orchestration Policy
-
-When paired with your **Antigravity Pro subscription**, you **never** need to prompt `"orchestrate task X using aider"`. The workspace rules automatically trigger full autonomous orchestration:
-
-1. **AST & Architecture Triage**: Maps dependencies before editing.
-2. **Tier-Optimal Execution**: Routes to local GPU ($0) or fast models first to conserve AWS credits.
-3. **Principal Engineer Standards**: Strict zero-placeholder policy (`// rest unchanged` is strictly forbidden). 100% complete, defensively typed implementations.
-4. **Closed-Loop Verification**: Automatically verifies syntax (`py_compile`, Node check), test suites, and git status before declaring tasks complete.
-
----
-
-## 📊 CLI Usage & Manual Orchestration
+## 🖥️ CLI Quick Reference
 
 ```bash
-# Auto-tiering (Default: intelligent 5-tier routing based on task)
-python orchestrate.py -t "Refactor the authentication flow with JWT refresh tokens"
+# 1. Default Autonomous Execution (Auto-routes model tier + injects Graphify & 32-Repo Skills)
+python orchestrate.py -t "Add rate-limiting middleware with Redis fallback"
 
-# Target specific agent harnesses
-python orchestrate.py -a aider -t "Fix null pointer in user profile component"
-python orchestrate.py -a claude -t "Audit API security and rate limiting"
+# 2. Run in ANY other project directory on your machine
+python orchestrate.py -d "C:/Projects/my-go-service" -t "Build a modern Go healthcheck handler"
 
-# Force specific model tier
-python orchestrate.py -m fast -t "Generate unit tests for auth middleware"
-python orchestrate.py -m reasoner -t "Debug race condition in WebSocket stream"
+# 3. Run Read-Only Verification Gate (AST Constitution + DeepSeek R1 Critic + ggshield)
+python orchestrate.py --judge-only
 
-# Run with Frontier Critic consensus review
-python orchestrate.py -t "Optimize database query batching" --judge
-
-# Inspect token consumption and credit spend
+# 4. Inspect Live Token Spend & Smart-Tier Savings
 python orchestrate.py --usage
+
+# 5. Run Full Gateway, Graphify, & Inference Latency Benchmark
+python benchmark_models.py
 ```
 
 ---
 
 ## 📄 License
-MIT License. Built for modern, high-speed, cost-protected autonomous software engineering.
+
+Released under the [MIT License](LICENSE). Designed for high-velocity, zero-leakage, cost-protected autonomous software engineering.
