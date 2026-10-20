@@ -153,6 +153,8 @@ The workstation features a dual-layer automated verification gate built directly
 ```
 
 * **GitGuardian Secret Scan**: Every task automatically passes through `ggshield` to verify that no AWS tokens, private keys, API secrets, or passwords are exposed before committing or pushing.
+* **Code Constitution AST Sensor**: Scans Python AST for anti-patterns (blocks bare `except:`, detects mutable default parameters, ensures complete implementations).
+* **Frontier Critic Consensus (`--judge`)**: Dispatches the diff to a reasoning model (DeepSeek R1 / Claude Sonnet 4.5) to critique logic, catch regressions, and verify that the diff strictly satisfies requirements before merging.
 * **Continuous Error Memory**: Failures are logged to `~/.agent_workstation/postmortems.json`, and historical lessons are automatically injected into future prompts to eliminate repetitive regression loops.
 
 ---

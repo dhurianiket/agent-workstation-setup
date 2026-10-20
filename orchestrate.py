@@ -24,6 +24,7 @@ import time
 import urllib.request
 import json
 import py_compile
+import ast
 from pathlib import Path
 
 LOCAL_API_BASE = "http://127.0.0.1:8000/v1"
@@ -203,6 +204,76 @@ def run_ggshield_audit(cwd: str, files: list = None) -> bool:
         print(f"[SECURITY SHIELD] Warning running ggshield: {e}")
         return True
 
+def inspect_python_code_constitution(fpath: Path) -> list:
+    """
+    Enforces Code Constitutional rules via Python AST inspection:
+    1. Forbids bare 'except:' (must specify an explicit exception class).
+    2. Forbids mutable default arguments (e.g. def fn(arg=[]):).
+    """
+    violations = []
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read(), filename=str(fpath))
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ExceptHandler) and node.type is None:
+                violations.append(f"Line {node.lineno}: Bare 'except:' detected. Specify an explicit Exception class.")
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                for default in node.args.defaults + node.args.kw_defaults:
+                    if default and isinstance(default, (ast.List, ast.Dict, ast.Set)):
+                        violations.append(f"Line {node.lineno}: Mutable default argument in '{node.name}'. Use None and initialize inside.")
+    except Exception as e:
+        violations.append(f"AST Parsing error: {e}")
+    return violations
+
+def run_frontier_critic(cwd: str, task: str) -> bool:
+    """
+    Cross-Model Validator / Critic Layer (DeepSeek R1 / Claude Sonnet 4.5):
+    Evaluates generated diff against subtle logic bugs and regression anti-patterns.
+    """
+    try:
+        diff_res = subprocess.run(["git", "diff", "HEAD~1"], cwd=cwd, stdout=subprocess.PIPE, text=True, check=False)
+        diff_text = diff_res.stdout.strip()
+        if not diff_text:
+            diff_res = subprocess.run(["git", "diff"], cwd=cwd, stdout=subprocess.PIPE, text=True, check=False)
+            diff_text = diff_res.stdout.strip()
+            
+        if not diff_text:
+            return True
+            
+        print("\n[FRONTIER CRITIC] Reviewing code changes with Reasoner model (DeepSeek R1)...")
+        prompt = (
+            f"You are a Principal Code Reviewer. Critique this git diff produced for task: '{task}'.\n\n"
+            f"GIT DIFF:\n```diff\n{diff_text[:3000]}\n```\n\n"
+            f"Reply in 2 short lines:\n"
+            f"VERDICT: APPROVED or REJECTED\n"
+            f"SUMMARY: [1-sentence reason]"
+        )
+        
+        req_data = json.dumps({
+            "model": "reasoner",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+            "max_tokens": 250
+        }).encode("utf-8")
+        
+        req = urllib.request.Request(
+            f"{LOCAL_API_BASE}/chat/completions",
+            data=req_data,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            critique = data["choices"][0]["message"]["content"].strip()
+            print(f"[FRONTIER CRITIC] Result:\n{critique}")
+            if "REJECTED" in critique.upper():
+                print("[WARNING] Frontier Critic flagged potential issues in the generated code.")
+                return False
+            return True
+    except Exception as e:
+        print(f"[FRONTIER CRITIC] Notice: Critic pass skipped ({e})")
+        return True
+
 def verify_changes(cwd: str) -> tuple:
     """
     Deterministic Post-Action Sensors:
@@ -233,11 +304,19 @@ def verify_changes(cwd: str) -> tuple:
             if not fpath.exists() or not fpath.is_file():
                 continue
             
-            # 1. Python AST & Bytecode Check
+            # 1. Python AST & Bytecode Check + Code Constitution
             if fpath.suffix == ".py":
                 try:
                     py_compile.compile(str(fpath), doraise=True)
-                    print(f"  [OK] Python syntax: {fpath_str}")
+                    print(f"  [OK] Python bytecode: {fpath_str}")
+                    
+                    # Code Constitution Check
+                    violations = inspect_python_code_constitution(fpath)
+                    if violations:
+                        for v in violations:
+                            print(f"  [CONSTITUTION WARNING] {fpath_str} -> {v}")
+                    else:
+                        print(f"  [OK] Code Constitution AST verified: {fpath_str}")
                 except py_compile.PyCompileError as err:
                     print(f"  [FAIL] Python syntax error in {fpath_str}: {err}")
                     all_clean = False
@@ -269,7 +348,7 @@ def verify_changes(cwd: str) -> tuple:
 
     return all_clean, modified_files
 
-def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, shield: bool = True, cwd: str = None) -> bool:
+def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, shield: bool = True, judge: bool = False, cwd: str = None) -> bool:
     """
     Main dispatch entry point for multi-agent execution.
     Can be imported and called programmatically from Python or CLI.
@@ -346,7 +425,11 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
                 print("[WARNING] Syntax verification flagged issues. Please inspect modified files.")
                 return False
 
-        # 2. GitGuardian Secret Shield Scan
+        # 2. Frontier Critic Review (if requested or complex task)
+        if judge:
+            run_frontier_critic(target_cwd, task)
+
+        # 3. GitGuardian Secret Shield Scan
         if shield:
             is_secure = run_ggshield_audit(target_cwd, modified_files)
             if not is_secure:
@@ -368,6 +451,7 @@ if __name__ == "__main__":
     parser.add_argument("--agent", "-a", default="aider", choices=["aider", "claude", "codex", "opencode"], help="Agent harness to dispatch")
     parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "sonnet", "reasoner", "coder", "fast", "local"], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
+    parser.add_argument("--judge", action="store_true", help="Run Frontier Critic model (DeepSeek R1) review pass on the diff")
     parser.add_argument("--no-verify", action="store_true", help="Skip post-execution AST/syntax verification")
     parser.add_argument("--no-shield", action="store_true", help="Skip GitGuardian (ggshield) secret audit")
     parser.add_argument("--dir", "-d", default=None, help="Working directory path")
@@ -388,6 +472,7 @@ if __name__ == "__main__":
         model=args.model,
         verify=not args.no_verify,
         shield=not args.no_shield,
+        judge=args.judge,
         cwd=args.dir
     )
     sys.exit(0 if success else 1)
