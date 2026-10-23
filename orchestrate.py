@@ -249,10 +249,26 @@ def run_ggshield_audit(cwd: str, files: list = None) -> bool:
     try:
         # If specific files were modified, scan only those files for sub-second precision
         valid_files = [f for f in (files or []) if (Path(cwd) / f).is_file()]
+        if not valid_files:
+            # Fallback to git-tracked files so we never recursively scan .venv or tools/*/
+            ls_res = subprocess.run(
+                ["git", "ls-files"],
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if ls_res.returncode == 0 and ls_res.stdout.strip():
+                valid_files = [
+                    f.strip()
+                    for f in ls_res.stdout.splitlines()
+                    if f.strip() and (Path(cwd) / f.strip()).is_file()
+                ]
         if valid_files:
             cmd = ["ggshield", "secret", "scan", "path", "--yes"] + valid_files
         else:
-            cmd = ["ggshield", "secret", "scan", "path", "--recursive", "--yes", "."]
+            cmd = ["ggshield", "secret", "scan", "path", "--yes", "."]
 
         res = subprocess.run(
             cmd,
@@ -337,7 +353,7 @@ def run_frontier_critic(cwd: str, task: str) -> bool:
             "model": "reasoner",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.2,
-            "max_tokens": 250
+            "max_tokens": 1024
         }).encode("utf-8")
         
         req = urllib.request.Request(
