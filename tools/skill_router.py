@@ -120,10 +120,11 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
         ]
     },
     {
-        "domain": "AI Video, Avatar & Media Generation",
-        "repos": ["open-higgsfield", "higgsfield-video", "LongCat-Video", "bible-strong-avatar-lab"],
-        "keywords": ["video generation", "avatar", "lip sync", "higgsfield", "longcat", "text-to-video", "image-to-video", "storyboard"],
+        "domain": "AI Video, Podcast, Documentary & Avatar Generation",
+        "repos": ["cinematic-marathi-podcast-production", "open-higgsfield", "higgsfield-video", "LongCat-Video", "bible-strong-avatar-lab"],
+        "keywords": ["video generation", "avatar", "lip sync", "higgsfield", "longcat", "text-to-video", "image-to-video", "storyboard", "podcast", "documentary", "marathi", "multi-cam", "google flow", "2-shot", "b-roll", "episode", "omni flash"],
         "priority_files": [
+            "../skills/cinematic-marathi-podcast-production/SKILL.md",
             "open-higgsfield/README.md",
             "LongCat-Video/README.md",
             "bible-strong-avatar-lab/README.md"
@@ -238,6 +239,23 @@ def build_or_load_skill_index(force_rebuild: bool = False) -> List[Dict[str, str
                     "repo": repo_name,
                     "name": repo_name,
                     "rel_path": f"{repo_name}/README.md",
+                    "description": meta["description"],
+                    "excerpt": meta["excerpt"]
+                })
+
+    # Also index bundled first-party skills in <REPO_ROOT>/skills/
+    bundled_skills_dir = WORKSPACE_ROOT / "skills"
+    if bundled_skills_dir.exists():
+        for sdir in sorted(bundled_skills_dir.iterdir()):
+            if not sdir.is_dir() or sdir.name.startswith((".", "_")):
+                continue
+            sf = sdir / "SKILL.md"
+            if sf.exists():
+                meta = _extract_frontmatter_and_summary(sf)
+                entries.append({
+                    "repo": sdir.name,
+                    "name": meta["name"],
+                    "rel_path": f"../skills/{sdir.name}/SKILL.md",
                     "description": meta["description"],
                     "excerpt": meta["excerpt"]
                 })

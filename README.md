@@ -198,11 +198,12 @@ Every prompt is analyzed by [`tools/pre_invocation_hook.py`](tools/pre_invocatio
 | *"Write a Golang HTTP API server and check for XSS vulnerabilities"* | `go-modern-guidelines`, `strix` | `use-modern-go/SKILL.md`<br/>`fix-security-vulnerabilities-with-strix/SKILL.md` |
 | *"Audit our landing page SEO and remove AI slop from the copy"* | `open-seo` | `deslop/SKILL.md`<br/>`ai-visibility-audit/SKILL.md`<br/>`competitor-analysis/SKILL.md` |
 | *"Simplify our module boundaries and generate an architecture diagram"* | `archify`, `graphify`, `rea` | `archify/SKILL.md`<br/>`simplify-codebase/SKILL.md`<br/>`graphify/skill.md` |
+| *"Produce a 1080p multi-cam two-host Marathi documentary episode on Google Flow"* | `cinematic-marathi-podcast-production`, `open-higgsfield`, `LongCat-Video` | `cinematic-marathi-podcast-production/SKILL.md`<br/>`flow_1080p_2shot_production_engine.py` |
 
 <details open>
-<summary><b>📂 Click to inspect all 32 Installed Repositories by Domain (<code>32 / 32 READY</code>)</b></summary>
+<summary><b>📂 Click to inspect all 32 Installed Repositories + Bundled Skills by Domain (<code>32 / 32 READY</code>)</b></summary>
 
-| Domain | Installed Repositories (`tools/`) | `SKILL.md` Count | Primary Capability |
+| Domain | Installed Repositories & Bundled Skills (`tools/` & `skills/`) | `SKILL.md` Count | Primary Capability |
 | :--- | :--- | :---: | :--- |
 | **UI/UX, Apple HIG & Motion** | `dickwu-apple-design-skill`, `emilkowalski-skills`, `ui-ux-pro-max-skill`, `reimagine-it`, `hairline`, `open-design`, `pretext`, `OpenDots` | `36` | Apple HIG compliance, WWDC spring physics, 79 UI style systems, DOM-less text layout |
 | **Architecture & AST Graphs** | `graphify`, `archify`, `rea` | `11` | Persistent Tree-sitter AST graphs, Leiden community clustering, interactive diagrams |
@@ -210,9 +211,43 @@ Every prompt is analyzed by [`tools/pre_invocation_hook.py`](tools/pre_invocatio
 | **Memory & Retrospectives** | `agentmemory`, `hindsight` | `18` | Cross-session episodic recall, commit context, and automated error post-mortems |
 | **Security & SEO** | `strix`, `open-seo` | `48` | Autonomous OWASP pentesting & patch validation, technical SEO audits, prose deslop |
 | **Science, Time-Series & Go** | `scientific-agent-skills`, `timesfm`, `OpenMAIC`, `go-modern-guidelines` | `205` | 177 bioinformatics/research skills, Google TimesFM forecasting, JetBrains Modern Go |
-| **Video, Avatars & Spatial** | `open-higgsfield`, `higgsfield-video`, `LongCat-Video`, `bible-strong-avatar-lab`, `RuView`, `gods-eye-view`, `minimind` | `57` | AI video synthesis, avatar lip-sync, WiFi spatial sensing, 3D telemetry |
+| **Video, Podcast, Avatars & Spatial** | `cinematic-marathi-podcast-production`, `open-higgsfield`, `higgsfield-video`, `LongCat-Video`, `bible-strong-avatar-lab`, `RuView`, `gods-eye-view`, `minimind` | `58` | 3-Camera + B-Roll 1080p Documentary/Podcast engine, AI video synthesis, avatar lip-sync |
 
 </details>
+
+---
+
+## 🎬 Featured Bundled Skill: `/cinematic-marathi-podcast-production` (`v4.0` Multi-Cam Engine)
+
+Bundled directly in [`skills/cinematic-marathi-podcast-production/`](skills/cinematic-marathi-podcast-production/SKILL.md) (and automatically installed into `~/.gemini/config/skills/` on setup), this production skill + automation engine ([`flow_1080p_2shot_production_engine.py`](skills/cinematic-marathi-podcast-production/scripts/flow_1080p_2shot_production_engine.py)) automates broadcast-grade **`1080p` two-host investigative documentaries and podcasts** on **Google Flow (`Gemini Omni 1.1 Flash`)**:
+
+- **🎥 3-Camera + B-Roll Documentary Switching**: Automatically alternates every 10-second beat across **Camera 1 (`wide_2shot`)**, **Camera 2 (`cam_a_chate_closeup` — Lead Host 85mm close-up)**, **Camera 3 (`cam_b_roohi_closeup` — Co-Host 85mm close-up)**, and **Camera 4 (`broll` — 1080p historical/scientific cutaways)**.
+- **🔒 Single-Paste Base64 Plate Lock & 2-Card Top-Row Batching**: Eliminates Google Flow Masonry Row-2 DOM order swaps and duplicate-ingredient upload races.
+- **✨ Broadcast Optical Detail Restoration (`CRF 16`)**: Automatically downloads **`1080p Upscaled`** clips with `CONSUMED_SIZES` anti-duplicate protection and runs FFmpeg Contrast Adaptive Sharpening (`cas=0.55,unsharp=5:5:0.75:3:3:0.35` at `-crf 16`).
+- **🛡️ 4-Gate Automated QA Audit**:
+  1. **Gate 1**: `1920x1080` stream & MD5 deduplication check.
+  2. **Gate 2**: `1s..10s` Multi-Frame Camera-Lock Drift Audit (`MAD <= 15.0` against studio reference plates).
+  3. **Gate 3**: `faster-whisper` Speech & Script Adherence Audit (catches any garbled or mismatched audio).
+  4. **Gate 4**: Drift-free `1080p` Master MP4 concatenation (`aresample=async=1:first_pts=0`).
+
+### 🛠️ Customize for Your Own Channel, Hosts, Wardrobe & Language
+Anyone can customize the hosts, outfits, language (Marathi, Hindi, English, etc.), and episode directory via environment variables without modifying the engine code:
+
+```bash
+export EPISODE_DIR="./episodes/episode-01"
+export PODCAST_LANGUAGE="Marathi"   # Or Hindi, English, Tamil, etc.
+export WHISPER_LANG="mr"            # ISO code for faster-whisper Gate 3 QA
+export HOST_A_DESC="the mature Indian man with glasses and mustache"
+export HOST_B_DESC="the young Indian woman with glasses"
+export CHATE_OUTFIT="a tailored midnight-indigo pinstripe blazer, pale lavender shirt, and silver-grey tie"
+export ROOHI_OUTFIT="a tailored deep plum-violet structured blazer over a soft cream silk blouse"
+
+# 1. Auto-create Google Flow project & lock duration from 8s -> 10s:
+python3 skills/cinematic-marathi-podcast-production/scripts/flow_1080p_2shot_production_engine.py init_new_project
+
+# 2. Run 3-Camera + B-Roll batch generation, 1080p optical restoration, 4-Gate QA, and Master assembly:
+python3 skills/cinematic-marathi-podcast-production/scripts/flow_1080p_2shot_production_engine.py all
+```
 
 ---
 
