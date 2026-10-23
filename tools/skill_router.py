@@ -320,7 +320,14 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
         stop_words = {
             "the", "and", "for", "with", "that", "this", "from", "into", "update",
             "check", "make", "please", "file", "code", "build", "create", "write",
-            "add", "fix", "use", "using", "project", "app", "test", "run"
+            "add", "fix", "use", "using", "project", "app", "test", "run",
+            "repo", "repos", "repository", "repositories", "skill", "skills",
+            "tool", "tools", "there", "where", "here", "they", "them", "their",
+            "are", "not", "nit", "getting", "got", "get", "active", "activate",
+            "activated", "automatically", "auto", "install", "installed",
+            "give", "status", "what", "when", "why", "how", "who", "our", "your",
+            "can", "will", "just", "like", "also", "created", "other", "others",
+            "work", "working", "setup", "set", "everything", "right", "now", "okay"
         }
         tokens = [
             w for w in re.findall(r"[a-z0-9_-]{3,}", t_lower)
@@ -350,13 +357,26 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
             "matched_domains": [],
             "matched_repos": [],
             "matched_skills": [],
+            "matched_skill_abs_paths": [],
             "context_block": ""
         }
+
+    matched_skill_abs_paths: List[str] = []
+    global_skills_root = Path.home() / ".gemini" / "config" / "skills"
+    for r in matched_repos[:3]:
+        cand = global_skills_root / r / "SKILL.md"
+        if cand.exists():
+            matched_skill_abs_paths.append(str(cand.resolve()))
+    for rel_s in matched_skills:
+        cand2 = (TOOLS_DIR / rel_s).resolve()
+        if cand2.exists() and str(cand2) not in matched_skill_abs_paths:
+            matched_skill_abs_paths.append(str(cand2))
 
     header = (
         f"\n[AUTO-ACTIVATED WORKSTATION SKILLS & REPOS]\n"
         f"Activated Repos: {', '.join(matched_repos[:6])}\n"
         f"Activated Skills: {', '.join(matched_skills)}\n"
+        f"Native Skill Paths: {', '.join(matched_skill_abs_paths[:3])}\n"
     )
     body = "\n\n".join(selected_excerpts)
     context_block = (header + body)[:max_chars] + "\n"
@@ -365,6 +385,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
         "matched_domains": matched_domains,
         "matched_repos": matched_repos,
         "matched_skills": matched_skills,
+        "matched_skill_abs_paths": matched_skill_abs_paths,
         "context_block": context_block
     }
 

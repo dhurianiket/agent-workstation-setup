@@ -161,26 +161,24 @@ def main() -> None:
 
     conv_id = str(payload.get("conversationId", ""))
 
-    # Deduplication guard: if both workspace .agents/hooks.json and global plugin hooks.json fire on the same turn
-    if LAST_ROUTE_FILE.exists():
-        try:
-            prev = json.loads(LAST_ROUTE_FILE.read_text(encoding="utf-8"))
-            prev_ts = float(prev.get("epoch", 0.0))
-            if (
-                prev.get("conversation_id") == conv_id
-                and prev.get("invocation_num") == invocation_num
-                and (time.time() - prev_ts) < 2.0
-            ):
-                print(json.dumps({"injectSteps": []}))
-                return
-        except Exception:
-            pass
-
     tp = resolve_transcript_file(payload)
     user_prompt = extract_latest_user_prompt(tp)
     if not user_prompt:
         print(json.dumps({"injectSteps": []}))
         return
+
+    # Deduplication guard: only inject ONCE per unique user prompt turn (prevents duplicate firing from workspace + global hooks or mid-turn tool steps)
+    if LAST_ROUTE_FILE.exists():
+        try:
+            prev = json.loads(LAST_ROUTE_FILE.read_text(encoding="utf-8"))
+            if (
+                prev.get("conversation_id") == conv_id
+                and prev.get("prompt_preview") == user_prompt[:180]
+            ):
+                print(json.dumps({"injectSteps": []}))
+                return
+        except Exception:
+            pass
 
     # 1. Run 5-Tier Smart Model Classifier & 32-Repo Skill Router
     if str(TOOLS_DIR) not in sys.path:
@@ -198,13 +196,15 @@ def main() -> None:
     matched_repos = []
     matched_skills = []
     matched_domains = []
+    matched_skill_abs_paths = []
     context_block = ""
     try:
         import skill_router
-        routed = skill_router.auto_route_domain_tools(user_prompt, max_skills=3, max_chars=1400)
+        routed = skill_router.auto_route_domain_tools(user_prompt, max_skills=3, max_chars=1800)
         matched_repos = routed.get("matched_repos", [])
         matched_skills = routed.get("matched_skills", [])
         matched_domains = routed.get("matched_domains", [])
+        matched_skill_abs_paths = routed.get("matched_skill_abs_paths", [])
         context_block = routed.get("context_block", "")
     except Exception:
         pass
@@ -221,6 +221,7 @@ def main() -> None:
         "matched_domains": matched_domains,
         "matched_repos": matched_repos[:6],
         "matched_skills": matched_skills,
+        "matched_skill_abs_paths": matched_skill_abs_paths[:3],
     }
     try:
         LAST_ROUTE_FILE.write_text(json.dumps(route_record, indent=2), encoding="utf-8")
@@ -241,12 +242,18 @@ def main() -> None:
             "If the user is setting up the workstation, ask them for their personal API keys (NVIDIA NIM / AWS / Gemini / OpenRouter) "
             "or direct them to http://127.0.0.1:8000/dashboard ('API Keys & Cloud' button) or `python3 tools/setup_wizard.py`."
         )
+    native_skill_note = ""
+    if matched_skill_abs_paths:
+        native_skill_note = (
+            f"\n• Native Skill File to Read   : {matched_skill_abs_paths[0]}\n"
+            f"• Native UI Skill Activation  : When executing this task, call `read_file` on `{matched_skill_abs_paths[0]}` so Antigravity IDE natively marks the skill as Active in the chat UI and loads the complete runbook."
+        )
 
     injected_msg = (
         f"[AUTONOMOUS WORKSTATION PRE-INVOCATION ROUTER — ACTIVE]\n"
         f"• Prompt Auto-Classified Tier : {resolved_tier.upper()}\n"
         f"• Auto-Activated Repositories : {repos_str}\n"
-        f"• Auto-Injected Skill Runbooks: {skills_str}{bootstrap_note}\n"
+        f"• Auto-Injected Skill Runbooks: {skills_str}{bootstrap_note}{native_skill_note}\n"
         f"{context_block}\n"
         f"MANDATORY RESPONSE REQUIREMENT: Start your response to the user with this exact 1-line status banner:\n"
         f"> ⚡ **Auto-Router**: Tier = `{resolved_tier}` | Activated Repos = `{repos_str}` | Graphify AST = `Synced`"
