@@ -49,7 +49,7 @@ STATS_DIR.mkdir(parents=True, exist_ok=True)
 STATS_FILE = STATS_DIR / "usage_stats.json"
 
 # Load local .env if present (Zero-leakage local configuration)
-def load_local_env():
+def load_local_env(override: bool = False):
     env_path = Path(__file__).resolve().parent / ".env"
     if env_path.exists():
         with open(env_path, "r", encoding="utf-8") as f:
@@ -59,7 +59,7 @@ def load_local_env():
                     k, v = line.split("=", 1)
                     k = k.strip()
                     v = v.strip().strip("\"'")
-                    if k and k not in os.environ:
+                    if k and (override or k not in os.environ):
                         os.environ[k] = v
 
 load_local_env()
@@ -67,12 +67,16 @@ load_local_env()
 # Pricing per 1,000,000 tokens (USD)
 PRICING_PER_M = {
     "us.anthropic.claude-opus-4-5-20251101-v1:0": {"input": 15.00, "output": 75.00},
+    "us.anthropic.claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
     "us.anthropic.claude-sonnet-4-5-20250929-v1:0": {"input": 3.00, "output": 15.00},
+    "us.anthropic.claude-haiku-4-5-20251001-v1:0": {"input": 0.80, "output": 4.00},
     "us.deepseek.r1-v1:0": {"input": 1.35, "output": 2.19},
     "us.meta.llama3-3-70b-instruct-v1:0": {"input": 0.72, "output": 0.72},
+    "us.meta.llama4-maverick-17b-instruct-v1:0": {"input": 0.20, "output": 0.60},
     "us.meta.llama4-scout-17b-instruct-v1:0": {"input": 0.08, "output": 0.30},
     "us.mistral.pixtral-large-2502-v1:0": {"input": 2.00, "output": 6.00},
     "us.amazon.nova-pro-v1:0": {"input": 0.80, "output": 3.20},
+    "us.amazon.nova-2-lite-v1:0": {"input": 0.06, "output": 0.24},
     "us.amazon.nova-lite-v1:0": {"input": 0.06, "output": 0.24},
     "us.amazon.nova-micro-v1:0": {"input": 0.035, "output": 0.14},
     "openrouter": {"input": 1.00, "output": 3.00},
@@ -146,11 +150,31 @@ BYOK_PROVIDERS = {
         "key": os.environ.get("NVIDIA_API_KEY"),
         "headers": {},
         "models": {
-            "reasoner": "deepseek-ai/deepseek-r1",
-            "deepseek-r1": "deepseek-ai/deepseek-r1",
-            "coder": "meta/llama-3.3-70b-instruct",
-            "llama-3.3-70b": "meta/llama-3.3-70b-instruct",
-            "fast": "meta/llama-3.1-8b-instruct",
+            "opus": "nvidia/nemotron-3-ultra-550b-a55b",
+            "claude": "nvidia/nemotron-3-ultra-550b-a55b",
+            "sonnet": "nvidia/nemotron-3-ultra-550b-a55b",
+            "reasoner": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "deepseek-r1": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "coder": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "llama-3.3-70b": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "fast": "meta/llama-3.2-11b-vision-instruct",
+            "llama-4-scout": "meta/llama-3.2-11b-vision-instruct",
+            "nvidia-default": "meta/llama-3.2-11b-vision-instruct",
+            "nemotron-ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+            "nemotron-super": "nvidia/nemotron-3-super-120b-a12b",
+            "nemotron-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "nemotron-lightning": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "llama-3.2-vision": "meta/llama-3.2-11b-vision-instruct",
+            "gemma-4-31b": "google/gemma-4-31b-it",
+            "meta/llama-3.2-11b-vision-instruct": "meta/llama-3.2-11b-vision-instruct",
+            "nvidia/nemotron-3-ultra-550b-a55b": "nvidia/nemotron-3-ultra-550b-a55b",
+            "nvidia/nemotron-3-super-120b-a12b": "nvidia/nemotron-3-super-120b-a12b",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "nvidia/nemotron-3.5-lightning-30b-a3b": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "google/gemma-4-31b-it": "google/gemma-4-31b-it",
+            "nvidia/nemotron-parse-2.0": "nvidia/nemotron-parse-2.0",
+            "nvidia/riva-translate-4b-instruct-v2": "nvidia/riva-translate-4b-instruct-v2",
+            "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
         }
     },
     "deepseek": {
@@ -189,20 +213,24 @@ BYOK_PROVIDERS = {
 MODEL_MAP = {
     # Smart 5-Tier Auto Router
     "auto": {"provider": "router", "id": "smart-5-tier-router", "tier": "auto_router"},
-    # Frontier Claude
-    "claude": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
-    "claude-sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
+    # Frontier Claude (Bedrock)
+    "claude": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
+    "claude-sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
+    "claude-sonnet-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "claude-sonnet-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
-    "sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
+    "sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
     "claude-opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
     "claude-opus-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
+    "haiku": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
+    "claude-haiku-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
     # Deep Reasoning
     "reasoner": {"provider": "bedrock", "id": "us.deepseek.r1-v1:0", "tier": "reasoning"},
     "deepseek-r1": {"provider": "bedrock", "id": "us.deepseek.r1-v1:0", "tier": "reasoning"},
     # Standard Full-Stack Coding (Cost Efficient)
     "coder": {"provider": "bedrock", "id": "us.meta.llama3-3-70b-instruct-v1:0", "tier": "coding"},
     "llama-3.3-70b": {"provider": "bedrock", "id": "us.meta.llama3-3-70b-instruct-v1:0", "tier": "coding"},
+    "llama-4-maverick": {"provider": "bedrock", "id": "us.meta.llama4-maverick-17b-instruct-v1:0", "tier": "coding"},
     # Ultra-Fast / Budget Scout
     "fast": {"provider": "bedrock", "id": "us.meta.llama4-scout-17b-instruct-v1:0", "tier": "scout"},
     "llama-4-scout": {"provider": "bedrock", "id": "us.meta.llama4-scout-17b-instruct-v1:0", "tier": "scout"},
@@ -210,8 +238,26 @@ MODEL_MAP = {
     "pixtral": {"provider": "bedrock", "id": "us.mistral.pixtral-large-2502-v1:0", "tier": "multimodal"},
     "multimodal": {"provider": "bedrock", "id": "us.amazon.nova-pro-v1:0", "tier": "multimodal"},
     "nova-pro": {"provider": "bedrock", "id": "us.amazon.nova-pro-v1:0", "tier": "general"},
+    "nova-2-lite": {"provider": "bedrock", "id": "us.amazon.nova-2-lite-v1:0", "tier": "scout"},
     "nova-lite": {"provider": "bedrock", "id": "us.amazon.nova-lite-v1:0", "tier": "scout"},
     "nova-micro": {"provider": "bedrock", "id": "us.amazon.nova-micro-v1:0", "tier": "micro"},
+    # NVIDIA NIM Direct Models (Aegis AI Verified)
+    "nvidia-default": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
+    "nemotron-ultra": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "nvidia_nim"},
+    "nemotron-super": {"provider": "nvidia", "id": "nvidia/nemotron-3-super-120b-a12b", "tier": "nvidia_nim"},
+    "nemotron-reasoning": {"provider": "nvidia", "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "tier": "nvidia_nim"},
+    "nemotron-lightning": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
+    "llama-3.2-vision": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
+    "gemma-4-31b": {"provider": "nvidia", "id": "google/gemma-4-31b-it", "tier": "nvidia_nim"},
+    "meta/llama-3.2-11b-vision-instruct": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3-ultra-550b-a55b": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3-super-120b-a12b": {"provider": "nvidia", "id": "nvidia/nemotron-3-super-120b-a12b", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {"provider": "nvidia", "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3.5-lightning-30b-a3b": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
+    "google/gemma-4-31b-it": {"provider": "nvidia", "id": "google/gemma-4-31b-it", "tier": "nvidia_nim"},
+    "nvidia/nemotron-parse-2.0": {"provider": "nvidia", "id": "nvidia/nemotron-parse-2.0", "tier": "nvidia_nim"},
+    "nvidia/riva-translate-4b-instruct-v2": {"provider": "nvidia", "id": "nvidia/riva-translate-4b-instruct-v2", "tier": "nvidia_nim"},
+    "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {"provider": "nvidia", "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3", "tier": "nvidia_nim"},
     # Local GPU Models (Ollama - Free)
     "local": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
     "llama3.2:1b": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
@@ -271,6 +317,51 @@ class OrchestrationRequest(BaseModel):
     model: Optional[str] = "auto"   # auto, fast, coder, reasoner, claude, local
     working_dir: Optional[str] = None
     verify: Optional[bool] = True
+
+
+class ApiKeysUpdateRequest(BaseModel):
+    nvidia_api_key: Optional[str] = None
+    openrouter_api_key: Optional[str] = None
+    deepseek_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    aws_profile: Optional[str] = None
+    aws_region: Optional[str] = None
+
+
+def reload_runtime_credentials() -> None:
+    """Hot-reloads .env into os.environ, BYOK_PROVIDERS, and AWS Bedrock client without restarting."""
+    global bedrock, aws_profile, aws_region
+    load_local_env(override=True)
+    aws_profile = os.environ.get("AWS_PROFILE", "").strip()
+    aws_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1").strip() or "us-east-1"
+    try:
+        if aws_profile:
+            sess = boto3.Session(profile_name=aws_profile, region_name=aws_region)
+        else:
+            sess = boto3.Session(region_name=aws_region)
+        # Only mark bedrock active if credentials exist in the session
+        if sess.get_credentials() is not None:
+            bedrock = sess.client("bedrock-runtime")
+        else:
+            bedrock = None
+    except Exception:
+        bedrock = None
+
+    BYOK_PROVIDERS["openrouter"]["key"] = os.environ.get("OPENROUTER_API_KEY", "").strip() or None
+    BYOK_PROVIDERS["nvidia"]["key"] = os.environ.get("NVIDIA_API_KEY", "").strip() or None
+    BYOK_PROVIDERS["deepseek"]["key"] = os.environ.get("DEEPSEEK_API_KEY", "").strip() or None
+    BYOK_PROVIDERS["groq"]["key"] = os.environ.get("GROQ_API_KEY", "").strip() or None
+    BYOK_PROVIDERS["openai"]["key"] = os.environ.get("OPENAI_API_KEY", "").strip() or None
+
+
+def _mask_secret(val: Optional[str]) -> str:
+    if not val:
+        return ""
+    s = val.strip()
+    if len(s) <= 10:
+        return "****"
+    return f"{s[:8]}...****"
 
 @app.get("/")
 def root(req: Request):
@@ -958,6 +1049,10 @@ def dashboard():
         <span class="dot"></span>
         <span id="status-text">ONLINE • 127.0.0.1:8000</span>
       </div>
+      <button class="btn btn-ghost" onclick="openKeysModal()" title="Configure Personal API Keys & Auto-Setup AWS Bedrock">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+        API Keys &amp; Cloud
+      </button>
       <button class="btn btn-ghost" onclick="window.open('/graphify', '_blank')" title="Open Interactive Graphify AST Graph (graphify-out/graph.html)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
         Graphify AST ↗
@@ -1325,6 +1420,61 @@ def dashboard():
     </div>
   </div>
 
+  <!-- Personal API Keys & 1-Click AWS Auto-Setup Modal -->
+  <div class="modal-backdrop" id="keys-modal" role="dialog" aria-modal="true" aria-labelledby="keys-modal-title" onclick="if(event.target===this) closeKeysModal()">
+    <div class="modal-panel" style="max-width: 680px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <div>
+          <h2 id="keys-modal-title" style="font-size: 1.12rem; font-weight: 700; color: var(--text);">Personal API Keys &amp; Cloud Auto-Setup</h2>
+          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">Stored exclusively in your local git-ignored <code>.env</code> (<code>0600</code> permissions) • Hot-reloads instantly</div>
+        </div>
+        <button class="btn btn-ghost" onclick="closeKeysModal()">Close ✕</button>
+      </div>
+
+      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent);">AWS CLI Login Auto-Detector &amp; Key Creator</div>
+          <div style="font-size: 0.74rem; color: var(--text-secondary);" id="aws-status-line">Detects local ~/.aws login, creates a dedicated workstation IAM profile, and enables Claude Sonnet 4.6 / Opus 4.5 / DeepSeek R1.</div>
+        </div>
+        <button type="button" class="btn" onclick="autoConfigureAws()" id="aws-auto-btn">Auto-Setup AWS Bedrock</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="field-label" for="cfg-nvidia">NVIDIA NIM API Key (<span class="mono" id="mask-nvidia">not set</span>)</label>
+          <input type="password" id="cfg-nvidia" placeholder="nvapi-... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-openrouter">OpenRouter API Key (<span class="mono" id="mask-openrouter">not set</span>)</label>
+          <input type="password" id="cfg-openrouter" placeholder="sk-or-v1-... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-deepseek">DeepSeek API Key (<span class="mono" id="mask-deepseek">not set</span>)</label>
+          <input type="password" id="cfg-deepseek" placeholder="sk-... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-groq">Groq API Key (<span class="mono" id="mask-groq">not set</span>)</label>
+          <input type="password" id="cfg-groq" placeholder="gsk_... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-openai">OpenAI API Key (<span class="mono" id="mask-openai">not set</span>)</label>
+          <input type="password" id="cfg-openai" placeholder="sk-proj-... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-aws-profile">AWS Profile (<span class="mono" id="mask-aws">not set</span>)</label>
+          <input type="text" id="cfg-aws-profile" placeholder="e.g. antigravity-workstation or default">
+        </div>
+      </div>
+
+      <div id="keys-save-msg" class="mono" style="font-size: 0.76rem; color: var(--success); margin-top: 6px; min-height: 18px;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" class="btn btn-ghost" onclick="closeKeysModal()">Cancel</button>
+        <button type="button" class="btn" onclick="saveApiKeys()">Save to Local .env &amp; Hot-Reload</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let pollingActive = true;
     let pollTimer = null;
@@ -1335,6 +1485,79 @@ def dashboard():
 
     function closeGuideModal() {
       document.getElementById('guide-modal').classList.remove('open');
+    }
+
+    async function openKeysModal() {
+      document.getElementById('keys-modal').classList.add('open');
+      document.getElementById('keys-save-msg').innerText = '';
+      try {
+        const r = await fetch('/v1/config/status');
+        const d = await r.json();
+        document.getElementById('mask-nvidia').innerText = d.nvidia || 'not set';
+        document.getElementById('mask-openrouter').innerText = d.openrouter || 'not set';
+        document.getElementById('mask-deepseek').innerText = d.deepseek || 'not set';
+        document.getElementById('mask-groq').innerText = d.groq || 'not set';
+        document.getElementById('mask-openai').innerText = d.openai || 'not set';
+        document.getElementById('mask-aws').innerText = d.aws_profile || 'not set';
+        if (d.aws_profile) document.getElementById('cfg-aws-profile').value = d.aws_profile;
+      } catch (e) {}
+    }
+
+    function closeKeysModal() {
+      document.getElementById('keys-modal').classList.remove('open');
+    }
+
+    async function saveApiKeys() {
+      const msg = document.getElementById('keys-save-msg');
+      msg.style.color = 'var(--accent)';
+      msg.innerText = 'Saving credentials to local .env and hot-reloading gateway...';
+      try {
+        const payload = {
+          nvidia_api_key: document.getElementById('cfg-nvidia').value.trim(),
+          openrouter_api_key: document.getElementById('cfg-openrouter').value.trim(),
+          deepseek_api_key: document.getElementById('cfg-deepseek').value.trim(),
+          groq_api_key: document.getElementById('cfg-groq').value.trim(),
+          openai_api_key: document.getElementById('cfg-openai').value.trim(),
+          aws_profile: document.getElementById('cfg-aws-profile').value.trim()
+        };
+        const r = await fetch('/v1/config/keys', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const d = await r.json();
+        msg.style.color = 'var(--success)';
+        msg.innerText = d.message || 'Saved & hot-reloaded!';
+        ['cfg-nvidia','cfg-openrouter','cfg-deepseek','cfg-groq','cfg-openai'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        await openKeysModal();
+        fetchStats();
+      } catch (e) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'Error saving keys: ' + e.message;
+      }
+    }
+
+    async function autoConfigureAws() {
+      const msg = document.getElementById('keys-save-msg');
+      const btn = document.getElementById('aws-auto-btn');
+      btn.disabled = true;
+      msg.style.color = 'var(--accent)';
+      msg.innerText = 'Detecting local AWS CLI login & provisioning workstation Bedrock profile...';
+      try {
+        const r = await fetch('/v1/config/aws-auto', {method: 'POST'});
+        const d = await r.json();
+        msg.style.color = d.status === 'ok' ? 'var(--success)' : 'var(--warning)';
+        msg.innerText = d.message || 'Completed';
+        await openKeysModal();
+        fetchStats();
+      } catch (e) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'AWS auto-setup error: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function togglePolling() {
@@ -1590,6 +1813,98 @@ def health():
         },
         "active_models": len(MODEL_MAP)
     }
+
+
+@app.get("/v1/config/status")
+def get_config_status():
+    """Returns masked status of configured local credentials (never returns raw secret keys)."""
+    load_local_env(override=False)
+    return {
+        "aws_profile": os.environ.get("AWS_PROFILE", ""),
+        "aws_region": os.environ.get("AWS_DEFAULT_REGION", "us-east-1"),
+        "bedrock_active": bedrock is not None,
+        "nvidia": _mask_secret(os.environ.get("NVIDIA_API_KEY")),
+        "openrouter": _mask_secret(os.environ.get("OPENROUTER_API_KEY")),
+        "deepseek": _mask_secret(os.environ.get("DEEPSEEK_API_KEY")),
+        "groq": _mask_secret(os.environ.get("GROQ_API_KEY")),
+        "openai": _mask_secret(os.environ.get("OPENAI_API_KEY")),
+    }
+
+
+@app.post("/v1/config/keys")
+def update_config_keys(req: ApiKeysUpdateRequest):
+    """Updates personal API keys in local git-ignored .env and hot-reloads providers in memory."""
+    env_path = Path(__file__).resolve().parent / ".env"
+    existing: Dict[str, str] = {}
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            s = line.strip()
+            if s and not s.startswith("#") and "=" in s:
+                k, v = s.split("=", 1)
+                existing[k.strip()] = v.strip().strip("\"'")
+
+    def _clean(val: Optional[str], key_name: str) -> str:
+        if val is not None and val.strip():
+            return val.strip().replace("\\_", "_").strip("\"'")
+        return existing.get(key_name, os.environ.get(key_name, ""))
+
+    aws_prof = _clean(req.aws_profile, "AWS_PROFILE")
+    aws_reg = _clean(req.aws_region, "AWS_DEFAULT_REGION") or "us-east-1"
+    or_key = _clean(req.openrouter_api_key, "OPENROUTER_API_KEY")
+    nv_key = _clean(req.nvidia_api_key, "NVIDIA_API_KEY")
+    ds_key = _clean(req.deepseek_api_key, "DEEPSEEK_API_KEY")
+    gq_key = _clean(req.groq_api_key, "GROQ_API_KEY")
+    oa_key = _clean(req.openai_api_key, "OPENAI_API_KEY")
+
+    lines = [
+        "# Antigravity Autonomous Workstation — Local Environment Configuration",
+        "# WARNING: This file is git-ignored. Never commit secrets to version control.",
+        "",
+        f"AWS_PROFILE={aws_prof}",
+        f"AWS_DEFAULT_REGION={aws_reg}",
+        "",
+        f"OPENROUTER_API_KEY={or_key}",
+        f"NVIDIA_API_KEY={nv_key}",
+        f"DEEPSEEK_API_KEY={ds_key}",
+        f"GROQ_API_KEY={gq_key}",
+        f"OPENAI_API_KEY={oa_key}",
+        "",
+        f"OLLAMA_HOST={existing.get('OLLAMA_HOST', 'http://127.0.0.1:11434')}",
+    ]
+    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    try:
+        os.chmod(env_path, 0o600)
+    except Exception:
+        pass
+
+    reload_runtime_credentials()
+    return {
+        "status": "ok",
+        "message": "Saved to local .env (0600 permissions) and hot-reloaded active providers.",
+        "providers": health()["providers"],
+    }
+
+
+@app.post("/v1/config/aws-auto")
+def auto_configure_aws_endpoint():
+    """Auto-detects local ~/.aws login, creates a dedicated workstation IAM profile if needed, and hot-reloads Bedrock."""
+    import sys
+    try:
+        tools_dir = Path(__file__).resolve().parent / "tools"
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        import setup_wizard
+        prof, reg = setup_wizard.auto_detect_and_configure_aws(tty_stream=None, non_interactive=True)
+        if not prof:
+            return {"status": "warning", "message": "No local ~/.aws/credentials found. Run `aws configure` first or enter an API key below."}
+        update_config_keys(ApiKeysUpdateRequest(aws_profile=prof, aws_region=reg))
+        return {
+            "status": "ok",
+            "message": f"Activated AWS Bedrock profile [{prof}] ({reg}) and hot-reloaded gateway.",
+            "aws_profile": prof,
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
 
 @app.get("/v1/usage")
 def get_usage():
@@ -1862,7 +2177,12 @@ def call_openai_compatible(endpoint_url: str, api_key: str, payload: dict, extra
     
     req = urllib.request.Request(endpoint_url, data=json.dumps(payload).encode("utf-8"), headers=headers)
     with urllib.request.urlopen(req, timeout=90) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        data = json.loads(resp.read().decode("utf-8"))
+        for choice in data.get("choices", []):
+            msg = choice.get("message", {})
+            if not msg.get("content") and msg.get("reasoning_content"):
+                msg["content"] = msg["reasoning_content"]
+        return data
 
 async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias: str):
     """
@@ -1922,10 +2242,19 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                 try:
                     resp = bedrock.converse(**kwargs)
                     out_msg = resp["output"]["message"]
-                    content = out_msg["content"][0].get("text", "")
-                    reasoning = None
-                    if len(out_msg["content"]) > 1 and "reasoningContent" in out_msg["content"][1]:
-                        reasoning = out_msg["content"][1]["reasoningContent"]["reasoningText"]["text"]
+                    text_parts = []
+                    reasoning_parts = []
+                    for blk in out_msg.get("content", []):
+                        if "text" in blk and blk["text"]:
+                            text_parts.append(blk["text"])
+                        if "reasoningContent" in blk:
+                            rt = blk["reasoningContent"].get("reasoningText", {}).get("text", "")
+                            if rt:
+                                reasoning_parts.append(rt)
+                    content = "\n".join(text_parts).strip()
+                    reasoning = "\n".join(reasoning_parts).strip() or None
+                    if not content and reasoning:
+                        content = reasoning
                     
                     usage = resp.get("usage", {})
                     p_tokens = usage.get("inputTokens", 0)

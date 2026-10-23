@@ -36,6 +36,16 @@ WORKSTATION_DIR = Path.home() / ".agent_workstation"
 WORKSTATION_DIR.mkdir(parents=True, exist_ok=True)
 POSTMORTEM_FILE = WORKSTATION_DIR / "postmortems.json"
 
+# Ensure ~/.local/bin and standard bins are in PATH for ggshield, aider, node, etc.
+_EXTRA_PATH = os.pathsep.join([
+    str(Path.home() / ".local" / "bin"),
+    str(Path.home() / "bin"),
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+])
+if str(Path.home() / ".local" / "bin") not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = f"{_EXTRA_PATH}{os.pathsep}{os.environ.get('PATH', '')}"
+
 def ensure_services_running():
     """Checks if the Laptop API server is running; if not, starts it silently."""
     try:
@@ -49,18 +59,26 @@ def ensure_services_running():
 
     print("[*] Unified Laptop AI Server is not active. Auto-starting background service...")
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ps_script = os.path.join(script_dir, "start_laptop_api_silent.ps1")
-    
-    if os.path.exists(ps_script):
-        try:
-            subprocess.run(
-                ["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", ps_script],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=True
-            )
-        except Exception as e:
-            print(f"[!] Warning triggering auto-start: {e}")
+    if sys.platform == "win32":
+        ps_script = os.path.join(script_dir, "start_laptop_api_silent.ps1")
+        if os.path.exists(ps_script):
+            try:
+                subprocess.run(
+                    ["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", ps_script],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=True
+                )
+            except Exception as e:
+                print(f"[!] Warning triggering auto-start: {e}")
+    else:
+        plist_path = Path.home() / "Library" / "LaunchAgents" / "com.antigravity.agent-workstation.plist"
+        if plist_path.exists():
+            subprocess.run(["launchctl", "load", str(plist_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        else:
+            srv_py = os.path.join(script_dir, "laptop_api_server.py")
+            if os.path.exists(srv_py):
+                subprocess.Popen([sys.executable, srv_py], cwd=script_dir, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # Wait up to 6 seconds for health
     for _ in range(6):
@@ -451,6 +469,13 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
+    extra_bins = os.pathsep.join([
+        str(Path.home() / ".local" / "bin"),
+        str(Path.home() / "bin"),
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+    ])
+    env["PATH"] = f"{extra_bins}{os.pathsep}{env.get('PATH', '')}"
 
     if agent == "aider":
         cmd = [

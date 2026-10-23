@@ -41,14 +41,24 @@ credentials*
 *.p12
 *.crt
 
+# Cloned 32 Curated Repositories inside tools/ (keep only tools/*.py tracked)
+tools/*/
+
+# Local Knowledge Graph & Machine-Specific Agent State
+graphify-out/
+.agents/mcp_config.json
+.agents/skills/
+.agents/rules/AGENTS.md
+
+# macOS AppleDouble & OS Metadata
+._*
+.DS_Store
+Thumbs.db
+
 # Aider & Agent Caches
 .aider*
 *.tags.cache*
-
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
 server.log
 server.err
-.aider*

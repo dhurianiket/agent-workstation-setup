@@ -16,7 +16,9 @@ import time
 from pathlib import Path
 from typing import Dict, List, Any
 
-TOOLS_DIR = Path(__file__).resolve().parent
+_LOCAL_TOOLS_DIR = Path(__file__).resolve().parent
+_CENTRAL_TOOLS_DIR = Path.home() / ".agent-workstation" / "repo" / "tools"
+TOOLS_DIR = _CENTRAL_TOOLS_DIR if (_CENTRAL_TOOLS_DIR / "9router").exists() and not (_LOCAL_TOOLS_DIR / "9router").exists() else _LOCAL_TOOLS_DIR
 WORKSPACE_ROOT = TOOLS_DIR.parent
 CACHE_DIR = Path.home() / ".agent_workstation"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -209,6 +211,8 @@ def build_or_load_skill_index(force_rebuild: bool = False) -> List[Dict[str, str
         seen_paths = set()
         unique_skills = []
         for sf in skill_files:
+            if sf.name.startswith("._") or any(part.startswith("._") for part in sf.parts):
+                continue
             norm = str(sf.resolve()).lower()
             if norm not in seen_paths:
                 seen_paths.add(norm)

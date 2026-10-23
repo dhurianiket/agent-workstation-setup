@@ -1,6 +1,11 @@
 # Antigravity Pro Workspace Guidelines & Auto-Orchestration
 
-## 1. Mandatory Step 0: Automatic Request Routing & Telemetry Banner
+## 0. Zero-Touch First-Run Setup & Personal API Key Onboarding
+- When a user clones or pulls this repository into Antigravity or another agent harness, `.agents/hooks.json` (`tools/pre_invocation_hook.py`) automatically triggers `python3 tools/setup_wizard.py --auto` on first run.
+- If asked to set up the repository, run `python3 tools/setup_wizard.py --auto` (which automatically creates `.venv`, clones all 32 repositories in parallel, builds the Graphify AST graph, installs the global Antigravity plugin & MCP server, and launches the port 8000 gateway daemon).
+- Then check `http://127.0.0.1:8000/v1/config/status` and ask the user for their personal API keys (NVIDIA NIM, AWS Bedrock/CLI, Gemini, OpenRouter, DeepSeek, Groq) or guide them to click **"🔑 API Keys & Cloud"** on `http://127.0.0.1:8000/dashboard`. Save personal keys strictly to local git-ignored `.env` (`0600`) and scan with `ggshield`.
+
+## 1. Mandatory Step 1: Automatic Request Routing & Telemetry Banner
 - Every user prompt in this chat is automatically analyzed by the `PreInvocation` hook (`tools/pre_invocation_hook.py`) and Zero-Name Skill Router (`tools/skill_router.py`).
 - **Always start your response** with the 1-line routing telemetry banner so the user can see automatic routing in action:
   `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Activated Repos = <matched_repos> | Graphify AST = Synced`

@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreInvocation": [
+      {
+        "command": "python3 ./tools/pre_invocation_hook.py || python ./tools/pre_invocation_hook.py",
+        "timeout": 8000
+      }
+    ]
+  }
+}

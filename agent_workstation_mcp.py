@@ -24,8 +24,11 @@ from typing import Optional, List
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError:
-    print("Error: 'mcp' package is required. Install via 'pip install mcp'", file=sys.stderr)
-    sys.exit(1)
+    try:
+        from mcp.server.mcpserver import MCPServer as FastMCP
+    except ImportError:
+        print("Error: 'mcp' package is required. Install via 'pip install \"mcp<2\"'", file=sys.stderr)
+        sys.exit(1)
 
 # Initialize FastMCP Server
 mcp = FastMCP("Autonomous-Agent-Workstation")
@@ -34,6 +37,15 @@ WORKSPACE_DIR = Path(__file__).parent.resolve()
 TOOLS_DIR = WORKSPACE_DIR / "tools"
 ORCHESTRATE_PY = WORKSPACE_DIR / "orchestrate.py"
 STATS_FILE = Path.home() / ".agent_workstation" / "usage_stats.json"
+
+_EXTRA_PATH = os.pathsep.join([
+    str(Path.home() / ".local" / "bin"),
+    str(Path.home() / "bin"),
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+])
+if str(Path.home() / ".local" / "bin") not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = f"{_EXTRA_PATH}{os.pathsep}{os.environ.get('PATH', '')}"
 
 @mcp.tool()
 async def workstation_health() -> str:

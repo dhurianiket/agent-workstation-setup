@@ -73,14 +73,20 @@ irm https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/i
 curl -fsSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup/main/install.sh | bash
 ```
 
-### 🔄 Already Cloned or Pulled via GitHub?
-```bash
-# Run the interactive Hardware Detector + Ollama Model Installer + API Key Prompt + 32-Repo Cloner:
-python tools/setup_wizard.py
+### 🔄 Already Cloned or Opened in Antigravity / Cursor / Claude Code?
+1. **Zero-Touch Auto-Bootstrap (Just Open & Prompt)**:
+   - Opening this cloned repository inside **Google Antigravity** (or any agent harness reading `.agents/hooks.json` / `AGENTS.md`) **automatically triggers background installation** on your first prompt (`tools/pre_invocation_hook.py` &rarr; `tools/setup_wizard.py --auto`).
+   - It automatically creates `.venv`, mirrors the runtime to `~/.agent-workstation/repo` (so even external exFAT SSDs work seamlessly with macOS `launchd`), clones all **32 repositories in parallel (6 workers)**, builds the Graphify AST graph, registers the global Antigravity plugin + 9-tool MCP server, and launches the background gateway daemon on `http://127.0.0.1:8000`.
+2. **Interactive Personal API Key & AWS Setup (CLI or 1-Click Web UI)**:
+   ```bash
+   # Option A: Run the interactive terminal wizard (prompts for your personal NVIDIA / AWS / OpenRouter / Gemini keys):
+   python3 tools/setup_wizard.py
 
-# Print the full "How It Works & How It Functions" architectural walkthrough anytime:
-python orchestrate.py --guide
-```
+   # Option B: Open the live web dashboard and click "🔑 API Keys & Cloud" in the top-right header:
+   open http://127.0.0.1:8000/dashboard
+   ```
+   - **Automatic AWS Bedrock Detection**: If you are logged into AWS CLI (`aws sts get-caller-identity`), the wizard & web dashboard can automatically detect your AWS session and create a dedicated `[antigravity-mac]` IAM profile with `AmazonBedrockFullAccess` in 1 click.
+   - **Zero Secret Leakage**: All personal keys are stored strictly in your local git-ignored `.env` (`0600` permissions) and protected by GitGuardian `ggshield`.
 
 > [!TIP]
 > **Automatic `git pull` Onboarding**: The setup wizard installs a `.git/hooks/post-merge` hook so every time you run `git pull`, the terminal automatically displays the **"How It Works & Quick Guide"** banner.
