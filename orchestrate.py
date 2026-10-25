@@ -505,15 +505,19 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
         ]
 
     elif agent == "claude":
+        env["CLAUDE_CODE_USE_BEDROCK"] = env.get("CLAUDE_CODE_USE_BEDROCK", "1")
+        env["AWS_REGION"] = env.get("AWS_REGION", "us-east-1")
+        env["AWS_DEFAULT_REGION"] = env.get("AWS_DEFAULT_REGION", "us-east-1")
+        env["AWS_PROFILE"] = env.get("AWS_PROFILE", "msi-lappy")
+        if "ANTHROPIC_MODEL" not in env:
+            env["ANTHROPIC_MODEL"] = "us.anthropic.claude-opus-4-6-v1"
         cmd = ["claude", "-p", augmented_task, "--dangerously-skip-permissions"]
 
     elif agent == "codex":
         if resolved_model in ["local", "llama3.2"]:
             cmd = ["codex", "exec", augmented_task, "--oss", "--local-provider", "ollama", "-m", "llama3.2:1b", "--dangerously-bypass-approvals-and-sandbox"]
         else:
-            env["OPENAI_BASE_URL"] = LOCAL_API_BASE
-            env["OPENAI_API_KEY"] = DUMMY_KEY
-            cmd = ["codex", "exec", augmented_task, "--model", resolved_model, "--dangerously-bypass-approvals-and-sandbox"]
+            cmd = ["codex", "exec", augmented_task, "--dangerously-bypass-approvals-and-sandbox"]
 
     elif agent == "opencode":
         cmd = ["opencode", "run", "--prompt", augmented_task, "--auto"]
