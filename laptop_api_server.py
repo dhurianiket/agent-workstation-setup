@@ -19,6 +19,7 @@ Advanced features:
 """
 
 import os
+import sys
 import time
 import json
 import asyncio
@@ -47,6 +48,16 @@ app.add_middleware(
 STATS_DIR = Path.home() / ".agent_workstation"
 STATS_DIR.mkdir(parents=True, exist_ok=True)
 STATS_FILE = STATS_DIR / "usage_stats.json"
+
+# Load auto_configurator from tools
+TOOLS_DIR = Path(__file__).resolve().parent / "tools"
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+try:
+    import auto_configurator
+except Exception:
+    auto_configurator = None
+
 
 # Load local .env if present (Zero-leakage local configuration)
 def load_local_env(override: bool = False):
@@ -315,6 +326,12 @@ class ChatCompletionRequest(BaseModel):
     stream: Optional[bool] = False
     enhance_quality: Optional[bool] = True
 
+class AgentChatRequest(BaseModel):
+    agent: str  # claude, codex, aider, opendots, orchestrator
+    message: str
+    model: Optional[str] = "auto"
+    working_dir: Optional[str] = None
+
 class OrchestrationRequest(BaseModel):
     task: str
     agent: Optional[str] = "aider"  # aider, codex, claude, opencode
@@ -441,7 +458,99 @@ def dashboard():
       font-variant-numeric: tabular-nums;
     }
 
-    /* Sticky Liquid-Glass Functional Top Bar (Apple HIG liquid-glass.md) */
+    
+    /* Multi-Agent Studio & Live Console (Apple HIG Liquid-Glass) */
+    .agent-studio-section {
+      margin-top: 24px;
+      margin-bottom: 30px;
+    }
+    .agent-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .agent-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      position: relative;
+    }
+    .agent-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .agent-card.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+    }
+    .agent-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .agent-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-status-pill {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-online {
+      background: var(--success-soft);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+    .status-pending {
+      background: var(--warning-soft);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .agent-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .agent-meta-badge {
+      font-size: 0.70rem;
+      font-family: "Fira Code", monospace;
+      color: var(--text-secondary);
+      background: var(--surface-inset);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .agent-console-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 900px) {
+      .agent-console-box {
+        grid-template-columns: 340px 1fr;
+      }
+    }
+
+/* Sticky Liquid-Glass Functional Top Bar (Apple HIG liquid-glass.md) */
     .topbar {
       position: sticky;
       top: 0;
@@ -1053,7 +1162,15 @@ def dashboard():
         <span class="dot"></span>
         <span id="status-text">ONLINE • 127.0.0.1:8000</span>
       </div>
-      <button class="btn btn-ghost" onclick="openKeysModal()" title="Configure Personal API Keys & Auto-Setup AWS Bedrock">
+            <button class="btn btn-ghost" onclick="triggerAutoConfig()" title="Auto-configure Claude Code, Codex, Aider, OpenDots & Ollama">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        ⚡ Auto-Configure
+      </button>
+      <a class="btn btn-ghost" href="#agent-studio-section" title="Jump to Multi-Agent Studio & Live Chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+        Agent Studio
+      </a>
+<button class="btn btn-ghost" onclick="openKeysModal()" title="Configure Personal API Keys & Auto-Setup AWS Bedrock">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
         API Keys &amp; Cloud
       </button>
@@ -1743,7 +1860,236 @@ def dashboard():
       } catch (e) {}
     }
 
-    async function runTestPrompt() {
+    
+    let currentSelectedAgent = 'claude';
+
+    function selectAgent(agentName) {
+      currentSelectedAgent = agentName;
+      ['claude', 'codex', 'aider', 'opendots', 'orchestrator'].forEach(a => {
+        const el = document.getElementById('agent-card-' + a);
+        if (el) el.classList.toggle('active', a === agentName);
+      });
+
+      const label = document.getElementById('agent-input-label');
+      const input = document.getElementById('agent-chat-prompt');
+      const cliCmd = document.getElementById('agent-cli-cmd');
+      const opendotsPanel = document.getElementById('opendots-extra-panel');
+
+      if (opendotsPanel) {
+        opendotsPanel.style.display = agentName === 'opendots' ? 'block' : 'none';
+      }
+
+      const agentMeta = {
+        claude: {
+          label: 'Chat or Dispatch Task to Claude Code (Bedrock Opus 4.6)',
+          placeholder: 'Ask Claude Code to build features, inspect code, or architect solutions...',
+          cli: 'claude -p "<task>"'
+        },
+        codex: {
+          label: 'Chat or Dispatch Task to OpenAI Codex (ChatGPT gpt-5.6-terra)',
+          placeholder: 'Instruct Codex to write, refactor, or test code in the elevated sandbox...',
+          cli: 'codex exec "<task>"'
+        },
+        aider: {
+          label: 'Chat or Dispatch Task to Aider (5-Tier Gateway Router)',
+          placeholder: 'Ask Aider to edit files with automatic commit tracking and model routing...',
+          cli: 'aider --model openai/auto --message "<task>"'
+        },
+        opendots: {
+          label: 'Interact with OpenDots CopilotKit UI Canvas & Channels',
+          placeholder: 'Ask OpenDots to generate UI states, interact with visual canvas dots, or query channels...',
+          cli: 'cd tools/OpenDots && npm run dev'
+        },
+        orchestrator: {
+          label: 'Dispatch Task to Autonomous Orchestrator (AST + ggshield Shield)',
+          placeholder: 'Describe a multi-agent task to orchestrate across AST, model tiers, and security sensors...',
+          cli: 'python orchestrate.py --task "<task>"'
+        }
+      };
+
+      if (agentMeta[agentName]) {
+        if (label) label.innerText = agentMeta[agentName].label;
+        if (input) input.placeholder = agentMeta[agentName].placeholder;
+        if (cliCmd) cliCmd.innerText = agentMeta[agentName].cli;
+      }
+    }
+
+    function setAgentChipPrompt(text) {
+      const input = document.getElementById('agent-chat-prompt');
+      if (input) {
+        input.value = text;
+        input.focus();
+      }
+    }
+
+    function clearAgentConsole() {
+      const consoleEl = document.getElementById('agent-output-console');
+      if (consoleEl) consoleEl.innerText = 'Console cleared. Select an agent and tap "Chat / Dispatch" to start a run.';
+      document.getElementById('agent-chat-status').innerText = 'Ready for input';
+    }
+
+    function copyAgentConsole() {
+      const consoleEl = document.getElementById('agent-output-console');
+      if (consoleEl && consoleEl.innerText) {
+        navigator.clipboard.writeText(consoleEl.innerText);
+        const st = document.getElementById('agent-chat-status');
+        if (st) {
+          const old = st.innerText;
+          st.innerText = '✓ Copied to clipboard!';
+          setTimeout(() => st.innerText = old, 2000);
+        }
+      }
+    }
+
+    async function sendAgentMessage() {
+      const input = document.getElementById('agent-chat-prompt');
+      const msg = input.value.trim();
+      if (!msg) {
+        alert('Please enter a prompt or instruction for ' + currentSelectedAgent);
+        return;
+      }
+
+      const model = document.getElementById('agent-model-select').value;
+      const statusEl = document.getElementById('agent-chat-status');
+      const consoleEl = document.getElementById('agent-output-console');
+      const sendBtn = document.getElementById('btn-agent-send');
+
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Executing...';
+      statusEl.innerText = `Dispatching to ${currentSelectedAgent.toUpperCase()}...`;
+      consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching task to ${currentSelectedAgent.toUpperCase()}...
+> Prompt: ${msg}
+
+Waiting for response from agent runner...
+`;
+
+      const startT = performance.now();
+      try {
+        const r = await fetch('/v1/agents/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            agent: currentSelectedAgent,
+            message: msg,
+            model: model
+          })
+        });
+        const data = await r.json();
+        const durationSec = ((performance.now() - startT) / 1000).toFixed(2);
+
+        if (r.ok && data.status === 'ok') {
+          consoleEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Exit: ${data.exit_code}]
+
+${data.response}`;
+          statusEl.innerText = `Completed in ${durationSec}s`;
+        } else {
+          consoleEl.innerText = `[ERROR • ${durationSec}s]
+${data.response || data.detail || JSON.stringify(data, null, 2)}`;
+          statusEl.innerText = 'Execution error';
+        }
+      } catch (err) {
+        consoleEl.innerText = `[Network Error]: ${err.message}`;
+        statusEl.innerText = 'Request failed';
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Chat / Dispatch';
+      }
+    }
+
+    async function triggerAutoConfig() {
+      const btn = document.getElementById('btn-auto-config');
+      const badge = document.getElementById('auto-config-status-badge');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '⚡ Auto-Configuring...';
+      }
+      if (badge) badge.innerText = 'Configuring all agents...';
+
+      try {
+        const r = await fetch('/v1/config/auto-configure', {method: 'POST'});
+        const d = await r.json();
+        if (badge) {
+          badge.innerText = '✓ All 5 Agents Auto-Configured';
+          badge.style.color = 'var(--success)';
+        }
+        await fetchAgentStatus();
+      } catch (err) {
+        if (badge) {
+          badge.innerText = 'Config notice: ' + err.message;
+          badge.style.color = 'var(--warning)';
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = '⚡ Auto-Configure All Agents';
+        }
+      }
+    }
+
+    async function configureOpenDots() {
+      try {
+        const r = await fetch('/v1/opendots/configure', {method: 'POST'});
+        const d = await r.json();
+        alert('OpenDots configured! Linked to http://127.0.0.1:8000/v1.\n\nTo launch UI canvas: cd tools/OpenDots && npm run dev');
+        fetchAgentStatus();
+      } catch (err) {
+        alert('OpenDots configuration notice: ' + err.message);
+      }
+    }
+
+    async function fetchAgentStatus() {
+      try {
+        const r = await fetch('/v1/agents/status');
+        if (!r.ok) return;
+        const d = await r.json();
+
+        // Claude status
+        if (d.claude) {
+          const pill = document.getElementById('status-pill-claude');
+          if (pill) {
+            pill.innerText = d.claude.configured ? 'ONLINE' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.claude.configured ? 'status-online' : 'status-pending');
+          }
+          const mod = document.getElementById('badge-claude-model');
+          if (mod) mod.innerText = d.claude.model ? d.claude.model.replace('us.anthropic.', '') : 'Opus 4.6';
+          const prof = document.getElementById('badge-claude-prof');
+          if (prof) prof.innerText = d.claude.profile || 'Bedrock Active';
+        }
+
+        // Codex status
+        if (d.codex) {
+          const pill = document.getElementById('status-pill-codex');
+          if (pill) {
+            pill.innerText = d.codex.authenticated ? 'ONLINE' : 'READY';
+            pill.className = 'agent-status-pill ' + (d.codex.authenticated ? 'status-online' : 'status-pending');
+          }
+          const mod = document.getElementById('badge-codex-model');
+          if (mod) mod.innerText = d.codex.model || 'gpt-5.6-terra';
+        }
+
+        // Aider status
+        if (d.aider) {
+          const pill = document.getElementById('status-pill-aider');
+          if (pill) {
+            pill.innerText = d.aider.configured ? 'ONLINE' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.aider.configured ? 'status-online' : 'status-pending');
+          }
+        }
+
+        // OpenDots status
+        if (d.opendots) {
+          const pill = document.getElementById('status-pill-opendots');
+          if (pill) {
+            pill.innerText = d.opendots.configured ? 'READY' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.opendots.configured ? 'status-online' : 'status-pending');
+          }
+        }
+      } catch (e) {
+        console.warn('Agent status fetch:', e);
+      }
+    }
+
+async function runTestPrompt() {
       const model = document.getElementById('test-model').value;
       const prompt = document.getElementById('test-prompt').value;
       const outBox = document.getElementById('test-output');
@@ -1882,10 +2228,19 @@ def update_config_keys(req: ApiKeysUpdateRequest):
         pass
 
     reload_runtime_credentials()
+    # Automatically configure all agent harnesses on key save
+    auto_cfg_res = {}
+    try:
+        if auto_configurator:
+            auto_cfg_res = auto_configurator.run_full_auto_configuration(force=True)
+    except Exception as e:
+        auto_cfg_res = {"error": str(e)}
+
     return {
         "status": "ok",
-        "message": "Saved to local .env (0600 permissions) and hot-reloaded active providers.",
+        "message": "Saved to local .env (0600 permissions), hot-reloaded active providers, and auto-configured all agent harnesses.",
         "providers": health()["providers"],
+        "agents": auto_cfg_res,
     }
 
 
@@ -1902,6 +2257,8 @@ def auto_configure_aws_endpoint():
         if not prof:
             return {"status": "warning", "message": "No local ~/.aws/credentials found. Run `aws configure` first or enter an API key below."}
         update_config_keys(ApiKeysUpdateRequest(aws_profile=prof, aws_region=reg))
+        if auto_configurator:
+            auto_configurator.run_full_auto_configuration(force=True)
         return {
             "status": "ok",
             "message": f"Activated AWS Bedrock profile [{prof}] ({reg}) and hot-reloaded gateway.",
@@ -2484,6 +2841,148 @@ async def orchestrate_agent(req: OrchestrationRequest):
         return {"status": "timeout", "detail": "Agent process exceeded 300s timeout."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Orchestration execution error: {str(e)}")
+
+
+@app.get("/v1/agents/status")
+def get_agents_status_endpoint():
+    """Returns the live configuration, version, and readiness status of all workstation agents."""
+    if auto_configurator:
+        return auto_configurator.get_agents_status()
+    return {"error": "auto_configurator not loaded"}
+
+
+@app.post("/v1/config/auto-configure")
+def trigger_auto_configuration():
+    """Triggers the full self-healing auto-configuration workflow across Claude Code, Codex, Aider, OpenDots, and Ollama."""
+    if auto_configurator:
+        return auto_configurator.run_full_auto_configuration(force=True)
+    return {"status": "error", "message": "auto_configurator not loaded"}
+
+
+@app.post("/v1/opendots/configure")
+def configure_opendots_endpoint():
+    """Auto-configures OpenDots (.env and gateway bridge) for local CopilotKit canvas execution."""
+    if auto_configurator:
+        return auto_configurator.configure_opendots()
+    return {"status": "error", "message": "auto_configurator not loaded"}
+
+
+@app.post("/v1/agents/chat")
+async def chat_with_agent(req: AgentChatRequest):
+    """
+    Direct interactive chat / execution endpoint for Claude Code, Codex, Aider, OpenDots, and Orchestrator.
+    Runs non-interactively with redirected stdin and returns complete response output.
+    """
+    cwd = req.working_dir or str(Path(__file__).resolve().parent)
+    agent = req.agent.lower().strip()
+    msg = req.message.strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    
+    extra_bins = os.pathsep.join([
+        str(Path.home() / ".local" / "bin"),
+        str(Path.home() / "bin"),
+        str(Path.home() / "AppData" / "Roaming" / "npm"),
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+    ])
+    env["PATH"] = f"{extra_bins}{os.pathsep}{env.get('PATH', '')}"
+
+    start_time = time.time()
+
+    if agent == "claude":
+        env["CLAUDE_CODE_USE_BEDROCK"] = env.get("CLAUDE_CODE_USE_BEDROCK", "1")
+        env["AWS_REGION"] = env.get("AWS_REGION", "us-east-1")
+        env["AWS_DEFAULT_REGION"] = env.get("AWS_DEFAULT_REGION", "us-east-1")
+        env["AWS_PROFILE"] = env.get("AWS_PROFILE", os.environ.get("AWS_PROFILE", "default"))
+        if req.model in ["opus", "claude-opus", "us.anthropic.claude-opus-4-6-v1"]:
+            env["ANTHROPIC_MODEL"] = "us.anthropic.claude-opus-4-6-v1"
+        elif req.model in ["sonnet", "claude-sonnet"]:
+            env["ANTHROPIC_MODEL"] = "us.anthropic.claude-sonnet-4-6"
+        else:
+            env["ANTHROPIC_MODEL"] = env.get("ANTHROPIC_MODEL", "us.anthropic.claude-opus-4-6-v1")
+        
+        clean_prompt = msg.replace('"', '\\"')
+        cmd = f'claude -p "{clean_prompt}" --dangerously-skip-permissions'
+
+    elif agent == "codex":
+        clean_prompt = msg.replace('"', '\\"')
+        if req.model in ["local", "llama3.2"]:
+            cmd = f'codex exec "{clean_prompt}" --oss --local-provider ollama -m llama3.2:1b --dangerously-bypass-approvals-and-sandbox'
+        elif req.model and req.model not in ["auto", "default"]:
+            cmd = f'codex exec "{clean_prompt}" -m {req.model} --dangerously-bypass-approvals-and-sandbox'
+        else:
+            cmd = f'codex exec "{clean_prompt}" --dangerously-bypass-approvals-and-sandbox'
+
+    elif agent == "aider":
+        clean_prompt = msg.replace('"', '\\"')
+        model_flag = f"--model openai/{req.model}" if (req.model and req.model != "auto") else "--model openai/auto"
+        cmd = f'aider --openai-api-base http://127.0.0.1:8000/v1 --openai-api-key dummy-local-key {model_flag} --message "{clean_prompt}" --exit --no-git --yes-always --no-show-model-warnings'
+
+    elif agent == "orchestrator":
+        clean_prompt = msg.replace('"', '\\"')
+        py_exe = sys.executable
+        orch_py = str((Path(__file__).resolve().parent / "orchestrate.py").resolve())
+        cmd = f'"{py_exe}" "{orch_py}" --task "{clean_prompt}" --no-shield'
+
+    elif agent == "opendots":
+        opendots_dir = Path(__file__).resolve().parent / "tools" / "OpenDots"
+        return {
+            "status": "ok",
+            "agent": "opendots",
+            "response": f"OpenDots Canvas is configured at {opendots_dir}.\n\n"
+                        f"• CopilotKit Bridge: http://127.0.0.1:8000/v1 (Linked)\n"
+                        f"• UI Canvas Origin: http://localhost:5173\n"
+                        f"• Backend Port: 4310\n"
+                        f"• Interactive UI Command: cd tools/OpenDots && npm run dev\n\n"
+                        f"Prompt received: {msg}",
+            "duration_seconds": round(time.time() - start_time, 2),
+            "exit_code": 0
+        }
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported agent: '{agent}'. Choose from: claude, codex, aider, orchestrator, opendots")
+
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            cmd,
+            stdin=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=cwd
+        )
+        stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=180)
+        dur = round(time.time() - start_time, 2)
+        stdout_txt = stdout_b.decode("utf-8", errors="replace").strip()
+        stderr_txt = stderr_b.decode("utf-8", errors="replace").strip()
+        
+        out = stdout_txt if stdout_txt else stderr_txt
+        if not out:
+            out = f"(Agent completed with exit code {proc.returncode} but produced no text output)"
+
+        return {
+            "status": "ok" if proc.returncode == 0 else "error",
+            "agent": agent,
+            "response": out,
+            "stderr": stderr_txt if proc.returncode != 0 else "",
+            "duration_seconds": dur,
+            "exit_code": proc.returncode
+        }
+    except asyncio.TimeoutError:
+        return {
+            "status": "timeout",
+            "agent": agent,
+            "response": "Agent execution exceeded 180s timeout.",
+            "duration_seconds": round(time.time() - start_time, 2),
+            "exit_code": -1
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Execution error running {agent}: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

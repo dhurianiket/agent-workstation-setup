@@ -304,6 +304,16 @@ Open **`http://127.0.0.1:8000/dashboard`** in any browser to inspect real-time t
  └─────────────────────────────────┴─────────────────────────────────┴────────────────────────────────┘
 ```
 
+
+### 🤖 Multi-Agent Studio & Live Console
+The control plane dashboard includes a live interactive studio to test, chat with, and dispatch work to every agent without opening separate terminal windows:
+- **🟣 Claude Code**: Runs natively with your AWS Bedrock account (Opus 4.6 / Sonnet 4.6) with zero interactive setup prompts.
+- **🟢 OpenAI Codex**: Operates in the elevated sandbox with stored ChatGPT account authentication (`gpt-5.6-terra`, `gpt-6-luna`).
+- **🔵 Aider**: Dispatches pair-programming tasks directly through the 5-Tier Gateway auto-router.
+- **🟠 OpenDots**: Integrates CopilotKit Generative UI canvas, visual state dots, and intelligence channels on port 4310.
+- **⚡ Autonomous Orchestrator**: Executes tasks across the Tree-sitter AST sensor and GitGuardian security shield.
+- **⚡ 1-Click Auto-Configure**: Any time credentials are saved in `.env` or the web dashboard, the self-healing auto-configuration workflow runs automatically to link all agent runtimes with zero manual intervention.
+
 ### Gateway REST & Visualization Endpoints
 | Endpoint | Method | Description |
 | :--- | :---: | :--- |

@@ -718,6 +718,14 @@ description: >-
     print(f"  [OK] Global Antigravity Plugin + 5 Skills + MCP + PreInvocation Hook installed at: {plugin_root}")
     print(f"  [OK] Global Claude Code & Aider configs linked to http://127.0.0.1:8000/v1")
 
+    # Run Zero-Touch Auto-Configurator for Claude Code, Codex, Aider, OpenDots, and Ollama
+    try:
+        import auto_configurator
+        auto_cfg_res = auto_configurator.run_full_auto_configuration(force=True)
+        print("  [OK] Auto-Configurator: Claude Code (Bedrock/Opus 4.6), Codex (ChatGPT), Aider, OpenDots & Ollama configured.")
+    except Exception as e:
+        print(f"  [Notice] Auto-Configurator status: {e}")
+
 
 def ensure_gateway_daemon_running() -> None:
     """

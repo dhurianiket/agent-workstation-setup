@@ -508,7 +508,7 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
         env["CLAUDE_CODE_USE_BEDROCK"] = env.get("CLAUDE_CODE_USE_BEDROCK", "1")
         env["AWS_REGION"] = env.get("AWS_REGION", "us-east-1")
         env["AWS_DEFAULT_REGION"] = env.get("AWS_DEFAULT_REGION", "us-east-1")
-        env["AWS_PROFILE"] = env.get("AWS_PROFILE", "msi-lappy")
+        env["AWS_PROFILE"] = env.get("AWS_PROFILE", os.environ.get("AWS_PROFILE", "default"))
         if "ANTHROPIC_MODEL" not in env:
             env["ANTHROPIC_MODEL"] = "us.anthropic.claude-opus-4-6-v1"
         cmd = ["claude", "-p", augmented_task, "--dangerously-skip-permissions"]

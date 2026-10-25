@@ -153,6 +153,16 @@ def main() -> None:
         payload = {}
 
     bootstrapped_now = ensure_first_run_bootstrap()
+    try:
+        claude_cfg = Path.home() / ".claude" / "settings.json"
+        aider_cfg = Path.home() / ".aider.conf.yml"
+        if not (claude_cfg.exists() and aider_cfg.exists()):
+            if str(TOOLS_DIR) not in sys.path:
+                sys.path.insert(0, str(TOOLS_DIR))
+            import auto_configurator
+            auto_configurator.run_full_auto_configuration()
+    except Exception:
+        pass
 
     invocation_num = payload.get("invocationNum", 1)
     if invocation_num and int(invocation_num) > 1:
