@@ -62,10 +62,12 @@ def load_local_env(override: bool = False):
                     if k and (override or k not in os.environ):
                         os.environ[k] = v
 
-load_local_env()
+load_local_env(override=True)
 
 # Pricing per 1,000,000 tokens (USD)
 PRICING_PER_M = {
+    "us.anthropic.claude-opus-4-6": {"input": 15.00, "output": 75.00},
+    "us.anthropic.claude-opus-4-6-v1:0": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-5-20251101-v1:0": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
     "us.anthropic.claude-sonnet-4-5-20250929-v1:0": {"input": 3.00, "output": 15.00},
@@ -219,8 +221,9 @@ MODEL_MAP = {
     "claude-sonnet-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "claude-sonnet-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
     "sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
-    "opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
-    "claude-opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
+    "opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
+    "claude-opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
+    "claude-opus-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
     "claude-opus-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
     "haiku": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
     "claude-haiku-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
@@ -1239,7 +1242,7 @@ def dashboard():
       <button type="button" class="tier-card" onclick="selectTier('claude', this)">
         <div>
           <span class="tier-badge" style="color: var(--pink); background: var(--pink-soft);">TIER 5 • FRONTIER</span>
-          <div class="tier-name">Claude Sonnet & Opus 4.5</div>
+          <div class="tier-name">Claude Sonnet 4.6 & Opus 4.6</div>
           <div class="tier-desc">High-stakes system architecture, cryptography, security overhauls, and multi-repo synthesis.</div>
         </div>
         <div class="tier-meta mono">

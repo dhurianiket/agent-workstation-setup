@@ -467,8 +467,8 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
         "fast": "Scout Tier (Llama 4 Scout ~190ms)",
         "coder": "Workhorse Tier (Llama 3.3 70B ~300ms)",
         "reasoner": "Deep Reasoning (DeepSeek R1 ~1.1s)",
-        "claude": "Frontier Tier (Claude Sonnet 4.5)",
-        "opus": "Frontier Tier (Claude Opus 4.5)",
+        "claude": "Frontier Tier (Claude Sonnet 4.6)",
+        "opus": "Flagship Tier (Claude Opus 4.6)",
     }.get(resolved_model, "Custom Tier")
 
     print(f"\n=======================================================")
