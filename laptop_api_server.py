@@ -421,7 +421,7 @@ def dashboard():
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
+:root {
       --bg: #090d16;
       --bg-mesh: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 189, 248, 0.14), transparent),
                  radial-gradient(ellipse 60% 40% at 90% 10%, rgba(139, 92, 246, 0.10), transparent);
@@ -471,295 +471,512 @@ def dashboard():
     }
 
     
-    
-    
-    /* ==========================================================================
-       MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS (Apple HIG + UI/UX Pro Max)
-       ========================================================================== */
+    /* Multi-Agent Studio & Live Console (Apple HIG Liquid-Glass) */
     .agent-studio-section {
-      margin-top: 32px;
-      margin-bottom: 40px;
-    }
-    .studio-card {
-      background: rgba(13, 19, 33, 0.82);
-      backdrop-filter: blur(32px) saturate(210%);
-      -webkit-backdrop-filter: blur(32px) saturate(210%);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-    }
-    .studio-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-    .studio-title-group {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .studio-icon-glow {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(168, 85, 247, 0.28));
-      border: 1px solid rgba(56, 189, 248, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      box-shadow: 0 0 24px rgba(56, 189, 248, 0.28);
-    }
-    .studio-title {
-      font-size: 1.22rem;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.02em;
-    }
-    .studio-sub {
-      font-size: 0.80rem;
-      color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 24px;
+      margin-bottom: 30px;
     }
     .agent-selector-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .agent-card {
-      background: rgba(17, 24, 39, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 14px 16px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+      transition: all 0.2s var(--ease-out);
       position: relative;
     }
     .agent-card:hover {
-      border-color: rgba(56, 189, 248, 0.5);
+      border-color: var(--accent);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
     }
     .agent-card.active {
-      background: rgba(30, 41, 59, 0.85);
       border-color: var(--accent);
-      box-shadow: 0 0 0 1.5px var(--accent), 0 10px 28px -4px rgba(56, 189, 248, 0.32);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
     .agent-card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 6px;
     }
     .agent-name {
       font-weight: 700;
-      font-size: 0.90rem;
+      font-size: 0.95rem;
       color: var(--text);
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .agent-status-pill {
-      font-size: 0.62rem;
-      font-weight: 700;
+      font-size: 0.68rem;
+      font-weight: 600;
       padding: 2px 7px;
       border-radius: 999px;
+      text-transform: uppercase;
       letter-spacing: 0.04em;
     }
     .status-online {
-      background: rgba(34, 197, 94, 0.15);
-      color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      background: var(--success-soft);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.25);
     }
-    .status-ready {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+    .status-pending {
+      background: var(--warning-soft);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.25);
     }
     .agent-desc {
-      font-size: 0.74rem;
-      color: var(--text-secondary);
+      font-size: 0.76rem;
+      color: var(--text-muted);
       line-height: 1.4;
-      margin-bottom: 10px;
-      min-height: 32px;
+      margin-bottom: 8px;
     }
     .agent-meta-badge {
-      font-size: 0.65rem;
-      padding: 2px 7px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      font-family: "Fira Code", monospace;
+      color: var(--text-secondary);
+      background: var(--surface-inset);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
     }
-    .studio-split-grid {
+    .agent-console-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
       display: grid;
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 14px;
     }
-    @media (min-width: 960px) {
-      .studio-split-grid {
-        grid-template-columns: 390px 1fr;
+    @media (min-width: 900px) {
+      .agent-console-box {
+        grid-template-columns: 340px 1fr;
       }
     }
-    .studio-controls-pane {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: rgba(11, 16, 27, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 18px;
-    }
-    .studio-canvas-pane {
-      display: flex;
-      flex-direction: column;
-      background: rgba(8, 12, 20, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 18px;
-      overflow: hidden;
-      min-height: 520px;
-      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6);
-    }
-    .canvas-nav-bar {
+
+/* Sticky Liquid-Glass Functional Top Bar (Apple HIG liquid-glass.md) */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 13, 22, 0.78);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 14px;
-      background: rgba(15, 23, 42, 0.85);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 16px;
       flex-wrap: wrap;
-      gap: 10px;
     }
-    .mac-traffic-lights {
+
+    .brand {
       display: flex;
-      gap: 6px;
       align-items: center;
-      margin-right: 6px;
+      gap: 12px;
     }
-    .traffic-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-    .traffic-red { background: #ef4444; }
-    .traffic-yellow { background: #f59e0b; }
-    .traffic-green { background: #10b981; }
-    .canvas-tabs {
-      display: flex;
-      gap: 4px;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 3px;
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    .canvas-tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.74rem;
-      font-weight: 600;
-      padding: 5px 11px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: all 0.2s var(--ease-out);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .canvas-tab-btn:hover {
-      color: var(--text);
-    }
-    .canvas-tab-btn.active {
-      background: rgba(56, 189, 248, 0.18);
-      color: #38bdf8;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2));
       border: 1px solid rgba(56, 189, 248, 0.35);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-    .canvas-viewport-wrap {
-      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #060910;
-      position: relative;
-      overflow: hidden;
-      min-height: 480px;
+      color: var(--accent);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
-    .canvas-iframe {
-      width: 100%;
-      height: 100%;
-      min-height: 480px;
-      border: none;
-      background: transparent;
-      transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    .canvas-iframe.mobile-view {
-      width: 375px;
-      box-shadow: 0 0 0 10px #1e293b, 0 20px 50px rgba(0, 0, 0, 0.8);
-      border-radius: 36px;
-      margin: 20px auto;
-      height: 90%;
-    }
-    .mode-pills-row {
-      display: flex;
-      gap: 6px;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 3px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    .mode-pill {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.73rem;
-      font-weight: 600;
-      padding: 6px 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s var(--ease-out);
-      text-align: center;
-    }
-    .mode-pill.active {
-      background: rgba(56, 189, 248, 0.2);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
-    }
-    .chips-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .chip {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.72rem;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s var(--ease-out);
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
       display: flex;
       align-items: center;
+      gap: 8px;
+    }
+
+    .version-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .provider-pills {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .prov-pill {
+      display: inline-flex;
+      align-items: center;
       gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
     }
+
+    .prov-pill.active {
+      color: var(--text);
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .prov-pill.active .dot, .status-pill .dot {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--success-soft);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: var(--accent);
+      color: #06101e;
+      font-weight: 600;
+      font-size: 0.84rem;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      min-height: 36px;
+      transition: transform 140ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: #7dd3fc;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, .tier-card:focus-visible, .chip:focus-visible {
+      outline: 2px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-elevated);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 28px 48px;
+    }
+
+    /* Bento KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+    }
+
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .kpi-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .kpi-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-val {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .meter-track {
+      width: 100%;
+      height: 5px;
+      background: var(--surface-inset);
+      border-radius: 999px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 300ms var(--ease-out);
+    }
+
+    /* Section Headers */
+    .section-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .section-hint {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Interactive 5-Tier Pipeline Grid */
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+      .tiers-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .tiers-grid { grid-template-columns: 1fr; }
+    }
+
+    .tier-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 15px 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .tier-card:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-elevated);
+      transform: translateY(-2px);
+    }
+
+    .tier-card:active {
+      transform: scale(0.98);
+    }
+
+    .tier-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 8px 24px -8px rgba(56, 189, 248, 0.25);
+    }
+
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+      width: fit-content;
+    }
+
+    .tier-name {
+      font-weight: 700;
+      font-size: 0.94rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .tier-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .tier-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem;
+    }
+
+    /* Main Operations Deck (3-Column Responsive Grid) */
+    .ops-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1.25fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 1280px) {
+      .ops-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 860px) {
+      .ops-grid { grid-template-columns: 1fr; }
+    }
+
+    .field-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      font-family: inherit;
+      transition: border-color 150ms var(--ease-out);
+    }
+
+    select:hover, textarea:hover, input[type="text"]:hover {
+      border-color: var(--border-strong);
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .chip {
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.71rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 120ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+    }
+
     .chip:hover {
-      background: rgba(56, 189, 248, 0.14);
-      color: #ffffff;
-      border-color: rgba(56, 189, 248, 0.4);
-      transform: translateY(-1px);
+      color: var(--text);
+      border-color: var(--accent);
     }
-.chip:active {
+
+    .chip:active {
       transform: scale(0.96);
     }
 
@@ -928,6 +1145,248 @@ def dashboard():
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
       }
+    }
+/* Multi-Agent Design Studio & OpenDots Canvas */
+    .agent-studio-section {
+      margin-top: 28px;
+      margin-bottom: 34px;
+    }
+    .studio-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
+    }
+    .studio-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .studio-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .studio-icon-glow {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.25));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+    .studio-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.015em;
+    }
+    .studio-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .agent-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .agent-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.22s var(--ease-out);
+      position: relative;
+    }
+    .agent-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .agent-card.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(56, 189, 248, 0.2);
+    }
+    .agent-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .agent-name {
+      font-weight: 700;
+      font-size: 0.90rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-status-pill {
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .agent-desc {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      line-height: 1.38;
+      margin-bottom: 8px;
+      min-height: 30px;
+    }
+    .agent-meta-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-inset);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono, monospace);
+    }
+    .studio-split-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 960px) {
+      .studio-split-grid {
+        grid-template-columns: 370px 1fr;
+      }
+    }
+    .studio-controls-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    .studio-canvas-pane {
+      display: flex;
+      flex-direction: column;
+      background: #060910;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      min-height: 500px;
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+    }
+    .canvas-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mac-traffic-lights {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-right: 4px;
+    }
+    .traffic-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .traffic-red { background: #ef4444; }
+    .traffic-yellow { background: #f59e0b; }
+    .traffic-green { background: #10b981; }
+    .canvas-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-inset);
+      padding: 3px;
+      border-radius: 8px;
+    }
+    .canvas-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .canvas-tab-btn:hover { color: var(--text); }
+    .canvas-tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .canvas-viewport-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #060910;
+      position: relative;
+      overflow: hidden;
+      min-height: 460px;
+    }
+    .canvas-iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 460px;
+      border: none;
+      background: transparent;
+      transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .canvas-iframe.mobile-view {
+      width: 375px;
+      box-shadow: 0 0 0 10px #1e293b, 0 20px 50px rgba(0, 0, 0, 0.8);
+      border-radius: 32px;
+      margin: 18px auto;
+      height: 90%;
+    }
+    .mode-pills-row {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-elevated);
+      padding: 3px;
+      border-radius: 8px;
+    }
+    .mode-pill {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.71rem;
+      font-weight: 600;
+      padding: 5px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      text-align: center;
+    }
+    .mode-pill.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
     }
   </style>
 </head>
@@ -1166,130 +1625,7 @@ def dashboard():
     </section>
 
     <!-- 3-Column Interactive Operations Deck -->
-    <section class="ops-grid" aria-label="Interactive Gateway Tools and Telemetry">
-      <!-- Column 1: Live Gateway Playground -->
-      <div class="card">
-        <div class="section-bar">
-          <div class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-            Live Gateway Playground
-          </div>
-          <span class="mono" style="font-size: 0.7rem; color: var(--text-muted);">Ctrl+Enter</span>
-        </div>
-
-        <label class="field-label" for="test-model">
-          <span>Target Model Tier</span>
-          <span class="mono" id="routed-badge" style="color: var(--accent);">auto-router ready</span>
-        </label>
-        <select id="test-model">
-          <option value="auto">auto — 5-Tier Smart Auto-Router</option>
-          <option value="local">local — Ollama GPU ($0.00)</option>
-          <option value="fast">fast — Llama 4 Scout ($0.08/M)</option>
-          <option value="coder">coder — Llama 3.3 70B ($0.72/M)</option>
-          <option value="reasoner">reasoner — DeepSeek R1 ($1.35/M)</option>
-          <option value="claude">claude — Claude Sonnet 4.5 ($3.00/M)</option>
-          <option value="opus">opus — Claude Opus 4.5 ($15.00/M)</option>
-        </select>
-
-        <div class="chips-row" aria-label="Quick Prompt Presets">
-          <button type="button" class="chip" onclick="setPrompt('auto', 'Fix a typo in docstring: reply in 1 sentence')">Tier 1: Docstring ($0)</button>
-          <button type="button" class="chip" onclick="setPrompt('auto', 'Write a unit test assertion for HTTP 200 in 2 lines')">Tier 2: Unit Test</button>
-          <button type="button" class="chip" onclick="setPrompt('auto', 'Debug why a mutex lock causes a race condition in 2 sentences')">Tier 4: Race Condition</button>
-        </div>
-
-        <label class="field-label" for="test-prompt">Prompt Instruction</label>
-        <textarea id="test-prompt" rows="2">Explain in 1 sentence how the 5-tier router conserves credits.</textarea>
-
-        <button type="button" class="btn" style="width: 100%;" onclick="runTestPrompt()" id="run-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          <span id="run-btn-label">Execute on Gateway</span>
-        </button>
-
-        <div class="output-box mono" id="test-output" role="region" aria-live="polite">Ready. Select a model tier or use "auto" to test live routing.</div>
-      </div>
-
-      <!-- Column 2: Zero-Name 32-Repo Skill Router Inspector -->
-      <div class="card">
-        <div class="section-bar">
-          <div class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            Zero-Name 32-Repo Skill Router
-          </div>
-          <span class="mono" style="font-size: 0.7rem; color: var(--purple);">1,041 SKILL.md</span>
-        </div>
-
-        <label class="field-label" for="skill-query">Test Natural-Language Task (No Repo Names Needed)</label>
-        <input type="text" id="skill-query" value="Design a macOS dashboard card with smooth spring animations" placeholder="Describe any coding, UI, Go, security, or SEO task...">
-
-        <div class="chips-row">
-          <button type="button" class="chip" onclick="testSkillRoute('Design a macOS dashboard card with smooth spring animations')">Apple HIG + Motion</button>
-          <button type="button" class="chip" onclick="testSkillRoute('Write a Golang HTTP API server and audit XSS vulnerabilities')">Go + Strix Pentest</button>
-          <button type="button" class="chip" onclick="testSkillRoute('Audit landing page SEO and deslop marketing copy')">SEO + Deslop</button>
-        </div>
-
-        <button type="button" class="btn btn-ghost" style="width: 100%;" onclick="testSkillRoute()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-          Inspect Auto-Activated Repos & Skills
-        </button>
-
-        <div class="route-box" id="skill-output" role="region" aria-live="polite">
-          <div style="color: var(--text-muted); font-size: 0.78rem;">Evaluating task intent...</div>
-        </div>
-      </div>
-
-      <!-- Column 3: Spend Breakdown, Post-Mortems & Graphify AST Explorer -->
-      <div class="card">
-        <div class="section-bar">
-          <div class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Telemetry, Memory & AST
-          </div>
-          <div class="tab-group" role="tablist">
-            <button type="button" class="tab-btn active" id="tab-spend-btn" onclick="switchTab('spend')">Spend</button>
-            <button type="button" class="tab-btn" id="tab-pm-btn" onclick="switchTab('pm')">Post-Mortems</button>
-            <button type="button" class="tab-btn" id="tab-ast-btn" onclick="switchTab('ast')">Graphify AST</button>
-          </div>
-        </div>
-
-        <div id="tab-spend-view" style="overflow-x: auto; max-height: 365px;">
-          <table id="spend-table">
-            <thead>
-              <tr>
-                <th>Model Engine</th>
-                <th>Reqs</th>
-                <th>Tokens</th>
-                <th>Cost (USD)</th>
-              </tr>
-            </thead>
-            <tbody id="spend-tbody">
-              <tr><td colspan="4" style="color: var(--text-muted);">Loading spend telemetry...</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div id="tab-pm-view" style="display: none; max-height: 365px; overflow-y: auto;">
-          <div id="pm-list" style="font-size: 0.78rem; color: var(--text-secondary);">No post-mortem regressions recorded.</div>
-        </div>
-
-        <div id="tab-ast-view" style="display: none; max-height: 365px; overflow-y: auto;">
-          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-            <button type="button" class="btn" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify', '_blank')">
-              Open Interactive Graph.html ↗
-            </button>
-            <button type="button" class="btn btn-ghost" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify/report', '_blank')">
-              Open GRAPH_REPORT.md ↗
-            </button>
-          </div>
-          <label class="field-label" for="ast-query-input">Query Graphify AST Knowledge Graph</label>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input type="text" id="ast-query-input" value="invoke_model_with_fallback" placeholder="Search symbol, function, or module..." style="margin-bottom: 0;">
-            <button type="button" class="btn btn-ghost" onclick="runAstQuery()">Query</button>
-          </div>
-          <div class="route-box mono" id="ast-query-output" style="font-size: 0.73rem; min-height: 150px; white-space: pre-wrap;">Tap "Query" or click "Open Interactive Graph.html ↗" above to explore the full 2,397-node AST graph.</div>
-        </div>
-      </div>
-    </section>
-      <!-- ==========================================================================
+    <!-- ==========================================================================
          INTERACTIVE MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS
          ========================================================================== -->
     <section class="agent-studio-section" id="agent-studio-section" aria-label="Interactive Multi-Agent Design Studio and OpenDots Canvas">
@@ -1591,6 +1927,129 @@ def dashboard():
       </div>
     </section>
 
+    <section class="ops-grid" aria-label="Interactive Gateway Tools and Telemetry">
+      <!-- Column 1: Live Gateway Playground -->
+      <div class="card">
+        <div class="section-bar">
+          <div class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+            Live Gateway Playground
+          </div>
+          <span class="mono" style="font-size: 0.7rem; color: var(--text-muted);">Ctrl+Enter</span>
+        </div>
+
+        <label class="field-label" for="test-model">
+          <span>Target Model Tier</span>
+          <span class="mono" id="routed-badge" style="color: var(--accent);">auto-router ready</span>
+        </label>
+        <select id="test-model">
+          <option value="auto">auto — 5-Tier Smart Auto-Router</option>
+          <option value="local">local — Ollama GPU ($0.00)</option>
+          <option value="fast">fast — Llama 4 Scout ($0.08/M)</option>
+          <option value="coder">coder — Llama 3.3 70B ($0.72/M)</option>
+          <option value="reasoner">reasoner — DeepSeek R1 ($1.35/M)</option>
+          <option value="claude">claude — Claude Sonnet 4.5 ($3.00/M)</option>
+          <option value="opus">opus — Claude Opus 4.5 ($15.00/M)</option>
+        </select>
+
+        <div class="chips-row" aria-label="Quick Prompt Presets">
+          <button type="button" class="chip" onclick="setPrompt('auto', 'Fix a typo in docstring: reply in 1 sentence')">Tier 1: Docstring ($0)</button>
+          <button type="button" class="chip" onclick="setPrompt('auto', 'Write a unit test assertion for HTTP 200 in 2 lines')">Tier 2: Unit Test</button>
+          <button type="button" class="chip" onclick="setPrompt('auto', 'Debug why a mutex lock causes a race condition in 2 sentences')">Tier 4: Race Condition</button>
+        </div>
+
+        <label class="field-label" for="test-prompt">Prompt Instruction</label>
+        <textarea id="test-prompt" rows="2">Explain in 1 sentence how the 5-tier router conserves credits.</textarea>
+
+        <button type="button" class="btn" style="width: 100%;" onclick="runTestPrompt()" id="run-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span id="run-btn-label">Execute on Gateway</span>
+        </button>
+
+        <div class="output-box mono" id="test-output" role="region" aria-live="polite">Ready. Select a model tier or use "auto" to test live routing.</div>
+      </div>
+
+      <!-- Column 2: Zero-Name 32-Repo Skill Router Inspector -->
+      <div class="card">
+        <div class="section-bar">
+          <div class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Zero-Name 32-Repo Skill Router
+          </div>
+          <span class="mono" style="font-size: 0.7rem; color: var(--purple);">1,041 SKILL.md</span>
+        </div>
+
+        <label class="field-label" for="skill-query">Test Natural-Language Task (No Repo Names Needed)</label>
+        <input type="text" id="skill-query" value="Design a macOS dashboard card with smooth spring animations" placeholder="Describe any coding, UI, Go, security, or SEO task...">
+
+        <div class="chips-row">
+          <button type="button" class="chip" onclick="testSkillRoute('Design a macOS dashboard card with smooth spring animations')">Apple HIG + Motion</button>
+          <button type="button" class="chip" onclick="testSkillRoute('Write a Golang HTTP API server and audit XSS vulnerabilities')">Go + Strix Pentest</button>
+          <button type="button" class="chip" onclick="testSkillRoute('Audit landing page SEO and deslop marketing copy')">SEO + Deslop</button>
+        </div>
+
+        <button type="button" class="btn btn-ghost" style="width: 100%;" onclick="testSkillRoute()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+          Inspect Auto-Activated Repos & Skills
+        </button>
+
+        <div class="route-box" id="skill-output" role="region" aria-live="polite">
+          <div style="color: var(--text-muted); font-size: 0.78rem;">Evaluating task intent...</div>
+        </div>
+      </div>
+
+      <!-- Column 3: Spend Breakdown, Post-Mortems & Graphify AST Explorer -->
+      <div class="card">
+        <div class="section-bar">
+          <div class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Telemetry, Memory & AST
+          </div>
+          <div class="tab-group" role="tablist">
+            <button type="button" class="tab-btn active" id="tab-spend-btn" onclick="switchTab('spend')">Spend</button>
+            <button type="button" class="tab-btn" id="tab-pm-btn" onclick="switchTab('pm')">Post-Mortems</button>
+            <button type="button" class="tab-btn" id="tab-ast-btn" onclick="switchTab('ast')">Graphify AST</button>
+          </div>
+        </div>
+
+        <div id="tab-spend-view" style="overflow-x: auto; max-height: 365px;">
+          <table id="spend-table">
+            <thead>
+              <tr>
+                <th>Model Engine</th>
+                <th>Reqs</th>
+                <th>Tokens</th>
+                <th>Cost (USD)</th>
+              </tr>
+            </thead>
+            <tbody id="spend-tbody">
+              <tr><td colspan="4" style="color: var(--text-muted);">Loading spend telemetry...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="tab-pm-view" style="display: none; max-height: 365px; overflow-y: auto;">
+          <div id="pm-list" style="font-size: 0.78rem; color: var(--text-secondary);">No post-mortem regressions recorded.</div>
+        </div>
+
+        <div id="tab-ast-view" style="display: none; max-height: 365px; overflow-y: auto;">
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button type="button" class="btn" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify', '_blank')">
+              Open Interactive Graph.html ↗
+            </button>
+            <button type="button" class="btn btn-ghost" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify/report', '_blank')">
+              Open GRAPH_REPORT.md ↗
+            </button>
+          </div>
+          <label class="field-label" for="ast-query-input">Query Graphify AST Knowledge Graph</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="ast-query-input" value="invoke_model_with_fallback" placeholder="Search symbol, function, or module..." style="margin-bottom: 0;">
+            <button type="button" class="btn btn-ghost" onclick="runAstQuery()">Query</button>
+          </div>
+          <div class="route-box mono" id="ast-query-output" style="font-size: 0.73rem; min-height: 150px; white-space: pre-wrap;">Tap "Query" or click "Open Interactive Graph.html ↗" above to explore the full 2,397-node AST graph.</div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- How It Works & Cross-Platform Setup Guide Modal -->
@@ -1958,8 +2417,235 @@ def dashboard():
     }
 
     
-    
-    /* ==========================================================================
+    let currentSelectedAgent = 'claude';
+
+    function selectAgent(agentName) {
+      currentSelectedAgent = agentName;
+      ['claude', 'codex', 'aider', 'opendots', 'orchestrator'].forEach(a => {
+        const el = document.getElementById('agent-card-' + a);
+        if (el) el.classList.toggle('active', a === agentName);
+      });
+
+      const label = document.getElementById('agent-input-label');
+      const input = document.getElementById('agent-chat-prompt');
+      const cliCmd = document.getElementById('agent-cli-cmd');
+      const opendotsPanel = document.getElementById('opendots-extra-panel');
+
+      if (opendotsPanel) {
+        opendotsPanel.style.display = agentName === 'opendots' ? 'block' : 'none';
+      }
+
+      const agentMeta = {
+        claude: {
+          label: 'Chat or Dispatch Task to Claude Code (Bedrock Opus 4.6)',
+          placeholder: 'Ask Claude Code to build features, inspect code, or architect solutions...',
+          cli: 'claude -p "<task>"'
+        },
+        codex: {
+          label: 'Chat or Dispatch Task to OpenAI Codex (ChatGPT gpt-5.6-terra)',
+          placeholder: 'Instruct Codex to write, refactor, or test code in the elevated sandbox...',
+          cli: 'codex exec "<task>"'
+        },
+        aider: {
+          label: 'Chat or Dispatch Task to Aider (5-Tier Gateway Router)',
+          placeholder: 'Ask Aider to edit files with automatic commit tracking and model routing...',
+          cli: 'aider --model openai/auto --message "<task>"'
+        },
+        opendots: {
+          label: 'Interact with OpenDots CopilotKit UI Canvas & Channels',
+          placeholder: 'Ask OpenDots to generate UI states, interact with visual canvas dots, or query channels...',
+          cli: 'cd tools/OpenDots && npm run dev'
+        },
+        orchestrator: {
+          label: 'Dispatch Task to Autonomous Orchestrator (AST + ggshield Shield)',
+          placeholder: 'Describe a multi-agent task to orchestrate across AST, model tiers, and security sensors...',
+          cli: 'python orchestrate.py --task "<task>"'
+        }
+      };
+
+      if (agentMeta[agentName]) {
+        if (label) label.innerText = agentMeta[agentName].label;
+        if (input) input.placeholder = agentMeta[agentName].placeholder;
+        if (cliCmd) cliCmd.innerText = agentMeta[agentName].cli;
+      }
+    }
+
+    function setAgentChipPrompt(text) {
+      const input = document.getElementById('agent-chat-prompt');
+      if (input) {
+        input.value = text;
+        input.focus();
+      }
+    }
+
+    function clearAgentConsole() {
+      const consoleEl = document.getElementById('agent-output-console');
+      if (consoleEl) consoleEl.innerText = 'Console cleared. Select an agent and tap "Chat / Dispatch" to start a run.';
+      document.getElementById('agent-chat-status').innerText = 'Ready for input';
+    }
+
+    function copyAgentConsole() {
+      const consoleEl = document.getElementById('agent-output-console');
+      if (consoleEl && consoleEl.innerText) {
+        navigator.clipboard.writeText(consoleEl.innerText);
+        const st = document.getElementById('agent-chat-status');
+        if (st) {
+          const old = st.innerText;
+          st.innerText = '✓ Copied to clipboard!';
+          setTimeout(() => st.innerText = old, 2000);
+        }
+      }
+    }
+
+    async function sendAgentMessage() {
+      const input = document.getElementById('agent-chat-prompt');
+      const msg = input.value.trim();
+      if (!msg) {
+        alert('Please enter a prompt or instruction for ' + currentSelectedAgent);
+        return;
+      }
+
+      const model = document.getElementById('agent-model-select').value;
+      const statusEl = document.getElementById('agent-chat-status');
+      const consoleEl = document.getElementById('agent-output-console');
+      const sendBtn = document.getElementById('btn-agent-send');
+
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Executing...';
+      statusEl.innerText = `Dispatching to ${currentSelectedAgent.toUpperCase()}...`;
+      consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching task to ${currentSelectedAgent.toUpperCase()}...
+> Prompt: ${msg}
+
+Waiting for response from agent runner...
+`;
+
+      const startT = performance.now();
+      try {
+        const r = await fetch('/v1/agents/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            agent: currentSelectedAgent,
+            message: msg,
+            model: model
+          })
+        });
+        const data = await r.json();
+        const durationSec = ((performance.now() - startT) / 1000).toFixed(2);
+
+        if (r.ok && data.status === 'ok') {
+          consoleEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Exit: ${data.exit_code}]
+
+${data.response}`;
+          statusEl.innerText = `Completed in ${durationSec}s`;
+        } else {
+          consoleEl.innerText = `[ERROR • ${durationSec}s]
+${data.response || data.detail || JSON.stringify(data, null, 2)}`;
+          statusEl.innerText = 'Execution error';
+        }
+      } catch (err) {
+        consoleEl.innerText = `[Network Error]: ${err.message}`;
+        statusEl.innerText = 'Request failed';
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Chat / Dispatch';
+      }
+    }
+
+    async function triggerAutoConfig() {
+      const btn = document.getElementById('btn-auto-config');
+      const badge = document.getElementById('auto-config-status-badge');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '⚡ Auto-Configuring...';
+      }
+      if (badge) badge.innerText = 'Configuring all agents...';
+
+      try {
+        const r = await fetch('/v1/config/auto-configure', {method: 'POST'});
+        const d = await r.json();
+        if (badge) {
+          badge.innerText = '✓ All 5 Agents Auto-Configured';
+          badge.style.color = 'var(--success)';
+        }
+        await fetchAgentStatus();
+      } catch (err) {
+        if (badge) {
+          badge.innerText = 'Config notice: ' + err.message;
+          badge.style.color = 'var(--warning)';
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = '⚡ Auto-Configure All Agents';
+        }
+      }
+    }
+
+    async function configureOpenDots() {
+      try {
+        const r = await fetch('/v1/opendots/configure', {method: 'POST'});
+        const d = await r.json();
+        alert('OpenDots configured! Linked to http://127.0.0.1:8000/v1.\n\nTo launch UI canvas: cd tools/OpenDots && npm run dev');
+        fetchAgentStatus();
+      } catch (err) {
+        alert('OpenDots configuration notice: ' + err.message);
+      }
+    }
+
+    async function fetchAgentStatus() {
+      try {
+        const r = await fetch('/v1/agents/status');
+        if (!r.ok) return;
+        const d = await r.json();
+
+        // Claude status
+        if (d.claude) {
+          const pill = document.getElementById('status-pill-claude');
+          if (pill) {
+            pill.innerText = d.claude.configured ? 'ONLINE' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.claude.configured ? 'status-online' : 'status-pending');
+          }
+          const mod = document.getElementById('badge-claude-model');
+          if (mod) mod.innerText = d.claude.model ? d.claude.model.replace('us.anthropic.', '') : 'Opus 4.6';
+          const prof = document.getElementById('badge-claude-prof');
+          if (prof) prof.innerText = d.claude.profile || 'Bedrock Active';
+        }
+
+        // Codex status
+        if (d.codex) {
+          const pill = document.getElementById('status-pill-codex');
+          if (pill) {
+            pill.innerText = d.codex.authenticated ? 'ONLINE' : 'READY';
+            pill.className = 'agent-status-pill ' + (d.codex.authenticated ? 'status-online' : 'status-pending');
+          }
+          const mod = document.getElementById('badge-codex-model');
+          if (mod) mod.innerText = d.codex.model || 'gpt-5.6-terra';
+        }
+
+        // Aider status
+        if (d.aider) {
+          const pill = document.getElementById('status-pill-aider');
+          if (pill) {
+            pill.innerText = d.aider.configured ? 'ONLINE' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.aider.configured ? 'status-online' : 'status-pending');
+          }
+        }
+
+        // OpenDots status
+        if (d.opendots) {
+          const pill = document.getElementById('status-pill-opendots');
+          if (pill) {
+            pill.innerText = d.opendots.configured ? 'READY' : 'PENDING';
+            pill.className = 'agent-status-pill ' + (d.opendots.configured ? 'status-online' : 'status-pending');
+          }
+        }
+      } catch (e) {
+        console.warn('Agent status fetch:', e);
+      }
+    }
+
+/* ==========================================================================
        MULTI-AGENT DESIGN STUDIO & OPENDOTS ENGINE JAVASCRIPT
        ========================================================================== */
     let currentAgent = 'claude';
