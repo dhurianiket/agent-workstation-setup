@@ -472,90 +472,91 @@ def dashboard():
 
     
     
+    
     /* ==========================================================================
        MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS (Apple HIG + UI/UX Pro Max)
        ========================================================================== */
     .agent-studio-section {
-      margin-top: 28px;
-      margin-bottom: 34px;
+      margin-top: 32px;
+      margin-bottom: 40px;
     }
     .studio-card {
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(28px) saturate(200%);
-      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      background: rgba(13, 19, 33, 0.82);
+      backdrop-filter: blur(32px) saturate(210%);
+      -webkit-backdrop-filter: blur(32px) saturate(210%);
       border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: var(--radius-lg);
-      padding: 22px;
-      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.14);
     }
     .studio-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
     }
     .studio-title-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
     .studio-icon-glow {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.25));
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(168, 85, 247, 0.28));
+      border: 1px solid rgba(56, 189, 248, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--accent);
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.28);
     }
     .studio-title {
-      font-size: 1.18rem;
+      font-size: 1.22rem;
       font-weight: 700;
-      color: var(--text);
+      color: #ffffff;
       letter-spacing: -0.02em;
     }
     .studio-sub {
-      font-size: 0.78rem;
+      font-size: 0.80rem;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 3px;
     }
     .agent-selector-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 10px;
-      margin-bottom: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
     }
     .agent-card {
-      background: var(--surface-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
+      background: rgba(17, 24, 39, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px 16px;
       cursor: pointer;
-      transition: all 0.25s var(--ease-out);
+      transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
       position: relative;
     }
     .agent-card:hover {
-      border-color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.5);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
     }
     .agent-card.active {
+      background: rgba(30, 41, 59, 0.85);
       border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.08);
-      box-shadow: 0 0 24px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 0 1.5px var(--accent), 0 10px 28px -4px rgba(56, 189, 248, 0.32);
     }
     .agent-card-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 4px;
+      align-items: center;
+      margin-bottom: 6px;
     }
     .agent-name {
       font-weight: 700;
@@ -566,88 +567,98 @@ def dashboard():
       gap: 8px;
     }
     .agent-status-pill {
-      font-size: 0.64rem;
+      font-size: 0.62rem;
       font-weight: 700;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
     }
     .status-online {
-      background: var(--success-soft);
-      color: var(--success);
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
-    .status-pending {
-      background: var(--warning-soft);
-      color: var(--warning);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+    .status-ready {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
     }
     .agent-desc {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      line-height: 1.35;
-      margin-bottom: 6px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 10px;
+      min-height: 32px;
     }
     .agent-meta-badge {
-      font-size: 0.68rem;
-      font-family: "Fira Code", monospace;
-      color: var(--text-secondary);
-      background: var(--surface-inset);
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-mono);
     }
-
-    /* Split-Screen Studio Grid */
     .studio-split-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 20px;
     }
-    @media (min-width: 980px) {
+    @media (min-width: 960px) {
       .studio-split-grid {
-        grid-template-columns: 420px 1fr;
+        grid-template-columns: 390px 1fr;
       }
     }
     .studio-controls-pane {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      background: var(--surface-inset);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px;
+      gap: 16px;
+      background: rgba(11, 16, 27, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 18px;
     }
     .studio-canvas-pane {
       display: flex;
       flex-direction: column;
-      background: var(--surface-inset);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
+      background: rgba(8, 12, 20, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 18px;
       overflow: hidden;
       min-height: 520px;
+      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6);
     }
     .canvas-nav-bar {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
-      background: var(--surface-elevated);
-      border-bottom: 1px solid var(--border);
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
+    .mac-traffic-lights {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-right: 6px;
+    }
+    .traffic-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .traffic-red { background: #ef4444; }
+    .traffic-yellow { background: #f59e0b; }
+    .traffic-green { background: #10b981; }
     .canvas-tabs {
-      display: inline-flex;
-      background: var(--surface-inset);
-      border-radius: var(--radius-sm);
-      padding: 2px;
-      border: 1px solid var(--border);
+      display: flex;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .canvas-tab-btn {
       background: transparent;
@@ -655,500 +666,100 @@ def dashboard():
       color: var(--text-muted);
       font-size: 0.74rem;
       font-weight: 600;
-      padding: 5px 10px;
-      border-radius: 4px;
+      padding: 5px 11px;
+      border-radius: 7px;
       cursor: pointer;
+      transition: all 0.2s var(--ease-out);
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s var(--ease-out);
+    }
+    .canvas-tab-btn:hover {
+      color: var(--text);
     }
     .canvas-tab-btn.active {
-      background: var(--surface-elevated);
-      color: var(--text);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      background: rgba(56, 189, 248, 0.18);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     .canvas-viewport-wrap {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
-      background: #080c14;
+      background: #060910;
       position: relative;
       overflow: hidden;
+      min-height: 480px;
     }
     .canvas-iframe {
       width: 100%;
       height: 100%;
       min-height: 480px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      background: #090d16;
-      transition: width 0.3s var(--ease-out);
+      border: none;
+      background: transparent;
+      transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     }
     .canvas-iframe.mobile-view {
       width: 375px;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 8px rgba(30, 41, 59, 0.6);
+      box-shadow: 0 0 0 10px #1e293b, 0 20px 50px rgba(0, 0, 0, 0.8);
+      border-radius: 36px;
+      margin: 20px auto;
+      height: 90%;
     }
     .mode-pills-row {
       display: flex;
       gap: 6px;
-      margin-bottom: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .mode-pill {
       flex: 1;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-align: center;
-      padding: 5px 8px;
-      border-radius: 6px;
-      background: var(--surface-elevated);
+      background: transparent;
+      border: none;
       color: var(--text-muted);
-      border: 1px solid var(--border);
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 6px 8px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s var(--ease-out);
+      text-align: center;
     }
     .mode-pill.active {
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
     }
-    .opendots-node-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .opendots-node {
-      background: var(--surface-elevated);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .opendots-node:hover {
-      border-color: #fb923c;
-      transform: translateY(-2px);
-    }
-
-
-/* Sticky Liquid-Glass Functional Top Bar (Apple HIG liquid-glass.md) */
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(9, 13, 22, 0.78);
-      backdrop-filter: blur(18px) saturate(180%);
-      -webkit-backdrop-filter: blur(18px) saturate(180%);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2));
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
-    }
-
-    .brand-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .version-pill {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.28);
-    }
-
-    .brand-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    .topbar-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .provider-pills {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .prov-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-    }
-
-    .prov-pill.active {
-      color: var(--text);
-      border-color: rgba(34, 197, 94, 0.35);
-      background: rgba(34, 197, 94, 0.08);
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--text-muted);
-    }
-
-    .prov-pill.active .dot, .status-pill .dot {
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background: var(--success-soft);
-      color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.35);
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      background: var(--accent);
-      color: #06101e;
-      font-weight: 600;
-      font-size: 0.84rem;
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      cursor: pointer;
-      min-height: 36px;
-      transition: transform 140ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
-      user-select: none;
-    }
-
-    .btn:hover {
-      background: #7dd3fc;
-    }
-
-    .btn:active {
-      transform: scale(0.97);
-    }
-
-    .btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, .tier-card:focus-visible, .chip:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: 2px;
-    }
-
-    .btn-ghost {
-      background: var(--surface);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-ghost:hover {
-      background: var(--surface-elevated);
-      border-color: var(--border-strong);
-      color: var(--text);
-    }
-
-    .container {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 24px 28px 48px;
-    }
-
-    /* Bento KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 1200px) {
-      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 720px) {
-      .kpi-grid { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px 20px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
-    }
-
-    .kpi-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .kpi-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .kpi-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .kpi-val {
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      line-height: 1.2;
-    }
-
-    .kpi-sub {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      margin-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .meter-track {
-      width: 100%;
-      height: 5px;
-      background: var(--surface-inset);
-      border-radius: 999px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-
-    .meter-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 300ms var(--ease-out);
-    }
-
-    /* Section Headers */
-    .section-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      letter-spacing: -0.01em;
-    }
-
-    .section-hint {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-    }
-
-    /* Interactive 5-Tier Pipeline Grid */
-    .tiers-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 1200px) {
-      .tiers-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 720px) {
-      .tiers-grid { grid-template-columns: 1fr; }
-    }
-
-    .tier-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 15px 16px;
-      cursor: pointer;
-      text-align: left;
-      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .tier-card:hover {
-      border-color: var(--border-strong);
-      background: var(--surface-elevated);
-      transform: translateY(-2px);
-    }
-
-    .tier-card:active {
-      transform: scale(0.98);
-    }
-
-    .tier-card.selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 8px 24px -8px rgba(56, 189, 248, 0.25);
-    }
-
-    .tier-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      margin-bottom: 10px;
-      width: fit-content;
-    }
-
-    .tier-name {
-      font-weight: 700;
-      font-size: 0.94rem;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-
-    .tier-desc {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
-
-    .tier-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-      font-size: 0.72rem;
-    }
-
-    /* Main Operations Deck (3-Column Responsive Grid) */
-    .ops-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 1fr 1.25fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 1280px) {
-      .ops-grid { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 860px) {
-      .ops-grid { grid-template-columns: 1fr; }
-    }
-
-    .field-label {
-      font-size: 0.74rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    select, textarea, input[type="text"] {
-      width: 100%;
-      background: var(--surface-inset);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 9px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      font-family: inherit;
-      transition: border-color 150ms var(--ease-out);
-    }
-
-    select:hover, textarea:hover, input[type="text"]:hover {
-      border-color: var(--border-strong);
-    }
-
     .chips-row {
       display: flex;
-      gap: 6px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      gap: 6px;
     }
-
     .chip {
-      background: var(--surface-inset);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.71rem;
-      padding: 4px 9px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
       cursor: pointer;
-      transition: transform 120ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+      transition: all 0.2s var(--ease-out);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
-
     .chip:hover {
-      color: var(--text);
-      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.14);
+      color: #ffffff;
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-1px);
     }
-
-    .chip:active {
+.chip:active {
       transform: scale(0.96);
     }
 
@@ -1694,10 +1305,10 @@ def dashboard():
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="btn btn-ghost" style="font-size: 0.74rem; padding: 5px 10px;" onclick="window.open('http://localhost:5173', '_blank')" id="btn-opendots-open" title="Open standalone OpenDots web application">
+            <button type="button" class="btn btn-ghost" style="font-size: 0.74rem; padding: 5px 11px;" onclick="window.open('http://localhost:5173', '_blank')" id="btn-opendots-open" title="Open standalone OpenDots web application">
               🌐 OpenDots App ↗
             </button>
-            <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.74rem; padding: 6px 12px;" onclick="triggerAutoConfig()" id="btn-auto-config" title="Auto-configures Claude Code, Codex, Aider, OpenDots, and Ollama in 1 click">
+            <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.74rem; padding: 6px 13px;" onclick="triggerAutoConfig()" id="btn-auto-config" title="Auto-configures Claude Code, Codex, Aider, OpenDots, and Ollama in 1 click">
               ⚡ Auto-Configure
             </button>
           </div>
@@ -1708,12 +1319,12 @@ def dashboard():
           <!-- Claude Code -->
           <div class="agent-card active" id="agent-card-claude" onclick="selectAgent('claude')">
             <div class="agent-card-header">
-              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a78bfa;"></span>Claude Code</span>
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a78bfa;box-shadow:0 0 8px #a78bfa;"></span>Claude Code</span>
               <span class="agent-status-pill status-online" id="status-pill-claude">ONLINE</span>
             </div>
-            <div class="agent-desc">Architectural lead &amp; high-craft UI component designer on Bedrock Opus 4.6.</div>
+            <div class="agent-desc">Architectural lead &amp; high-craft UI component designer on Bedrock Opus 4.6 &amp; Sonnet 4.6.</div>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              <span class="agent-meta-badge" id="badge-claude-model">Opus 4.6</span>
+              <span class="agent-meta-badge" id="badge-claude-model">Sonnet 4.6</span>
               <span class="agent-meta-badge" id="badge-claude-prof">Bedrock</span>
             </div>
           </div>
@@ -1721,7 +1332,7 @@ def dashboard():
           <!-- OpenAI Codex -->
           <div class="agent-card" id="agent-card-codex" onclick="selectAgent('codex')">
             <div class="agent-card-header">
-              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;"></span>OpenAI Codex</span>
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;"></span>OpenAI Codex</span>
               <span class="agent-status-pill status-online" id="status-pill-codex">ONLINE</span>
             </div>
             <div class="agent-desc">Rapid component generation and elevated sandbox coding engine.</div>
@@ -1734,7 +1345,7 @@ def dashboard():
           <!-- Aider -->
           <div class="agent-card" id="agent-card-aider" onclick="selectAgent('aider')">
             <div class="agent-card-header">
-              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;"></span>Aider</span>
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></span>Aider</span>
               <span class="agent-status-pill status-online" id="status-pill-aider">ONLINE</span>
             </div>
             <div class="agent-desc">Automated pair-programming engine wired to the Unified 5-Tier auto-router.</div>
@@ -1747,8 +1358,8 @@ def dashboard():
           <!-- OpenDots Canvas -->
           <div class="agent-card" id="agent-card-opendots" onclick="selectAgent('opendots')">
             <div class="agent-card-header">
-              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fb923c;"></span>OpenDots</span>
-              <span class="agent-status-pill status-online" id="status-pill-opendots">READY</span>
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fb923c;box-shadow:0 0 8px #fb923c;"></span>OpenDots</span>
+              <span class="agent-status-pill status-ready" id="status-pill-opendots">READY</span>
             </div>
             <div class="agent-desc">CopilotKit Generative UI canvas, visual state dots, and agent coworker spaces.</div>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -1760,8 +1371,8 @@ def dashboard():
           <!-- Workstation Orchestrator -->
           <div class="agent-card" id="agent-card-orchestrator" onclick="selectAgent('orchestrator')">
             <div class="agent-card-header">
-              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e879f9;"></span>Orchestrator</span>
-              <span class="agent-status-pill status-online" id="status-pill-orchestrator">READY</span>
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f472b6;box-shadow:0 0 8px #f472b6;"></span>Orchestrator</span>
+              <span class="agent-status-pill status-ready" id="status-pill-orchestrator">READY</span>
             </div>
             <div class="agent-desc">Multi-agent controller with Tree-sitter AST sensor and GitGuardian shield.</div>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -1779,7 +1390,7 @@ def dashboard():
               <label class="field-label">Studio Mode</label>
               <div class="mode-pills-row">
                 <button type="button" class="mode-pill active" id="mode-design-btn" onclick="setStudioMode('design')">🎨 UI Design</button>
-                <button type="button" class="mode-pill" id="mode-dots-btn" onclick="setStudioMode('dots')">🔮 OpenDots Dots</button>
+                <button type="button" class="mode-pill" id="mode-dots-btn" onclick="setStudioMode('dots')">🔮 State Dots</button>
                 <button type="button" class="mode-pill" id="mode-code-btn" onclick="setStudioMode('code')">💻 Full Code</button>
                 <button type="button" class="mode-pill" id="mode-cli-btn" onclick="setStudioMode('cli')">⚡ CLI Dispatch</button>
               </div>
@@ -1788,9 +1399,9 @@ def dashboard():
             <div>
               <label class="field-label" for="studio-model-select">Model Profile</label>
               <select id="studio-model-select" style="margin-bottom: 0;">
+                <option value="sonnet" selected>Claude Sonnet 4.6 (Fast Bedrock)</option>
+                <option value="opus">Claude Opus 4.6 (Frontier Bedrock)</option>
                 <option value="auto">Auto 5-Tier Fallback Router</option>
-                <option value="opus">Claude Opus 4.6 (AWS Bedrock)</option>
-                <option value="sonnet">Claude Sonnet 4.6 (AWS Bedrock)</option>
                 <option value="gpt-5.6-terra">ChatGPT gpt-5.6-terra (Codex)</option>
                 <option value="gpt-6-luna">ChatGPT gpt-6-luna (Codex)</option>
                 <option value="local">Local Ollama ($0.00)</option>
@@ -1820,7 +1431,7 @@ def dashboard():
               <span id="studio-exec-status" style="font-size: 0.72rem; color: var(--text-muted);">Ready to design</span>
               <div style="display: flex; gap: 8px;">
                 <button type="button" class="btn btn-ghost" style="font-size: 0.74rem; padding: 6px 10px;" onclick="resetShowcaseDesign()">Reset Showcase</button>
-                <button type="button" class="btn" style="font-size: 0.76rem; padding: 7px 14px;" id="btn-studio-generate" onclick="generateDesign()">
+                <button type="button" class="btn" style="background: linear-gradient(135deg, #38bdf8, #818cf8); font-size: 0.76rem; padding: 7px 14px; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);" id="btn-studio-generate" onclick="generateDesign()">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                   Generate &amp; Render Design
                 </button>
@@ -1831,27 +1442,34 @@ def dashboard():
           <!-- Right: Interactive Live Canvas & Inspector -->
           <div class="studio-canvas-pane">
             <div class="canvas-nav-bar">
-              <div class="canvas-tabs">
-                <button type="button" class="canvas-tab-btn active" id="tab-canvas-preview-btn" onclick="switchStudioTab('preview')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  Visual Preview
-                </button>
-                <button type="button" class="canvas-tab-btn" id="tab-canvas-dots-btn" onclick="switchStudioTab('dots')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="18" r="2"></circle><circle cx="5" cy="18" r="2"></circle></svg>
-                  OpenDots State Dots
-                </button>
-                <button type="button" class="canvas-tab-btn" id="tab-canvas-code-btn" onclick="switchStudioTab('code')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                  Code Inspector
-                </button>
-                <button type="button" class="canvas-tab-btn" id="tab-canvas-logs-btn" onclick="switchStudioTab('logs')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                  Diagnostics
-                </button>
-                <button type="button" class="canvas-tab-btn" id="tab-canvas-app-btn" onclick="switchStudioTab('app')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                  OpenDots App (5173)
-                </button>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="mac-traffic-lights" aria-hidden="true">
+                  <div class="traffic-dot traffic-red"></div>
+                  <div class="traffic-dot traffic-yellow"></div>
+                  <div class="traffic-dot traffic-green"></div>
+                </div>
+                <div class="canvas-tabs">
+                  <button type="button" class="canvas-tab-btn active" id="tab-canvas-preview-btn" onclick="switchStudioTab('preview')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Visual Preview
+                  </button>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-dots-btn" onclick="switchStudioTab('dots')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="18" r="2"></circle><circle cx="5" cy="18" r="2"></circle></svg>
+                    OpenDots State Dots
+                  </button>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-code-btn" onclick="switchStudioTab('code')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Code Inspector
+                  </button>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-logs-btn" onclick="switchStudioTab('logs')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Diagnostics
+                  </button>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-app-btn" onclick="switchStudioTab('app')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    OpenDots App (5173)
+                  </button>
+                </div>
               </div>
 
               <!-- Viewport & Actions Toolbar -->
@@ -1899,42 +1517,42 @@ def dashboard():
                 <path d="M 380 160 C 380 260, 260 260, 240 250" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2"/>
                 <path d="M 380 160 C 380 260, 500 260, 520 250" fill="none" stroke="rgba(244, 114, 182, 0.4)" stroke-width="2"/>
 
-                <!-- Dot 1: Research -->
-                <g transform="translate(120, 160)" onclick="selectDot('research')" style="cursor: pointer;">
-                  <circle r="26" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="2" filter="url(#glow)"/>
-                  <circle r="14" fill="#38bdf8"/>
-                  <text y="42" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Research Dot</text>
-                  <text y="56" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Fira Code, monospace">agent-reach</text>
+                <!-- Node 1: Research Dot -->
+                <g class="dot-node" onclick="selectDot('research')" style="cursor: pointer;">
+                  <circle cx="120" cy="160" r="32" fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="2" filter="url(#glow)"/>
+                  <circle cx="120" cy="160" r="12" fill="#38bdf8"/>
+                  <text x="120" y="210" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">Research</text>
+                  <text x="120" y="226" text-anchor="middle" fill="#94a3b8" font-size="10">agent-reach</text>
                 </g>
 
-                <!-- Dot 2: Architect (Core) -->
-                <g transform="translate(380, 160)" onclick="selectDot('architect')" style="cursor: pointer;">
-                  <circle r="34" fill="rgba(168, 85, 247, 0.25)" stroke="#a855f7" stroke-width="2.5" filter="url(#glow)"/>
-                  <circle r="18" fill="#a855f7"/>
-                  <text y="52" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="800" font-family="Plus Jakarta Sans, sans-serif">UI Architect Dot</text>
-                  <text y="66" text-anchor="middle" fill="#c084fc" font-size="9" font-family="Fira Code, monospace">Apple HIG • Core</text>
+                <!-- Node 2: UI Architect Dot (Center) -->
+                <g class="dot-node" onclick="selectDot('architect')" style="cursor: pointer;">
+                  <circle cx="380" cy="160" r="44" fill="rgba(168, 85, 247, 0.2)" stroke="#a855f7" stroke-width="2.5" filter="url(#glow)"/>
+                  <circle cx="380" cy="160" r="16" fill="#a855f7"/>
+                  <text x="380" y="222" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">UI Architect</text>
+                  <text x="380" y="238" text-anchor="middle" fill="#cbd5e1" font-size="10">Apple HIG Core</text>
                 </g>
 
-                <!-- Dot 3: Canvas Engine -->
-                <g transform="translate(640, 160)" onclick="selectDot('canvas')" style="cursor: pointer;">
-                  <circle r="26" fill="rgba(251, 146, 60, 0.25)" stroke="#fb923c" stroke-width="2" filter="url(#glow)"/>
-                  <circle r="14" fill="#fb923c"/>
-                  <text y="42" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Generative Canvas</text>
-                  <text y="56" text-anchor="middle" fill="#fdba74" font-size="9" font-family="Fira Code, monospace">CopilotKit :5173</text>
+                <!-- Node 3: Generative Canvas Dot -->
+                <g class="dot-node" onclick="selectDot('canvas')" style="cursor: pointer;">
+                  <circle cx="640" cy="160" r="34" fill="rgba(251, 146, 60, 0.2)" stroke="#fb923c" stroke-width="2" filter="url(#glow)"/>
+                  <circle cx="640" cy="160" r="13" fill="#fb923c"/>
+                  <text x="640" y="212" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">Canvas</text>
+                  <text x="640" y="228" text-anchor="middle" fill="#94a3b8" font-size="10">CopilotKit :5173</text>
                 </g>
 
-                <!-- Dot 4: Security -->
-                <g transform="translate(240, 250)" onclick="selectDot('security')" style="cursor: pointer;">
-                  <circle r="20" fill="rgba(34, 197, 94, 0.2)" stroke="#22c55e" stroke-width="1.8"/>
-                  <circle r="10" fill="#22c55e"/>
-                  <text y="32" text-anchor="middle" fill="#cbd5e1" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Security Shield</text>
+                <!-- Node 4: Security Shield Dot -->
+                <g class="dot-node" onclick="selectDot('security')" style="cursor: pointer;">
+                  <circle cx="240" cy="250" r="24" fill="rgba(34, 197, 94, 0.2)" stroke="#22c55e" stroke-width="1.8"/>
+                  <circle cx="240" cy="250" r="9" fill="#22c55e"/>
+                  <text x="240" y="288" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="600">Security</text>
                 </g>
 
-                <!-- Dot 5: Motion -->
-                <g transform="translate(520, 250)" onclick="selectDot('motion')" style="cursor: pointer;">
-                  <circle r="20" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="1.8"/>
-                  <circle r="10" fill="#f472b6"/>
-                  <text y="32" text-anchor="middle" fill="#cbd5e1" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Spring Motion</text>
+                <!-- Node 5: Motion & Spring Physics Dot -->
+                <g class="dot-node" onclick="selectDot('motion')" style="cursor: pointer;">
+                  <circle cx="520" cy="250" r="24" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="1.8"/>
+                  <circle cx="520" cy="250" r="9" fill="#f472b6"/>
+                  <text x="520" y="288" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="600">Spring Motion</text>
                 </g>
               </svg>
 
@@ -1947,16 +1565,24 @@ def dashboard():
             </div>
 
             <!-- View 3: Code Inspector -->
-            <div id="view-canvas-code" style="display: none; padding: 12px; flex: 1; background: #080c14; overflow-y: auto;">
-              <pre class="mono" id="studio-code-viewer" style="font-size: 0.76rem; color: #38bdf8; line-height: 1.45; white-space: pre-wrap; margin: 0;">Loading component code...</pre>
+            <div id="view-canvas-code" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="mono" style="font-size: 0.72rem; color: var(--accent);">Active HTML/CSS Component Source</span>
+                <button type="button" class="btn btn-ghost" style="padding: 3px 8px; font-size: 0.70rem;" onclick="copyCanvasCode()">Copy to Clipboard</button>
+              </div>
+              <pre id="studio-code-viewer" class="mono" style="font-size: 0.74rem; color: #cbd5e1; line-height: 1.5; white-space: pre-wrap; word-break: break-all; margin: 0;"></pre>
             </div>
 
-            <!-- View 4: Diagnostics -->
-            <div id="view-canvas-logs" style="display: none; padding: 14px; flex: 1; background: #080c14; overflow-y: auto;">
-              <div class="mono" id="studio-diagnostics-text" style="font-size: 0.78rem; color: var(--text-secondary); white-space: pre-wrap;">Engine Diagnostics: Ready for task execution.</div>
+            <!-- View 4: Diagnostics Log -->
+            <div id="view-canvas-logs" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="mono" style="font-size: 0.72rem; color: #a78bfa;">Execution Trace &amp; Hardware Sensor</span>
+                <button type="button" class="btn btn-ghost" style="padding: 3px 8px; font-size: 0.70rem;" onclick="document.getElementById('studio-diagnostics-text').innerText=''">Clear Logs</button>
+              </div>
+              <pre id="studio-diagnostics-text" class="mono" style="font-size: 0.72rem; color: #94a3b8; line-height: 1.5; white-space: pre-wrap; margin: 0;">Ready to execute. Tap Generate &amp; Render Design to dispatch prompt.</pre>
             </div>
 
-            <!-- View 5: OpenDots Standalone Web App (Port 5173) -->
+            <!-- View 5: OpenDots Standalone App -->
             <div id="view-canvas-app" style="display: none; flex: 1; background: #080c14; position: relative;">
               <iframe id="opendots-app-iframe" src="http://localhost:5173" style="width: 100%; height: 100%; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
             </div>
@@ -2340,236 +1966,9 @@ def dashboard():
     let currentStudioMode = 'design';
     let activeComponentHtml = '';
 
-    const SHOWCASE_HTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apple HIG Liquid-Glass Music Player</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #090d16;
-      --glass: rgba(18, 24, 38, 0.75);
-      --glass-border: rgba(255, 255, 255, 0.14);
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.35);
-      --pink: #f472b6;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --spring: cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: radial-gradient(ellipse 90% 70% at 50% 10%, #1e1b4b 0%, #090d16 80%);
-      color: var(--text);
-      font-family: "Plus Jakarta Sans", -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .player-card {
-      background: var(--glass);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      padding: 24px;
-      width: 100%;
-      max-width: 360px;
-      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-      transition: transform 0.4s var(--spring), box-shadow 0.4s var(--spring);
-    }
-    .player-card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 32px 70px -12px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    }
-    .album-art-wrap {
-      position: relative;
-      width: 100%;
-      padding-top: 100%;
-      border-radius: 20px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5);
-    }
-    .album-art {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .album-art.playing { animation: rotate-vinyl 18s linear infinite; }
-    @keyframes rotate-vinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .vinyl-grooves {
-      position: absolute;
-      inset: 12px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
-    }
-    .vinyl-core {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: #090d16;
-      border: 3px solid var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 16px var(--accent-glow);
-    }
-    .track-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .track-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.015em;
-    }
-    .track-artist { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
-    .pill-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      text-transform: uppercase;
-    }
-    .scrubber { width: 100%; margin-bottom: 18px; }
-    .scrubber-bar {
-      height: 5px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-      position: relative;
-      cursor: pointer;
-      overflow: hidden;
-    }
-    .scrubber-fill {
-      height: 100%;
-      width: 42%;
-      background: linear-gradient(90deg, var(--accent), var(--pink));
-      border-radius: 999px;
-    }
-    .time-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 6px;
-      font-family: "JetBrains Mono", monospace;
-    }
-    .controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      padding: 0 10px;
-    }
-    .btn-control {
-      background: transparent;
-      border: none;
-      color: var(--text);
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s var(--spring);
-    }
-    .btn-control:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
-    .btn-play {
-      width: 56px;
-      height: 56px;
-      background: var(--text);
-      color: #090d16;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.25);
-    }
-    .btn-play:hover { transform: scale(1.08); background: #ffffff; box-shadow: 0 10px 28px rgba(56, 189, 248, 0.4); }
-    .volume-row { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
-    .volume-slider { flex: 1; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; cursor: pointer; }
-    .volume-fill { height: 100%; width: 75%; background: var(--text-muted); border-radius: 999px; }
-  </style>
-</head>
-<body>
-  <div class="player-card">
-    <div class="album-art-wrap">
-      <div class="album-art playing" id="art">
-        <div class="vinyl-grooves"></div>
-        <div class="vinyl-core">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
-        </div>
-      </div>
-    </div>
-    <div class="track-info">
-      <div>
-        <div class="track-title">Cupertino Nights</div>
-        <div class="track-artist">Antigravity Studio • Liquid Glass</div>
-      </div>
-      <span class="pill-badge">Lossless</span>
-    </div>
-    <div class="scrubber">
-      <div class="scrubber-bar" onclick="seek(event)">
-        <div class="scrubber-fill" id="fill"></div>
-      </div>
-      <div class="time-labels">
-        <span id="cur">1:28</span>
-        <span>3:32</span>
-      </div>
-    </div>
-    <div class="controls">
-      <button class="btn-control" onclick="prev()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg></button>
-      <button class="btn-control btn-play" onclick="togglePlay()"><svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg></button>
-      <button class="btn-control" onclick="next()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg></button>
-    </div>
-    <div class="volume-row">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
-      <div class="volume-slider" onclick="setVol(event)">
-        <div class="volume-fill" id="volFill"></div>
-      </div>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-    </div>
-  </div>
-  <script>
-    let isPlaying = true;
-    function togglePlay() {
-      isPlaying = !isPlaying;
-      document.getElementById('art').classList.toggle('playing', isPlaying);
-      document.getElementById('playIcon').innerHTML = isPlaying ? '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>' : '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
-    }
-    function seek(e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width * 100;
-      document.getElementById('fill').style.width = pct + '%';
-    }
-    function setVol(e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width * 100;
-      document.getElementById('volFill').style.width = pct + '%';
-    }
-    function next() { alert('Next track: OpenDots Ambient Canvas'); }
-    function prev() { alert('Previous track: Cupertino Spring'); }
-  </script>
-</body>
-</html>`;
+    // Base64-encoded Apple HIG Music Player (100% immune to HTML parser tag conflicts)
+    const SHOWCASE_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiPgogIDxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wIj4KICA8dGl0bGU+QXBwbGUgSElHIExpcXVpZC1HbGFzcyBNdXNpYyBQbGF5ZXI8L3RpdGxlPgogIDxsaW5rIHJlbD0icHJlY29ubmVjdCIgaHJlZj0iaHR0cHM6Ly9mb250cy5nb29nbGVhcGlzLmNvbSI+CiAgPGxpbmsgcmVsPSJwcmVjb25uZWN0IiBocmVmPSJodHRwczovL2ZvbnRzLmdzdGF0aWMuY29tIiBjcm9zc29yaWdpbj4KICA8bGluayBocmVmPSJodHRwczovL2ZvbnRzLmdvb2dsZWFwaXMuY29tL2NzczI/ZmFtaWx5PVBsdXMrSmFrYXJ0YStTYW5zOndnaHRANDAwOzUwMDs2MDA7NzAwOzgwMCZmYW1pbHk9SmV0QnJhaW5zK01vbm86d2dodEA0MDA7NTAwJmRpc3BsYXk9c3dhcCIgcmVsPSJzdHlsZXNoZWV0Ij4KICA8c3R5bGU+CiAgICA6cm9vdCB7CiAgICAgIC0tYmc6ICMwOTBkMTY7CiAgICAgIC0tZ2xhc3M6IHJnYmEoMTgsIDI0LCAzOCwgMC43NSk7CiAgICAgIC0tZ2xhc3MtYm9yZGVyOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMTQpOwogICAgICAtLWFjY2VudDogIzM4YmRmODsKICAgICAgLS1hY2NlbnQtZ2xvdzogcmdiYSg1NiwgMTg5LCAyNDgsIDAuMzUpOwogICAgICAtLXBpbms6ICNmNDcyYjY7CiAgICAgIC0tdGV4dDogI2Y4ZmFmYzsKICAgICAgLS10ZXh0LW11dGVkOiAjOTRhM2I4OwogICAgICAtLXNwcmluZzogY3ViaWMtYmV6aWVyKDAuMjMsIDEsIDAuMzIsIDEpOwogICAgfQogICAgKiB7IGJveC1zaXppbmc6IGJvcmRlci1ib3g7IG1hcmdpbjogMDsgcGFkZGluZzogMDsgfQogICAgYm9keSB7CiAgICAgIGJhY2tncm91bmQ6IHJhZGlhbC1ncmFkaWVudChlbGxpcHNlIDkwJSA3MCUgYXQgNTAlIDEwJSwgIzFlMWI0YiAwJSwgIzA5MGQxNiA4MCUpOwogICAgICBjb2xvcjogdmFyKC0tdGV4dCk7CiAgICAgIGZvbnQtZmFtaWx5OiAiUGx1cyBKYWthcnRhIFNhbnMiLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmOwogICAgICBtaW4taGVpZ2h0OiAxMDB2aDsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIHBhZGRpbmc6IDI0cHg7CiAgICB9CiAgICAucGxheWVyLWNhcmQgewogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1nbGFzcyk7CiAgICAgIGJhY2tkcm9wLWZpbHRlcjogYmx1cigyOHB4KSBzYXR1cmF0ZSgxOTAlKTsKICAgICAgLXdlYmtpdC1iYWNrZHJvcC1maWx0ZXI6IGJsdXIoMjhweCkgc2F0dXJhdGUoMTkwJSk7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWdsYXNzLWJvcmRlcik7CiAgICAgIGJvcmRlci1yYWRpdXM6IDI4cHg7CiAgICAgIHBhZGRpbmc6IDI0cHg7CiAgICAgIHdpZHRoOiAxMDAlOwogICAgICBtYXgtd2lkdGg6IDM2MHB4OwogICAgICBib3gtc2hhZG93OiAwIDI0cHggNjBweCAtMTJweCByZ2JhKDAsIDAsIDAsIDAuNzUpLCBpbnNldCAwIDFweCAwIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xOCk7CiAgICAgIHRyYW5zaXRpb246IHRyYW5zZm9ybSAwLjRzIHZhcigtLXNwcmluZyksIGJveC1zaGFkb3cgMC40cyB2YXIoLS1zcHJpbmcpOwogICAgfQogICAgLnBsYXllci1jYXJkOmhvdmVyIHsKICAgICAgdHJhbnNmb3JtOiB0cmFuc2xhdGVZKC00cHgpIHNjYWxlKDEuMDEpOwogICAgICBib3gtc2hhZG93OiAwIDMycHggNzBweCAtMTJweCByZ2JhKDU2LCAxODksIDI0OCwgMC4yNSksIGluc2V0IDAgMXB4IDAgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjI1KTsKICAgIH0KICAgIC5hbGJ1bS1hcnQtd3JhcCB7CiAgICAgIHBvc2l0aW9uOiByZWxhdGl2ZTsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIHBhZGRpbmctdG9wOiAxMDAlOwogICAgICBib3JkZXItcmFkaXVzOiAyMHB4OwogICAgICBvdmVyZmxvdzogaGlkZGVuOwogICAgICBtYXJnaW4tYm90dG9tOiAyMHB4OwogICAgICBib3gtc2hhZG93OiAwIDE2cHggMzZweCAtOHB4IHJnYmEoMCwgMCwgMCwgMC41KTsKICAgIH0KICAgIC5hbGJ1bS1hcnQgewogICAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICAgIGluc2V0OiAwOwogICAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjZWM0ODk5LCAjOGI1Y2Y2LCAjM2I4MmY2KTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICB9CiAgICAuYWxidW0tYXJ0LnBsYXlpbmcgeyBhbmltYXRpb246IHJvdGF0ZS12aW55bCAxOHMgbGluZWFyIGluZmluaXRlOyB9CiAgICBAa2V5ZnJhbWVzIHJvdGF0ZS12aW55bCB7IGZyb20geyB0cmFuc2Zvcm06IHJvdGF0ZSgwZGVnKTsgfSB0byB7IHRyYW5zZm9ybTogcm90YXRlKDM2MGRlZyk7IH0gfQogICAgLnZpbnlsLWdyb292ZXMgewogICAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICAgIGluc2V0OiAxMnB4OwogICAgICBib3JkZXItcmFkaXVzOiA1MCU7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xNSk7CiAgICAgIGJveC1zaGFkb3c6IGluc2V0IDAgMCAyMHB4IHJnYmEoMCwwLDAsMC40KTsKICAgIH0KICAgIC52aW55bC1jb3JlIHsKICAgICAgd2lkdGg6IDY0cHg7CiAgICAgIGhlaWdodDogNjRweDsKICAgICAgYm9yZGVyLXJhZGl1czogNTAlOwogICAgICBiYWNrZ3JvdW5kOiAjMDkwZDE2OwogICAgICBib3JkZXI6IDNweCBzb2xpZCB2YXIoLS1hY2NlbnQpOwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgYm94LXNoYWRvdzogMCAwIDE2cHggdmFyKC0tYWNjZW50LWdsb3cpOwogICAgfQogICAgLnRyYWNrLWluZm8gewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICB9CiAgICAudHJhY2stdGl0bGUgewogICAgICBmb250LXNpemU6IDEuMTVyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiA3MDA7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgbGV0dGVyLXNwYWNpbmc6IC0wLjAxNWVtOwogICAgfQogICAgLnRyYWNrLWFydGlzdCB7IGZvbnQtc2l6ZTogMC44MnJlbTsgY29sb3I6IHZhcigtLXRleHQtbXV0ZWQpOyBtYXJnaW4tdG9wOiAycHg7IH0KICAgIC5waWxsLWJhZGdlIHsKICAgICAgZm9udC1zaXplOiAwLjY1cmVtOwogICAgICBmb250LXdlaWdodDogNzAwOwogICAgICBwYWRkaW5nOiAzcHggOHB4OwogICAgICBib3JkZXItcmFkaXVzOiA5OTlweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSg1NiwgMTg5LCAyNDgsIDAuMTUpOwogICAgICBjb2xvcjogdmFyKC0tYWNjZW50KTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgcmdiYSg1NiwgMTg5LCAyNDgsIDAuMyk7CiAgICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgICB9CiAgICAuc2NydWJiZXIgeyB3aWR0aDogMTAwJTsgbWFyZ2luLWJvdHRvbTogMThweDsgfQogICAgLnNjcnViYmVyLWJhciB7CiAgICAgIGhlaWdodDogNXB4OwogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMTIpOwogICAgICBib3JkZXItcmFkaXVzOiA5OTlweDsKICAgICAgcG9zaXRpb246IHJlbGF0aXZlOwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICB9CiAgICAuc2NydWJiZXItZmlsbCB7CiAgICAgIGhlaWdodDogMTAwJTsKICAgICAgd2lkdGg6IDQyJTsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDkwZGVnLCB2YXIoLS1hY2NlbnQpLCB2YXIoLS1waW5rKSk7CiAgICAgIGJvcmRlci1yYWRpdXM6IDk5OXB4OwogICAgfQogICAgLnRpbWUtbGFiZWxzIHsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBmb250LXNpemU6IDAuNzJyZW07CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgbWFyZ2luLXRvcDogNnB4OwogICAgICBmb250LWZhbWlseTogIkpldEJyYWlucyBNb25vIiwgbW9ub3NwYWNlOwogICAgfQogICAgLmNvbnRyb2xzIHsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBtYXJnaW4tYm90dG9tOiAxOHB4OwogICAgICBwYWRkaW5nOiAwIDEwcHg7CiAgICB9CiAgICAuYnRuLWNvbnRyb2wgewogICAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudDsKICAgICAgYm9yZGVyOiBub25lOwogICAgICBjb2xvcjogdmFyKC0tdGV4dCk7CiAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgICAgd2lkdGg6IDQwcHg7CiAgICAgIGhlaWdodDogNDBweDsKICAgICAgYm9yZGVyLXJhZGl1czogNTAlOwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgdHJhbnNpdGlvbjogYWxsIDAuMnMgdmFyKC0tc3ByaW5nKTsKICAgIH0KICAgIC5idG4tY29udHJvbDpob3ZlciB7IGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xKTsgdHJhbnNmb3JtOiBzY2FsZSgxLjEpOyB9CiAgICAuYnRuLXBsYXkgewogICAgICB3aWR0aDogNTZweDsKICAgICAgaGVpZ2h0OiA1NnB4OwogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS10ZXh0KTsKICAgICAgY29sb3I6ICMwOTBkMTY7CiAgICAgIGJvcmRlci1yYWRpdXM6IDUwJTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIGJveC1zaGFkb3c6IDAgOHB4IDI0cHggcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjI1KTsKICAgIH0KICAgIC5idG4tcGxheTpob3ZlciB7IHRyYW5zZm9ybTogc2NhbGUoMS4wOCk7IGJhY2tncm91bmQ6ICNmZmZmZmY7IGJveC1zaGFkb3c6IDAgMTBweCAyOHB4IHJnYmEoNTYsIDE4OSwgMjQ4LCAwLjQpOyB9CiAgICAudm9sdW1lLXJvdyB7IGRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IGdhcDogMTJweDsgcGFkZGluZzogMCA0cHg7IH0KICAgIC52b2x1bWUtc2xpZGVyIHsgZmxleDogMTsgaGVpZ2h0OiA0cHg7IGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xMik7IGJvcmRlci1yYWRpdXM6IDk5OXB4OyBjdXJzb3I6IHBvaW50ZXI7IH0KICAgIC52b2x1bWUtZmlsbCB7IGhlaWdodDogMTAwJTsgd2lkdGg6IDc1JTsgYmFja2dyb3VuZDogdmFyKC0tdGV4dC1tdXRlZCk7IGJvcmRlci1yYWRpdXM6IDk5OXB4OyB9CiAgPC9zdHlsZT4KPC9oZWFkPgo8Ym9keT4KICA8ZGl2IGNsYXNzPSJwbGF5ZXItY2FyZCI+CiAgICA8ZGl2IGNsYXNzPSJhbGJ1bS1hcnQtd3JhcCI+CiAgICAgIDxkaXYgY2xhc3M9ImFsYnVtLWFydCBwbGF5aW5nIiBpZD0iYXJ0Ij4KICAgICAgICA8ZGl2IGNsYXNzPSJ2aW55bC1ncm9vdmVzIj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJ2aW55bC1jb3JlIj4KICAgICAgICAgIDxzdmcgd2lkdGg9IjIyIiBoZWlnaHQ9IjIyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIuMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyI+PC9jaXJjbGU+PHBhdGggZD0iTTEyIDJ2NG0wIDEydjRNNC45MyA0LjkzbDIuODMgMi44M204LjQ4IDguNDhsMi44MyAyLjgzTTIgMTJoNG0xMiAwaDRNNC45MyAxOS4wN2wyLjgzLTIuODNtOC40OC04LjQ4bDIuODMtMi44MyI+PC9wYXRoPjwvc3ZnPgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0idHJhY2staW5mbyI+CiAgICAgIDxkaXY+CiAgICAgICAgPGRpdiBjbGFzcz0idHJhY2stdGl0bGUiPkN1cGVydGlubyBOaWdodHM8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJ0cmFjay1hcnRpc3QiPkFudGlncmF2aXR5IFN0dWRpbyDigKIgTGlxdWlkIEdsYXNzPC9kaXY+CiAgICAgIDwvZGl2PgogICAgICA8c3BhbiBjbGFzcz0icGlsbC1iYWRnZSI+TG9zc2xlc3M8L3NwYW4+CiAgICA8L2Rpdj4KICAgIDxkaXYgY2xhc3M9InNjcnViYmVyIj4KICAgICAgPGRpdiBjbGFzcz0ic2NydWJiZXItYmFyIiBvbmNsaWNrPSJzZWVrKGV2ZW50KSI+CiAgICAgICAgPGRpdiBjbGFzcz0ic2NydWJiZXItZmlsbCIgaWQ9ImZpbGwiPjwvZGl2PgogICAgICA8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0idGltZS1sYWJlbHMiPgogICAgICAgIDxzcGFuIGlkPSJjdXIiPjE6Mjg8L3NwYW4+CiAgICAgICAgPHNwYW4+MzozMjwvc3Bhbj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KICAgIDxkaXYgY2xhc3M9ImNvbnRyb2xzIj4KICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuLWNvbnRyb2wiIG9uY2xpY2s9InByZXYoKSI+PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMi4yIj48cG9seWdvbiBwb2ludHM9IjE5IDIwIDkgMTIgMTkgNCAxOSAyMCI+PC9wb2x5Z29uPjxsaW5lIHgxPSI1IiB5MT0iMTkiIHgyPSI1IiB5Mj0iNSI+PC9saW5lPjwvc3ZnPjwvYnV0dG9uPgogICAgICA8YnV0dG9uIGNsYXNzPSJidG4tY29udHJvbCBidG4tcGxheSIgb25jbGljaz0idG9nZ2xlUGxheSgpIj48c3ZnIGlkPSJwbGF5SWNvbiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjIyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9ImN1cnJlbnRDb2xvciI+PHJlY3QgeD0iNiIgeT0iNCIgd2lkdGg9IjQiIGhlaWdodD0iMTYiPjwvcmVjdD48cmVjdCB4PSIxNCIgeT0iNCIgd2lkdGg9IjQiIGhlaWdodD0iMTYiPjwvcmVjdD48L3N2Zz48L2J1dHRvbj4KICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuLWNvbnRyb2wiIG9uY2xpY2s9Im5leHQoKSI+PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMi4yIj48cG9seWdvbiBwb2ludHM9IjUgNCAxNSAxMiA1IDIwIDUgNCI+PC9wb2x5Z29uPjxsaW5lIHgxPSIxOSIgeTE9IjUiIHgyPSIxOSIgeTI9IjE5Ij48L2xpbmU+PC9zdmc+PC9idXR0b24+CiAgICA8L2Rpdj4KICAgIDxkaXYgY2xhc3M9InZvbHVtZS1yb3ciPgogICAgICA8c3ZnIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9InZhcigtLXRleHQtbXV0ZWQpIiBzdHJva2Utd2lkdGg9IjIiPjxwb2x5Z29uIHBvaW50cz0iMTEgNSA2IDkgMiA5IDIgMTUgNiAxNSAxMSAxOSAxMSA1Ij48L3BvbHlnb24+PC9zdmc+CiAgICAgIDxkaXYgY2xhc3M9InZvbHVtZS1zbGlkZXIiIG9uY2xpY2s9InNldFZvbChldmVudCkiPgogICAgICAgIDxkaXYgY2xhc3M9InZvbHVtZS1maWxsIiBpZD0idm9sRmlsbCI+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgICA8c3ZnIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9InZhcigtLXRleHQtbXV0ZWQpIiBzdHJva2Utd2lkdGg9IjIiPjxwb2x5Z29uIHBvaW50cz0iMTEgNSA2IDkgMiA5IDIgMTUgNiAxNSAxMSAxOSAxMSA1Ij48L3BvbHlnb24+PHBhdGggZD0iTTE5LjA3IDQuOTNhMTAgMTAgMCAwIDEgMCAxNC4xNE0xNS41NCA4LjQ2YTUgNSAwIDAgMSAwIDcuMDciPjwvcGF0aD48L3N2Zz4KICAgIDwvZGl2PgogIDwvZGl2PgogIDxzY3JpcHQ+CiAgICBsZXQgaXNQbGF5aW5nID0gdHJ1ZTsKICAgIGZ1bmN0aW9uIHRvZ2dsZVBsYXkoKSB7CiAgICAgIGlzUGxheWluZyA9ICFpc1BsYXlpbmc7CiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhcnQnKS5jbGFzc0xpc3QudG9nZ2xlKCdwbGF5aW5nJywgaXNQbGF5aW5nKTsKICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3BsYXlJY29uJykuaW5uZXJIVE1MID0gaXNQbGF5aW5nID8gJzxyZWN0IHg9IjYiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjE2Ij48L3JlY3Q+PHJlY3QgeD0iMTQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjE2Ij48L3JlY3Q+JyA6ICc8cG9seWdvbiBwb2ludHM9IjUgMyAxOSAxMiA1IDIxIDUgMyI+PC9wb2x5Z29uPic7CiAgICB9CiAgICBmdW5jdGlvbiBzZWVrKGUpIHsKICAgICAgY29uc3QgcmVjdCA9IGUuY3VycmVudFRhcmdldC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgY29uc3QgcGN0ID0gKGUuY2xpZW50WCAtIHJlY3QubGVmdCkgLyByZWN0LndpZHRoICogMTAwOwogICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZmlsbCcpLnN0eWxlLndpZHRoID0gcGN0ICsgJyUnOwogICAgfQogICAgZnVuY3Rpb24gc2V0Vm9sKGUpIHsKICAgICAgY29uc3QgcmVjdCA9IGUuY3VycmVudFRhcmdldC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgY29uc3QgcGN0ID0gKGUuY2xpZW50WCAtIHJlY3QubGVmdCkgLyByZWN0LndpZHRoICogMTAwOwogICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndm9sRmlsbCcpLnN0eWxlLndpZHRoID0gcGN0ICsgJyUnOwogICAgfQogICAgZnVuY3Rpb24gbmV4dCgpIHsgYWxlcnQoJ05leHQgdHJhY2s6IE9wZW5Eb3RzIEFtYmllbnQgQ2FudmFzJyk7IH0KICAgIGZ1bmN0aW9uIHByZXYoKSB7IGFsZXJ0KCdQcmV2aW91cyB0cmFjazogQ3VwZXJ0aW5vIFNwcmluZycpOyB9CiAgPC9zY3JpcHQ+CjwvYm9keT4KPC9odG1sPg==";
+    const SHOWCASE_HTML = atob(SHOWCASE_B64);
 
     function selectAgent(agentName) {
       currentAgent = agentName;
@@ -2626,7 +2025,7 @@ def dashboard():
         const btn = document.getElementById('tab-canvas-' + t + '-btn');
         const view = document.getElementById('view-canvas-' + t);
         if (btn) btn.classList.toggle('active', t === tab);
-        if (view) view.style.display = (t === tab) ? (t === 'preview' || t === 'app' ? 'flex' : 'block') : 'none';
+        if (view) view.style.display = (t === tab) ? ((t === 'preview' || t === 'app') ? 'flex' : 'block') : 'none';
       });
     }
 
@@ -2635,7 +2034,6 @@ def dashboard():
       const deskBtn = document.getElementById('vp-desktop-btn');
       const mobBtn = document.getElementById('vp-mobile-btn');
       if (!iframe) return;
-
       if (size === 'mobile') {
         iframe.classList.add('mobile-view');
         if (mobBtn) mobBtn.style.color = 'var(--accent)';
@@ -2783,8 +2181,7 @@ def dashboard():
               switchStudioTab('preview');
             }
           } else {
-            // Render text in preview iframe as styled card
-            const wrapped = `<!DOCTYPE html><html><body style="background:#090d16;color:#f8fafc;font-family:sans-serif;padding:32px;line-height:1.6;"><div style="background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;max-width:600px;margin:0 auto;">${data.response.replace(/\n/g, '<br>')}</div></body></html>`;
+            const wrapped = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#090d16;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;padding:32px;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}.card{background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:28px;max-width:620px;line-height:1.65;box-shadow:0 20px 50px rgba(0,0,0,0.6);}</style></head><body><div class="card">' + data.response.replace(/\n/g, '<br>') + '</div>' + '<' + '/body>' + '<' + '/html>';
             renderInCanvas(wrapped);
             switchStudioTab('preview');
           }
@@ -2817,7 +2214,6 @@ def dashboard():
       resetShowcaseDesign();
       fetchAgentStatus();
     });
-
 
     async function runTestPrompt() {
       const model = document.getElementById('test-model').value;
