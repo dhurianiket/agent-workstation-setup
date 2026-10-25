@@ -27,6 +27,20 @@ SKILL_INDEX_CACHE = CACHE_DIR / "skills_index_v1.json"
 # Deterministic Domain-to-Repo Intent Matrix covering all 32 Curated Repos + Eko + Skyvern
 DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
     {
+        "domain": "Swarm Intelligence & Parallel World Social Simulation",
+        "repos": ["MiroFish", "ruflo", "gods-eye-view"],
+        "keywords": [
+            "mirofish", "swarm intelligence", "prediction", "predict", "social simulation",
+            "oasis", "parallel digital world", "gods eye", "opinion simulation", "public opinion",
+            "counterfactual", "sandbox simulation", "rehearse", "scenario deduction", "agent society"
+        ],
+        "priority_files": [
+            "MiroFish/SKILL.md",
+            "MiroFish/README.md"
+        ]
+    },
+
+    {
         "domain": "Apple HIG & macOS/iOS Polish",
         "repos": ["dickwu-apple-design-skill", "emilkowalski-skills"],
         "keywords": ["apple", "ios", "macos", "swift", "swiftui", "hig", "glassmorphism", "sf pro", "cupertino", "ipad"],

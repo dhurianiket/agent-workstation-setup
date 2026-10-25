@@ -60,6 +60,7 @@ CURATED_REPOS: List[Tuple[str, str]] = [
     ("RuView", "https://github.com/ruvnet/RuView"),
     ("gods-eye-view", "https://github.com/bilawalsidhu/gods-eye-view"),
     ("go-modern-guidelines", "https://github.com/JetBrains/go-modern-guidelines"),
+    ("MiroFish", "https://github.com/666ghj/MiroFish"),
 ]
 
 REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
@@ -95,6 +96,7 @@ REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
     "RuView": "WiFi DensePose spatial sensing, RF pose estimation, and cognitive spatial telemetry (`cognitum-spaces`). Activate for spatial sensing, signal processing, or hardware telemetry tasks.",
     "gods-eye-view": "3D geospatial telemetry, aerial scene reconstruction, and spatial visualization dashboards. Activate for 3D mapping, WebGL/Three.js spatial views, or geospatial visualization.",
     "go-modern-guidelines": "JetBrains Modern Go (`use-modern-go`) idioms, Go 1.22+ standard library routing, concurrency patterns, and zero-allocation Go engineering. Activate whenever writing or reviewing Go (Golang) code.",
+    "MiroFish": "High-fidelity parallel digital world social simulation and swarm intelligence prediction engine. Simulates public opinion dynamics, policy outcomes, and counterfactual events via multi-agent OASIS environment.",
 }
 
 
