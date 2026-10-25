@@ -67,6 +67,7 @@ load_local_env(override=True)
 # Pricing per 1,000,000 tokens (USD)
 PRICING_PER_M = {
     "us.anthropic.claude-opus-4-6": {"input": 15.00, "output": 75.00},
+    "us.anthropic.claude-opus-4-6-v1": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-6-v1:0": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-5-20251101-v1:0": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
@@ -221,9 +222,9 @@ MODEL_MAP = {
     "claude-sonnet-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "claude-sonnet-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "tier": "frontier"},
     "sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
-    "opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
-    "claude-opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
-    "claude-opus-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6", "tier": "frontier"},
+    "opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6-v1", "tier": "frontier"},
+    "claude-opus": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6-v1", "tier": "frontier"},
+    "claude-opus-4.6": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-6-v1", "tier": "frontier"},
     "claude-opus-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-opus-4-5-20251101-v1:0", "tier": "frontier"},
     "haiku": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
     "claude-haiku-4.5": {"provider": "bedrock", "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0", "tier": "scout"},
