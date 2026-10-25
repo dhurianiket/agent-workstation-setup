@@ -19,6 +19,7 @@ Advanced features:
 """
 
 import os
+import re
 import sys
 import time
 import json
@@ -33,6 +34,13 @@ from pydantic import BaseModel
 import boto3
 from botocore.exceptions import ClientError
 import urllib.request
+from dotenv import load_dotenv
+
+# Load .env immediately
+load_dotenv()
+_env_path = Path(__file__).resolve().parent / '.env'
+if _env_path.exists():
+    load_dotenv(_env_path)
 
 app = FastAPI(title="Laptop Unified AI API - Multi-Provider BYOK", version="2.1.0")
 
@@ -126,7 +134,7 @@ QUALITY_DIRECTIVE = (
 )
 
 # Initialize AWS Bedrock client with profile & region flexibility
-aws_profile = os.environ.get("AWS_PROFILE")
+aws_profile = os.environ.get("AWS_PROFILE") or os.environ.get("AWS_DEFAULT_PROFILE")
 aws_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
 
 try:
@@ -134,7 +142,10 @@ try:
         session = boto3.Session(profile_name=aws_profile, region_name=aws_region)
     else:
         session = boto3.Session(region_name=aws_region)
-    bedrock = session.client("bedrock-runtime")
+    if session.get_credentials() is not None:
+        bedrock = session.client("bedrock-runtime")
+    else:
+        bedrock = None
 except Exception as e:
     print(f"Notice: Bedrock not initialized ({e}). Server will route to BYOK providers or local Ollama.")
     bedrock = None
@@ -330,6 +341,7 @@ class AgentChatRequest(BaseModel):
     agent: str  # claude, codex, aider, opendots, orchestrator
     message: str
     model: Optional[str] = "auto"
+    mode: Optional[str] = "design"  # design, code, cli
     working_dir: Optional[str] = None
 
 class OrchestrationRequest(BaseModel):
@@ -459,96 +471,268 @@ def dashboard():
     }
 
     
-    /* Multi-Agent Studio & Live Console (Apple HIG Liquid-Glass) */
+    
+    /* ==========================================================================
+       MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS (Apple HIG + UI/UX Pro Max)
+       ========================================================================== */
     .agent-studio-section {
-      margin-top: 24px;
-      margin-bottom: 30px;
+      margin-top: 28px;
+      margin-bottom: 34px;
+    }
+    .studio-card {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .studio-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .studio-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .studio-icon-glow {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.25));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+    .studio-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .studio-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
     .agent-selector-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
     }
     .agent-card {
       background: var(--surface-elevated);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 14px;
+      padding: 12px 14px;
       cursor: pointer;
-      transition: all 0.2s var(--ease-out);
+      transition: all 0.25s var(--ease-out);
       position: relative;
     }
     .agent-card:hover {
       border-color: var(--accent);
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
     }
     .agent-card.active {
       border-color: var(--accent);
       background: rgba(56, 189, 248, 0.08);
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
     .agent-card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .agent-name {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.90rem;
       color: var(--text);
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .agent-status-pill {
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 2px 7px;
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 2px 6px;
       border-radius: 999px;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
     }
     .status-online {
       background: var(--success-soft);
       color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.25);
+      border: 1px solid rgba(34, 197, 94, 0.3);
     }
     .status-pending {
       background: var(--warning-soft);
       color: var(--warning);
-      border: 1px solid rgba(245, 158, 11, 0.25);
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
     .agent-desc {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
-      line-height: 1.4;
-      margin-bottom: 8px;
+      line-height: 1.35;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .agent-meta-badge {
-      font-size: 0.70rem;
+      font-size: 0.68rem;
       font-family: "Fira Code", monospace;
       color: var(--text-secondary);
       background: var(--surface-inset);
       padding: 2px 6px;
       border-radius: 4px;
-      display: inline-block;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .agent-console-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px;
+
+    /* Split-Screen Studio Grid */
+    .studio-split-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 14px;
+      gap: 16px;
     }
-    @media (min-width: 900px) {
-      .agent-console-box {
-        grid-template-columns: 340px 1fr;
+    @media (min-width: 980px) {
+      .studio-split-grid {
+        grid-template-columns: 420px 1fr;
       }
     }
+    .studio-controls-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    .studio-canvas-pane {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      min-height: 520px;
+    }
+    .canvas-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .canvas-tabs {
+      display: inline-flex;
+      background: var(--surface-inset);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      border: 1px solid var(--border);
+    }
+    .canvas-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s var(--ease-out);
+    }
+    .canvas-tab-btn.active {
+      background: var(--surface-elevated);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .canvas-viewport-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: #080c14;
+      position: relative;
+      overflow: hidden;
+    }
+    .canvas-iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 480px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: #090d16;
+      transition: width 0.3s var(--ease-out);
+    }
+    .canvas-iframe.mobile-view {
+      width: 375px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 8px rgba(30, 41, 59, 0.6);
+    }
+    .mode-pills-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .mode-pill {
+      flex: 1;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: var(--surface-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .opendots-node-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .opendots-node {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .opendots-node:hover {
+      border-color: #fb923c;
+      transform: translateY(-2px);
+    }
+
 
 /* Sticky Liquid-Glass Functional Top Bar (Apple HIG liquid-glass.md) */
     .topbar {
@@ -1494,6 +1678,293 @@ def dashboard():
         </div>
       </div>
     </section>
+      <!-- ==========================================================================
+         INTERACTIVE MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS
+         ========================================================================== -->
+    <section class="agent-studio-section" id="agent-studio-section" aria-label="Interactive Multi-Agent Design Studio and OpenDots Canvas">
+      <div class="studio-card">
+        <div class="studio-header">
+          <div class="studio-title-group">
+            <div class="studio-icon-glow">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+            </div>
+            <div>
+              <div class="studio-title">Interactive Design Studio &amp; OpenDots Canvas</div>
+              <div class="studio-sub">Generate, render, and interact with live UI components, visual state dots, and CopilotKit agent workspaces in real time.</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-ghost" style="font-size: 0.74rem; padding: 5px 10px;" onclick="window.open('http://localhost:5173', '_blank')" id="btn-opendots-open" title="Open standalone OpenDots web application">
+              🌐 OpenDots App ↗
+            </button>
+            <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.74rem; padding: 6px 12px;" onclick="triggerAutoConfig()" id="btn-auto-config" title="Auto-configures Claude Code, Codex, Aider, OpenDots, and Ollama in 1 click">
+              ⚡ Auto-Configure
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Agent Cards Grid -->
+        <div class="agent-selector-grid">
+          <!-- Claude Code -->
+          <div class="agent-card active" id="agent-card-claude" onclick="selectAgent('claude')">
+            <div class="agent-card-header">
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a78bfa;"></span>Claude Code</span>
+              <span class="agent-status-pill status-online" id="status-pill-claude">ONLINE</span>
+            </div>
+            <div class="agent-desc">Architectural lead &amp; high-craft UI component designer on Bedrock Opus 4.6.</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span class="agent-meta-badge" id="badge-claude-model">Opus 4.6</span>
+              <span class="agent-meta-badge" id="badge-claude-prof">Bedrock</span>
+            </div>
+          </div>
+
+          <!-- OpenAI Codex -->
+          <div class="agent-card" id="agent-card-codex" onclick="selectAgent('codex')">
+            <div class="agent-card-header">
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;"></span>OpenAI Codex</span>
+              <span class="agent-status-pill status-online" id="status-pill-codex">ONLINE</span>
+            </div>
+            <div class="agent-desc">Rapid component generation and elevated sandbox coding engine.</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span class="agent-meta-badge" id="badge-codex-model">gpt-5.6-terra</span>
+              <span class="agent-meta-badge">ChatGPT</span>
+            </div>
+          </div>
+
+          <!-- Aider -->
+          <div class="agent-card" id="agent-card-aider" onclick="selectAgent('aider')">
+            <div class="agent-card-header">
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;"></span>Aider</span>
+              <span class="agent-status-pill status-online" id="status-pill-aider">ONLINE</span>
+            </div>
+            <div class="agent-desc">Automated pair-programming engine wired to the Unified 5-Tier auto-router.</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span class="agent-meta-badge">openai/auto</span>
+              <span class="agent-meta-badge">:8000/v1</span>
+            </div>
+          </div>
+
+          <!-- OpenDots Canvas -->
+          <div class="agent-card" id="agent-card-opendots" onclick="selectAgent('opendots')">
+            <div class="agent-card-header">
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fb923c;"></span>OpenDots</span>
+              <span class="agent-status-pill status-online" id="status-pill-opendots">READY</span>
+            </div>
+            <div class="agent-desc">CopilotKit Generative UI canvas, visual state dots, and agent coworker spaces.</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span class="agent-meta-badge">Port 5173</span>
+              <span class="agent-meta-badge">Canvas</span>
+            </div>
+          </div>
+
+          <!-- Workstation Orchestrator -->
+          <div class="agent-card" id="agent-card-orchestrator" onclick="selectAgent('orchestrator')">
+            <div class="agent-card-header">
+              <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e879f9;"></span>Orchestrator</span>
+              <span class="agent-status-pill status-online" id="status-pill-orchestrator">READY</span>
+            </div>
+            <div class="agent-desc">Multi-agent controller with Tree-sitter AST sensor and GitGuardian shield.</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span class="agent-meta-badge">AST Sensor</span>
+              <span class="agent-meta-badge">ggshield</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split-Screen Studio Grid -->
+        <div class="studio-split-grid">
+          <!-- Left: Controls & Prompts -->
+          <div class="studio-controls-pane">
+            <div>
+              <label class="field-label">Studio Mode</label>
+              <div class="mode-pills-row">
+                <button type="button" class="mode-pill active" id="mode-design-btn" onclick="setStudioMode('design')">🎨 UI Design</button>
+                <button type="button" class="mode-pill" id="mode-dots-btn" onclick="setStudioMode('dots')">🔮 OpenDots Dots</button>
+                <button type="button" class="mode-pill" id="mode-code-btn" onclick="setStudioMode('code')">💻 Full Code</button>
+                <button type="button" class="mode-pill" id="mode-cli-btn" onclick="setStudioMode('cli')">⚡ CLI Dispatch</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="field-label" for="studio-model-select">Model Profile</label>
+              <select id="studio-model-select" style="margin-bottom: 0;">
+                <option value="auto">Auto 5-Tier Fallback Router</option>
+                <option value="opus">Claude Opus 4.6 (AWS Bedrock)</option>
+                <option value="sonnet">Claude Sonnet 4.6 (AWS Bedrock)</option>
+                <option value="gpt-5.6-terra">ChatGPT gpt-5.6-terra (Codex)</option>
+                <option value="gpt-6-luna">ChatGPT gpt-6-luna (Codex)</option>
+                <option value="local">Local Ollama ($0.00)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="field-label">1-Click Design Starters</label>
+              <div class="chips-row" style="margin-top: 2px;">
+                <button type="button" class="chip" onclick="setPresetPrompt('Design a modern Apple HIG liquid-glass music player card with working play/pause, volume slider, album art, and spring physics', 'design')">✨ Apple HIG Music Player</button>
+                <button type="button" class="chip" onclick="setPresetPrompt('Create an OpenDots interactive visual state canvas with 5 glowing agent dots, connecting bezier arcs, and state channel inspect cards', 'dots')">🔮 OpenDots State Nodes</button>
+                <button type="button" class="chip" onclick="setPresetPrompt('Design an Apple HIG dark glassmorphism telemetry card with circular SVG gauges and spring animations', 'design')">📊 Glassmorphism Gauges</button>
+                <button type="button" class="chip" onclick="setPresetPrompt('Design an iOS 18 dynamic island audio pill component with smooth spring hover and expanding controls', 'design')">📱 iOS 18 Audio Pill</button>
+                <button type="button" class="chip" onclick="setPresetPrompt('Design a high-contrast responsive SaaS pricing matrix bento grid with gradient borders', 'design')">💎 SaaS Pricing Bento</button>
+              </div>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field-label" id="studio-prompt-label" for="studio-prompt-input" style="margin-bottom: 0;">Design or Chat Instruction</label>
+                <span class="mono" style="font-size: 0.68rem; color: var(--text-muted);">Ctrl + Enter to run</span>
+              </div>
+              <textarea id="studio-prompt-input" rows="4" style="flex: 1; min-height: 90px;" placeholder="Describe a component, layout, or visual design to build and preview live in the canvas..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span id="studio-exec-status" style="font-size: 0.72rem; color: var(--text-muted);">Ready to design</span>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-ghost" style="font-size: 0.74rem; padding: 6px 10px;" onclick="resetShowcaseDesign()">Reset Showcase</button>
+                <button type="button" class="btn" style="font-size: 0.76rem; padding: 7px 14px;" id="btn-studio-generate" onclick="generateDesign()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                  Generate &amp; Render Design
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Live Canvas & Inspector -->
+          <div class="studio-canvas-pane">
+            <div class="canvas-nav-bar">
+              <div class="canvas-tabs">
+                <button type="button" class="canvas-tab-btn active" id="tab-canvas-preview-btn" onclick="switchStudioTab('preview')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  Visual Preview
+                </button>
+                <button type="button" class="canvas-tab-btn" id="tab-canvas-dots-btn" onclick="switchStudioTab('dots')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="18" r="2"></circle><circle cx="5" cy="18" r="2"></circle></svg>
+                  OpenDots State Dots
+                </button>
+                <button type="button" class="canvas-tab-btn" id="tab-canvas-code-btn" onclick="switchStudioTab('code')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                  Code Inspector
+                </button>
+                <button type="button" class="canvas-tab-btn" id="tab-canvas-logs-btn" onclick="switchStudioTab('logs')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                  Diagnostics
+                </button>
+                <button type="button" class="canvas-tab-btn" id="tab-canvas-app-btn" onclick="switchStudioTab('app')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                  OpenDots App (5173)
+                </button>
+              </div>
+
+              <!-- Viewport & Actions Toolbar -->
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.72rem;" onclick="setCanvasViewport('desktop')" id="vp-desktop-btn" title="Desktop width (100%)">💻 Desktop</button>
+                <button type="button" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.72rem;" onclick="setCanvasViewport('mobile')" id="vp-mobile-btn" title="Mobile width (375px)">📱 Mobile</button>
+                <button type="button" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.72rem;" onclick="copyCanvasCode()" title="Copy active component code">📋 Copy</button>
+                <button type="button" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.72rem;" onclick="downloadCanvasHtml()" title="Download as HTML file">💾 Download</button>
+                <button type="button" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.72rem;" onclick="openCanvasNewTab()" title="Open live component in new tab">🚀 Popout ↗</button>
+              </div>
+            </div>
+
+            <!-- View 1: Visual Sandbox Canvas -->
+            <div class="canvas-viewport-wrap" id="view-canvas-preview">
+              <iframe id="studio-live-iframe" class="canvas-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin" title="Live Visual Component Sandbox"></iframe>
+            </div>
+
+            <!-- View 2: OpenDots State Dots Canvas -->
+            <div id="view-canvas-dots" style="display: none; padding: 18px; flex: 1; background: #080c14; overflow-y: auto;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <div style="font-weight: 700; font-size: 0.92rem; color: #fb923c;">OpenDots CopilotKit State Dots Engine</div>
+                  <div style="font-size: 0.74rem; color: var(--text-muted);">Active agent coworker state dots, persistent thread channels, and reactive intelligence.</div>
+                </div>
+                <button type="button" class="btn" style="background: #ea580c; font-size: 0.74rem; padding: 4px 10px;" onclick="startOpenDotsServer()">▶ Start OpenDots Server</button>
+              </div>
+
+              <!-- Interactive SVG Dots Graph -->
+              <svg viewBox="0 0 760 320" style="width: 100%; max-height: 320px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px;">
+                <defs>
+                  <linearGradient id="grad-curve" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+                    <stop offset="50%" stop-color="#a855f7" stop-opacity="0.6"/>
+                    <stop offset="100%" stop-color="#fb923c" stop-opacity="0.8"/>
+                  </linearGradient>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur"/>
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                  </filter>
+                </defs>
+
+                <!-- Connecting Arcs -->
+                <path d="M 120 160 C 260 80, 260 160, 380 160" fill="none" stroke="url(#grad-curve)" stroke-width="2.5" stroke-dasharray="6,4"/>
+                <path d="M 380 160 C 500 160, 500 80, 640 160" fill="none" stroke="url(#grad-curve)" stroke-width="2.5"/>
+                <path d="M 380 160 C 380 260, 260 260, 240 250" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2"/>
+                <path d="M 380 160 C 380 260, 500 260, 520 250" fill="none" stroke="rgba(244, 114, 182, 0.4)" stroke-width="2"/>
+
+                <!-- Dot 1: Research -->
+                <g transform="translate(120, 160)" onclick="selectDot('research')" style="cursor: pointer;">
+                  <circle r="26" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="2" filter="url(#glow)"/>
+                  <circle r="14" fill="#38bdf8"/>
+                  <text y="42" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Research Dot</text>
+                  <text y="56" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Fira Code, monospace">agent-reach</text>
+                </g>
+
+                <!-- Dot 2: Architect (Core) -->
+                <g transform="translate(380, 160)" onclick="selectDot('architect')" style="cursor: pointer;">
+                  <circle r="34" fill="rgba(168, 85, 247, 0.25)" stroke="#a855f7" stroke-width="2.5" filter="url(#glow)"/>
+                  <circle r="18" fill="#a855f7"/>
+                  <text y="52" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="800" font-family="Plus Jakarta Sans, sans-serif">UI Architect Dot</text>
+                  <text y="66" text-anchor="middle" fill="#c084fc" font-size="9" font-family="Fira Code, monospace">Apple HIG • Core</text>
+                </g>
+
+                <!-- Dot 3: Canvas Engine -->
+                <g transform="translate(640, 160)" onclick="selectDot('canvas')" style="cursor: pointer;">
+                  <circle r="26" fill="rgba(251, 146, 60, 0.25)" stroke="#fb923c" stroke-width="2" filter="url(#glow)"/>
+                  <circle r="14" fill="#fb923c"/>
+                  <text y="42" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Generative Canvas</text>
+                  <text y="56" text-anchor="middle" fill="#fdba74" font-size="9" font-family="Fira Code, monospace">CopilotKit :5173</text>
+                </g>
+
+                <!-- Dot 4: Security -->
+                <g transform="translate(240, 250)" onclick="selectDot('security')" style="cursor: pointer;">
+                  <circle r="20" fill="rgba(34, 197, 94, 0.2)" stroke="#22c55e" stroke-width="1.8"/>
+                  <circle r="10" fill="#22c55e"/>
+                  <text y="32" text-anchor="middle" fill="#cbd5e1" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Security Shield</text>
+                </g>
+
+                <!-- Dot 5: Motion -->
+                <g transform="translate(520, 250)" onclick="selectDot('motion')" style="cursor: pointer;">
+                  <circle r="20" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="1.8"/>
+                  <circle r="10" fill="#f472b6"/>
+                  <text y="32" text-anchor="middle" fill="#cbd5e1" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Spring Motion</text>
+                </g>
+              </svg>
+
+              <!-- Node Detail Inspector Card -->
+              <div id="dot-inspector-card" style="background: var(--surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px;">
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Selected OpenDot</div>
+                <div id="dot-inspector-title" style="font-size: 0.92rem; font-weight: 700; color: var(--text); margin-top: 2px;">UI Architect Dot (Core)</div>
+                <div id="dot-inspector-desc" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">Generates Apple HIG compliant glassmorphism layouts, Cupertino typography, and responsive Bento grids. Click any dot above to inspect.</div>
+              </div>
+            </div>
+
+            <!-- View 3: Code Inspector -->
+            <div id="view-canvas-code" style="display: none; padding: 12px; flex: 1; background: #080c14; overflow-y: auto;">
+              <pre class="mono" id="studio-code-viewer" style="font-size: 0.76rem; color: #38bdf8; line-height: 1.45; white-space: pre-wrap; margin: 0;">Loading component code...</pre>
+            </div>
+
+            <!-- View 4: Diagnostics -->
+            <div id="view-canvas-logs" style="display: none; padding: 14px; flex: 1; background: #080c14; overflow-y: auto;">
+              <div class="mono" id="studio-diagnostics-text" style="font-size: 0.78rem; color: var(--text-secondary); white-space: pre-wrap;">Engine Diagnostics: Ready for task execution.</div>
+            </div>
+
+            <!-- View 5: OpenDots Standalone Web App (Port 5173) -->
+            <div id="view-canvas-app" style="display: none; flex: 1; background: #080c14; position: relative;">
+              <iframe id="opendots-app-iframe" src="http://localhost:5173" style="width: 100%; height: 100%; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- How It Works & Cross-Platform Setup Guide Modal -->
@@ -1861,107 +2332,431 @@ def dashboard():
     }
 
     
-    let currentSelectedAgent = 'claude';
+    
+    /* ==========================================================================
+       MULTI-AGENT DESIGN STUDIO & OPENDOTS ENGINE JAVASCRIPT
+       ========================================================================== */
+    let currentAgent = 'claude';
+    let currentStudioMode = 'design';
+    let activeComponentHtml = '';
+
+    const SHOWCASE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apple HIG Liquid-Glass Music Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --glass: rgba(18, 24, 38, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --pink: #f472b6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --spring: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(ellipse 90% 70% at 50% 10%, #1e1b4b 0%, #090d16 80%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .player-card {
+      background: var(--glass);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      transition: transform 0.4s var(--spring), box-shadow 0.4s var(--spring);
+    }
+    .player-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 32px 70px -12px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .album-art-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5);
+    }
+    .album-art {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .album-art.playing { animation: rotate-vinyl 18s linear infinite; }
+    @keyframes rotate-vinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .vinyl-grooves {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+    }
+    .vinyl-core {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #090d16;
+      border: 3px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .track-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .track-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.015em;
+    }
+    .track-artist { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .pill-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      text-transform: uppercase;
+    }
+    .scrubber { width: 100%; margin-bottom: 18px; }
+    .scrubber-bar {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .scrubber-fill {
+      height: 100%;
+      width: 42%;
+      background: linear-gradient(90deg, var(--accent), var(--pink));
+      border-radius: 999px;
+    }
+    .time-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding: 0 10px;
+    }
+    .btn-control {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s var(--spring);
+    }
+    .btn-control:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
+    .btn-play {
+      width: 56px;
+      height: 56px;
+      background: var(--text);
+      color: #090d16;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.25);
+    }
+    .btn-play:hover { transform: scale(1.08); background: #ffffff; box-shadow: 0 10px 28px rgba(56, 189, 248, 0.4); }
+    .volume-row { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+    .volume-slider { flex: 1; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; cursor: pointer; }
+    .volume-fill { height: 100%; width: 75%; background: var(--text-muted); border-radius: 999px; }
+  </style>
+</head>
+<body>
+  <div class="player-card">
+    <div class="album-art-wrap">
+      <div class="album-art playing" id="art">
+        <div class="vinyl-grooves"></div>
+        <div class="vinyl-core">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+        </div>
+      </div>
+    </div>
+    <div class="track-info">
+      <div>
+        <div class="track-title">Cupertino Nights</div>
+        <div class="track-artist">Antigravity Studio • Liquid Glass</div>
+      </div>
+      <span class="pill-badge">Lossless</span>
+    </div>
+    <div class="scrubber">
+      <div class="scrubber-bar" onclick="seek(event)">
+        <div class="scrubber-fill" id="fill"></div>
+      </div>
+      <div class="time-labels">
+        <span id="cur">1:28</span>
+        <span>3:32</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn-control" onclick="prev()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg></button>
+      <button class="btn-control btn-play" onclick="togglePlay()"><svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg></button>
+      <button class="btn-control" onclick="next()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg></button>
+    </div>
+    <div class="volume-row">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+      <div class="volume-slider" onclick="setVol(event)">
+        <div class="volume-fill" id="volFill"></div>
+      </div>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+    </div>
+  </div>
+  <script>
+    let isPlaying = true;
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      document.getElementById('art').classList.toggle('playing', isPlaying);
+      document.getElementById('playIcon').innerHTML = isPlaying ? '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>' : '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+    }
+    function seek(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width * 100;
+      document.getElementById('fill').style.width = pct + '%';
+    }
+    function setVol(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width * 100;
+      document.getElementById('volFill').style.width = pct + '%';
+    }
+    function next() { alert('Next track: OpenDots Ambient Canvas'); }
+    function prev() { alert('Previous track: Cupertino Spring'); }
+  </script>
+</body>
+</html>`;
 
     function selectAgent(agentName) {
-      currentSelectedAgent = agentName;
+      currentAgent = agentName;
       ['claude', 'codex', 'aider', 'opendots', 'orchestrator'].forEach(a => {
         const el = document.getElementById('agent-card-' + a);
         if (el) el.classList.toggle('active', a === agentName);
       });
 
-      const label = document.getElementById('agent-input-label');
-      const input = document.getElementById('agent-chat-prompt');
-      const cliCmd = document.getElementById('agent-cli-cmd');
-      const opendotsPanel = document.getElementById('opendots-extra-panel');
+      const label = document.getElementById('studio-prompt-label');
+      const input = document.getElementById('studio-prompt-input');
 
-      if (opendotsPanel) {
-        opendotsPanel.style.display = agentName === 'opendots' ? 'block' : 'none';
-      }
-
-      const agentMeta = {
-        claude: {
-          label: 'Chat or Dispatch Task to Claude Code (Bedrock Opus 4.6)',
-          placeholder: 'Ask Claude Code to build features, inspect code, or architect solutions...',
-          cli: 'claude -p "<task>"'
-        },
-        codex: {
-          label: 'Chat or Dispatch Task to OpenAI Codex (ChatGPT gpt-5.6-terra)',
-          placeholder: 'Instruct Codex to write, refactor, or test code in the elevated sandbox...',
-          cli: 'codex exec "<task>"'
-        },
-        aider: {
-          label: 'Chat or Dispatch Task to Aider (5-Tier Gateway Router)',
-          placeholder: 'Ask Aider to edit files with automatic commit tracking and model routing...',
-          cli: 'aider --model openai/auto --message "<task>"'
-        },
-        opendots: {
-          label: 'Interact with OpenDots CopilotKit UI Canvas & Channels',
-          placeholder: 'Ask OpenDots to generate UI states, interact with visual canvas dots, or query channels...',
-          cli: 'cd tools/OpenDots && npm run dev'
-        },
-        orchestrator: {
-          label: 'Dispatch Task to Autonomous Orchestrator (AST + ggshield Shield)',
-          placeholder: 'Describe a multi-agent task to orchestrate across AST, model tiers, and security sensors...',
-          cli: 'python orchestrate.py --task "<task>"'
-        }
-      };
-
-      if (agentMeta[agentName]) {
-        if (label) label.innerText = agentMeta[agentName].label;
-        if (input) input.placeholder = agentMeta[agentName].placeholder;
-        if (cliCmd) cliCmd.innerText = agentMeta[agentName].cli;
+      if (agentName === 'opendots') {
+        if (label) label.innerText = 'Design with OpenDots Generative UI Canvas & Visual Dots';
+        if (input && !input.value) input.placeholder = 'Ask OpenDots to generate an interactive canvas component with visual state dots and channels...';
+        switchStudioTab('dots');
+      } else if (agentName === 'claude') {
+        if (label) label.innerText = 'Design & Architect with Claude Code (Bedrock Opus 4.6)';
+        if (input && !input.value) input.placeholder = 'Describe a component, layout, or visual design to build and preview live...';
+      } else if (agentName === 'codex') {
+        if (label) label.innerText = 'Build & Prototype with OpenAI Codex (gpt-5.6-terra)';
+        if (input && !input.value) input.placeholder = 'Instruct Codex to build and test code in the sandbox...';
+      } else if (agentName === 'aider') {
+        if (label) label.innerText = 'Pair-Program & Refactor with Aider (5-Tier Gateway)';
+        if (input && !input.value) input.placeholder = 'Ask Aider to modify code or design with model auto-routing...';
+      } else {
+        if (label) label.innerText = 'Orchestrate Multi-Agent Swarm & AST Sensor';
       }
     }
 
-    function setAgentChipPrompt(text) {
-      const input = document.getElementById('agent-chat-prompt');
+    function setStudioMode(mode) {
+      currentStudioMode = mode;
+      ['design', 'dots', 'code', 'cli'].forEach(m => {
+        const el = document.getElementById('mode-' + m + '-btn');
+        if (el) el.classList.toggle('active', m === mode);
+      });
+      if (mode === 'dots') switchStudioTab('dots');
+      else if (mode === 'code') switchStudioTab('code');
+      else if (mode === 'cli') switchStudioTab('logs');
+      else switchStudioTab('preview');
+    }
+
+    function setPresetPrompt(text, mode) {
+      const input = document.getElementById('studio-prompt-input');
       if (input) {
         input.value = text;
         input.focus();
       }
+      if (mode) setStudioMode(mode);
     }
 
-    function clearAgentConsole() {
-      const consoleEl = document.getElementById('agent-output-console');
-      if (consoleEl) consoleEl.innerText = 'Console cleared. Select an agent and tap "Chat / Dispatch" to start a run.';
-      document.getElementById('agent-chat-status').innerText = 'Ready for input';
+    function switchStudioTab(tab) {
+      const tabs = ['preview', 'dots', 'code', 'logs', 'app'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-canvas-' + t + '-btn');
+        const view = document.getElementById('view-canvas-' + t);
+        if (btn) btn.classList.toggle('active', t === tab);
+        if (view) view.style.display = (t === tab) ? (t === 'preview' || t === 'app' ? 'flex' : 'block') : 'none';
+      });
     }
 
-    function copyAgentConsole() {
-      const consoleEl = document.getElementById('agent-output-console');
-      if (consoleEl && consoleEl.innerText) {
-        navigator.clipboard.writeText(consoleEl.innerText);
-        const st = document.getElementById('agent-chat-status');
+    function setCanvasViewport(size) {
+      const iframe = document.getElementById('studio-live-iframe');
+      const deskBtn = document.getElementById('vp-desktop-btn');
+      const mobBtn = document.getElementById('vp-mobile-btn');
+      if (!iframe) return;
+
+      if (size === 'mobile') {
+        iframe.classList.add('mobile-view');
+        if (mobBtn) mobBtn.style.color = 'var(--accent)';
+        if (deskBtn) deskBtn.style.color = 'var(--text-muted)';
+      } else {
+        iframe.classList.remove('mobile-view');
+        if (deskBtn) deskBtn.style.color = 'var(--accent)';
+        if (mobBtn) mobBtn.style.color = 'var(--text-muted)';
+      }
+    }
+
+    function renderInCanvas(htmlContent) {
+      activeComponentHtml = htmlContent;
+      const iframe = document.getElementById('studio-live-iframe');
+      const codeViewer = document.getElementById('studio-code-viewer');
+      if (iframe) iframe.srcdoc = htmlContent;
+      if (codeViewer) codeViewer.innerText = htmlContent;
+    }
+
+    function resetShowcaseDesign() {
+      renderInCanvas(SHOWCASE_HTML);
+      switchStudioTab('preview');
+      const st = document.getElementById('studio-exec-status');
+      if (st) st.innerText = 'Showcase component loaded';
+    }
+
+    function copyCanvasCode() {
+      if (activeComponentHtml) {
+        navigator.clipboard.writeText(activeComponentHtml);
+        const st = document.getElementById('studio-exec-status');
         if (st) {
           const old = st.innerText;
-          st.innerText = '✓ Copied to clipboard!';
+          st.innerText = '✓ Code copied to clipboard!';
           setTimeout(() => st.innerText = old, 2000);
         }
       }
     }
 
-    async function sendAgentMessage() {
-      const input = document.getElementById('agent-chat-prompt');
+    function downloadCanvasHtml() {
+      if (!activeComponentHtml) return;
+      const blob = new Blob([activeComponentHtml], {type: 'text/html'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `component-${currentAgent}-${Date.now()}.html`;
+      a.click();
+    }
+
+    function openCanvasNewTab() {
+      if (!activeComponentHtml) return;
+      const blob = new Blob([activeComponentHtml], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }
+
+    function selectDot(dotType) {
+      const dotMeta = {
+        research: {
+          title: 'Research Dot (agent-reach)',
+          desc: 'Specialized in gathering real-time web, GitHub, and academic knowledge without paid API keys.',
+          prompt: 'Use OpenDots research dot to find modern WWDC glassmorphism patterns and synthesize a design'
+        },
+        architect: {
+          title: 'UI Architect Dot (Apple HIG Core)',
+          desc: 'Generates Apple HIG compliant glassmorphism layouts, Cupertino typography, and responsive Bento grids.',
+          prompt: 'Design an Apple HIG liquid-glass dashboard widget with Cupertino spring physics and hairline borders'
+        },
+        canvas: {
+          title: 'Generative Canvas Dot (CopilotKit :5173)',
+          desc: 'Interactive visual state engine connected to local CopilotKit threads, channels, and spaces.',
+          prompt: 'Create an OpenDots interactive generative UI canvas component with live reactive visual dots'
+        },
+        security: {
+          title: 'Security Shield Dot (strix & ggshield)',
+          desc: 'Monitors secrets, scans inputs for injection vulnerabilities, and enforces safety gates.',
+          prompt: 'Audit the component for XSS injection, safe styling, and zero credential leakage'
+        },
+        motion: {
+          title: 'Spring Motion Dot (WWDC Spring)',
+          desc: 'Applies fluid WWDC spring physics (cubic-bezier(0.23, 1, 0.32, 1)) and tactile micro-interactions.',
+          prompt: 'Add fluid spring hover transitions and tactile feedback to the design'
+        }
+      };
+
+      if (dotMeta[dotType]) {
+        document.getElementById('dot-inspector-title').innerText = dotMeta[dotType].title;
+        document.getElementById('dot-inspector-desc').innerText = dotMeta[dotType].desc;
+        setPresetPrompt(dotMeta[dotType].prompt, 'dots');
+      }
+    }
+
+    async function startOpenDotsServer() {
+      const st = document.getElementById('studio-exec-status');
+      if (st) st.innerText = 'Starting OpenDots Vite server on port 5173...';
+      try {
+        const r = await fetch('/v1/opendots/start', {method: 'POST'});
+        const d = await r.json();
+        alert(d.message || 'OpenDots server started on http://localhost:5173');
+        if (st) st.innerText = 'OpenDots online on port 5173';
+        switchStudioTab('app');
+      } catch (e) {
+        alert('Notice: ' + e.message);
+      }
+    }
+
+    async function generateDesign() {
+      const input = document.getElementById('studio-prompt-input');
       const msg = input.value.trim();
       if (!msg) {
-        alert('Please enter a prompt or instruction for ' + currentSelectedAgent);
+        alert('Please enter a prompt or instruction.');
         return;
       }
 
-      const model = document.getElementById('agent-model-select').value;
-      const statusEl = document.getElementById('agent-chat-status');
-      const consoleEl = document.getElementById('agent-output-console');
-      const sendBtn = document.getElementById('btn-agent-send');
+      const model = document.getElementById('studio-model-select').value;
+      const statusEl = document.getElementById('studio-exec-status');
+      const genBtn = document.getElementById('btn-studio-generate');
+      const diagEl = document.getElementById('studio-diagnostics-text');
 
-      sendBtn.disabled = true;
-      sendBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Executing...';
-      statusEl.innerText = `Dispatching to ${currentSelectedAgent.toUpperCase()}...`;
-      consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching task to ${currentSelectedAgent.toUpperCase()}...
-> Prompt: ${msg}
-
-Waiting for response from agent runner...
-`;
+      genBtn.disabled = true;
+      genBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Generating...';
+      statusEl.innerText = `Generating design with ${currentAgent.toUpperCase()}...`;
+      diagEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching design prompt to ${currentAgent} (Model: ${model}, Mode: ${currentStudioMode})...\n> Prompt: ${msg}\n`;
 
       const startT = performance.now();
       try {
@@ -1969,127 +2764,62 @@ Waiting for response from agent runner...
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            agent: currentSelectedAgent,
+            agent: currentAgent,
             message: msg,
-            model: model
+            model: model,
+            mode: currentStudioMode
           })
         });
         const data = await r.json();
         const durationSec = ((performance.now() - startT) / 1000).toFixed(2);
 
         if (r.ok && data.status === 'ok') {
-          consoleEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Exit: ${data.exit_code}]
+          statusEl.innerText = `✓ Generated in ${durationSec}s`;
+          diagEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Agent: ${data.agent}]\n\n${data.response}`;
 
-${data.response}`;
-          statusEl.innerText = `Completed in ${durationSec}s`;
+          if (data.code) {
+            renderInCanvas(data.code);
+            if (currentStudioMode !== 'dots') {
+              switchStudioTab('preview');
+            }
+          } else {
+            // Render text in preview iframe as styled card
+            const wrapped = `<!DOCTYPE html><html><body style="background:#090d16;color:#f8fafc;font-family:sans-serif;padding:32px;line-height:1.6;"><div style="background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;max-width:600px;margin:0 auto;">${data.response.replace(/\n/g, '<br>')}</div></body></html>`;
+            renderInCanvas(wrapped);
+            switchStudioTab('preview');
+          }
         } else {
-          consoleEl.innerText = `[ERROR • ${durationSec}s]
-${data.response || data.detail || JSON.stringify(data, null, 2)}`;
-          statusEl.innerText = 'Execution error';
+          statusEl.innerText = 'Generation error';
+          diagEl.innerText = `[ERROR • ${durationSec}s]\n${data.response || data.detail || JSON.stringify(data, null, 2)}`;
         }
       } catch (err) {
-        consoleEl.innerText = `[Network Error]: ${err.message}`;
         statusEl.innerText = 'Request failed';
+        diagEl.innerText = `[Network Error]: ${err.message}`;
       } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Chat / Dispatch';
+        genBtn.disabled = false;
+        genBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Generate &amp; Render Design';
       }
     }
 
-    async function triggerAutoConfig() {
-      const btn = document.getElementById('btn-auto-config');
-      const badge = document.getElementById('auto-config-status-badge');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = '⚡ Auto-Configuring...';
-      }
-      if (badge) badge.innerText = 'Configuring all agents...';
-
-      try {
-        const r = await fetch('/v1/config/auto-configure', {method: 'POST'});
-        const d = await r.json();
-        if (badge) {
-          badge.innerText = '✓ All 5 Agents Auto-Configured';
-          badge.style.color = 'var(--success)';
-        }
-        await fetchAgentStatus();
-      } catch (err) {
-        if (badge) {
-          badge.innerText = 'Config notice: ' + err.message;
-          badge.style.color = 'var(--warning)';
-        }
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerText = '⚡ Auto-Configure All Agents';
+    // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to generate design
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const input = document.getElementById('studio-prompt-input');
+        if (input && document.activeElement === input) {
+          e.preventDefault();
+          generateDesign();
         }
       }
-    }
+    });
 
-    async function configureOpenDots() {
-      try {
-        const r = await fetch('/v1/opendots/configure', {method: 'POST'});
-        const d = await r.json();
-        alert('OpenDots configured! Linked to http://127.0.0.1:8000/v1.\n\nTo launch UI canvas: cd tools/OpenDots && npm run dev');
-        fetchAgentStatus();
-      } catch (err) {
-        alert('OpenDots configuration notice: ' + err.message);
-      }
-    }
+    // Auto-load showcase design on page load
+    window.addEventListener('load', () => {
+      resetShowcaseDesign();
+      fetchAgentStatus();
+    });
 
-    async function fetchAgentStatus() {
-      try {
-        const r = await fetch('/v1/agents/status');
-        if (!r.ok) return;
-        const d = await r.json();
 
-        // Claude status
-        if (d.claude) {
-          const pill = document.getElementById('status-pill-claude');
-          if (pill) {
-            pill.innerText = d.claude.configured ? 'ONLINE' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.claude.configured ? 'status-online' : 'status-pending');
-          }
-          const mod = document.getElementById('badge-claude-model');
-          if (mod) mod.innerText = d.claude.model ? d.claude.model.replace('us.anthropic.', '') : 'Opus 4.6';
-          const prof = document.getElementById('badge-claude-prof');
-          if (prof) prof.innerText = d.claude.profile || 'Bedrock Active';
-        }
-
-        // Codex status
-        if (d.codex) {
-          const pill = document.getElementById('status-pill-codex');
-          if (pill) {
-            pill.innerText = d.codex.authenticated ? 'ONLINE' : 'READY';
-            pill.className = 'agent-status-pill ' + (d.codex.authenticated ? 'status-online' : 'status-pending');
-          }
-          const mod = document.getElementById('badge-codex-model');
-          if (mod) mod.innerText = d.codex.model || 'gpt-5.6-terra';
-        }
-
-        // Aider status
-        if (d.aider) {
-          const pill = document.getElementById('status-pill-aider');
-          if (pill) {
-            pill.innerText = d.aider.configured ? 'ONLINE' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.aider.configured ? 'status-online' : 'status-pending');
-          }
-        }
-
-        // OpenDots status
-        if (d.opendots) {
-          const pill = document.getElementById('status-pill-opendots');
-          if (pill) {
-            pill.innerText = d.opendots.configured ? 'READY' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.opendots.configured ? 'status-online' : 'status-pending');
-          }
-        }
-      } catch (e) {
-        console.warn('Agent status fetch:', e);
-      }
-    }
-
-async function runTestPrompt() {
+    async function runTestPrompt() {
       const model = document.getElementById('test-model').value;
       const prompt = document.getElementById('test-prompt').value;
       const outBox = document.getElementById('test-output');
@@ -2867,22 +3597,212 @@ def configure_opendots_endpoint():
     return {"status": "error", "message": "auto_configurator not loaded"}
 
 
+@app.get("/v1/opendots/status")
+def get_opendots_status_endpoint():
+    """Returns live status of OpenDots Vite frontend (port 5173) and backend (port 4310)."""
+    opendots_dir = TOOLS_DIR / "OpenDots"
+    has_nm = (opendots_dir / "node_modules").exists()
+    has_env = (opendots_dir / ".env").exists()
+    
+    port_5173_online = False
+    port_4310_online = False
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen("http://127.0.0.1:5173/", timeout=0.8) as r:
+            port_5173_online = (r.status == 200)
+    except Exception:
+        pass
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen("http://127.0.0.1:4310/", timeout=0.8) as r:
+            port_4310_online = True
+    except Exception:
+        pass
+
+    return {
+        "installed": opendots_dir.exists(),
+        "has_node_modules": has_nm,
+        "configured": has_env,
+        "vite_online": port_5173_online,
+        "server_online": port_4310_online,
+        "url": "http://localhost:5173" if port_5173_online else None,
+        "port": 5173
+    }
+
+
+@app.post("/v1/opendots/start")
+def start_opendots_server_endpoint():
+    """Starts OpenDots Vite frontend server on port 5173 in the background."""
+    opendots_dir = TOOLS_DIR / "OpenDots"
+    if not (opendots_dir / "node_modules").exists():
+        return {"status": "error", "message": "node_modules missing. Please run npm install first."}
+    
+    st = get_opendots_status_endpoint()
+    if st["vite_online"]:
+        return {"status": "already_running", "message": "OpenDots is already online on http://localhost:5173", "url": "http://localhost:5173"}
+    
+    try:
+        subprocess.Popen(
+            ["npx", "vite", "--port", "5173"],
+            cwd=str(opendots_dir),
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return {"status": "starting", "message": "Launched OpenDots Vite server on http://localhost:5173", "url": "http://localhost:5173"}
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to start OpenDots: {e}"}
+
+
+def _extract_code_block(text: str) -> str:
+    m = re.search(r"```(?:html|jsx|tsx|css|xml|svg)?\s*\n([\s\S]*?)```", text)
+    if m:
+        return m.group(1).strip()
+    if "<!DOCTYPE html>" in text or "<html" in text or ("<div" in text and "</div>" in text):
+        return text.strip()
+    return ""
+
+
+DESIGN_SYSTEM_PROMPT = """You are an elite Principal Design Engineer mastering Apple Human Interface Guidelines (HIG), Cupertino spring physics, Tailwind CSS, Lucide icons, glassmorphism, responsive Bento grids, and OpenDots CopilotKit visual agent canvas patterns.
+
+When asked to design a component, layout, or interactive agent interface:
+1. Deliver a complete, self-contained, runnable HTML5 + CSS3 / Tailwind / modern inline style component wrapped in ```html ... ``` code fences.
+2. Ensure rich visual polish: sub-pixel borders, frosted glassmorphism (backdrop-filter: blur(20px)), subtle spring animations (cubic-bezier(0.23, 1, 0.32, 1)), dark-mode aesthetic, and tactile hover states.
+3. Make the component interactive: buttons should toggle states, sliders should update numbers, cards should react to clicks, and animations should feel alive with JavaScript.
+4. If designing for OpenDots, include visual state dots (pulsing avatar nodes, thread channels, CopilotKit status pills, and reactive agent state).
+5. Always explain the design choices, typography scale, and interaction physics after the code block.
+"""
+
+
 @app.post("/v1/agents/chat")
 async def chat_with_agent(req: AgentChatRequest):
+    print(f"[AGENT_CHAT] ENTERED: agent={req.agent}, mode={req.mode}, model={req.model}", flush=True)
     """
-    Direct interactive chat / execution endpoint for Claude Code, Codex, Aider, OpenDots, and Orchestrator.
-    Runs non-interactively with redirected stdin and returns complete response output.
+    Direct interactive chat, visual design, and code generation endpoint for Claude Code, Codex, Aider, OpenDots, and Orchestrator.
+    Supports instant visual UI generation (mode='design') and non-interactive CLI dispatch (mode='cli').
     """
     cwd = req.working_dir or str(Path(__file__).resolve().parent)
     agent = req.agent.lower().strip()
     msg = req.message.strip()
+    mode = (req.mode or "design").lower().strip()
     if not msg:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
+    start_time = time.time()
+
+    # Fast AI Design & Visual Generation Mode (direct gateway model router)
+    if mode in ["design", "code", "auto"] or agent in ["opendots"]:
+        # 1. Claude Mode (AWS Bedrock Opus 4.6 / Sonnet 4.6)
+        if agent == "claude" and bedrock is not None:
+            model_id = "us.anthropic.claude-sonnet-4-6"
+            if req.model and "opus" in req.model:
+                model_id = "us.anthropic.claude-opus-4-6-v1"
+            elif req.model in ["sonnet", "claude-sonnet"]:
+                model_id = "us.anthropic.claude-sonnet-4-6"
+            
+            print(f'[AGENT_CHAT] Calling Bedrock converse with model {model_id}... (bedrock={bedrock is not None})', flush=True)
+            try:
+                loop = asyncio.get_running_loop()
+                resp = await asyncio.wait_for(
+                    loop.run_in_executor(
+                        None,
+                        lambda: bedrock.converse(
+                            modelId=model_id,
+                            system=[{"text": DESIGN_SYSTEM_PROMPT}],
+                            messages=[{"role": "user", "content": [{"text": msg}]}],
+                            inferenceConfig={"maxTokens": 3500, "temperature": 0.7}
+                        )
+                    ),
+                    timeout=85.0
+                )
+                print(f"[AGENT_CHAT] Bedrock converse FINISHED in {time.time() - start_time:.2f}s", flush=True)
+                out_msg = resp["output"]["message"]
+                text_parts = [b["text"] for b in out_msg.get("content", []) if "text" in b]
+                full_text = "\n".join(text_parts).strip()
+                code = _extract_code_block(full_text)
+                dur = round(time.time() - start_time, 2)
+                return {
+                    "status": "ok",
+                    "agent": "claude",
+                    "model": model_id,
+                    "mode": mode,
+                    "response": full_text,
+                    "code": code,
+                    "duration_seconds": dur,
+                    "exit_code": 0
+                }
+            except Exception as e:
+                print(f"[AGENT_CHAT] Bedrock EXCEPTION: {type(e).__name__}: {e}", flush=True)
+
+        # 2. OpenDots Mode (CopilotKit Generative UI Canvas & Visual Dots)
+        elif agent == "opendots":
+            opendots_prompt = f"{DESIGN_SYSTEM_PROMPT}\n\nTask: Generate an OpenDots interactive generative UI canvas component with visual state dots, reactive agent channels, and living document cards for: {msg}"
+            # Route to Bedrock if available, else local router
+            if bedrock is not None:
+                try:
+                    loop = asyncio.get_running_loop()
+                    resp = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            None,
+                            lambda: bedrock.converse(
+                                modelId="us.anthropic.claude-sonnet-4-6",
+                                system=[{"text": opendots_prompt}],
+                                messages=[{"role": "user", "content": [{"text": msg}]}],
+                                inferenceConfig={"maxTokens": 3500, "temperature": 0.7}
+                            )
+                        ),
+                        timeout=85.0
+                    )
+                    full_text = "\n".join([b["text"] for b in resp["output"]["message"].get("content", []) if "text" in b]).strip()
+                    code = _extract_code_block(full_text)
+                    return {
+                        "status": "ok",
+                        "agent": "opendots",
+                        "model": "us.anthropic.claude-opus-4-6-v1",
+                        "mode": mode,
+                        "response": full_text,
+                        "code": code,
+                        "duration_seconds": round(time.time() - start_time, 2),
+                        "exit_code": 0
+                    }
+                except Exception as e:
+                    print(f"[OpenDots Fallback] {e}")
+
+        # 3. Direct Gateway Chat Completions fallback for Codex, Aider, Orchestrator
+        try:
+            target_model = req.model if req.model and req.model != "auto" else "claude"
+            comp_req = ChatCompletionRequest(
+                model=target_model,
+                messages=[
+                    ChatMessage(role="system", content=DESIGN_SYSTEM_PROMPT),
+                    ChatMessage(role="user", content=msg)
+                ],
+                max_tokens=4096,
+                temperature=0.7
+            )
+            res = await invoke_model_with_fallback(comp_req, target_model)
+            full_text = res.get("choices", [{}])[0].get("message", {}).get("content", "")
+            code = _extract_code_block(full_text)
+            dur = round(time.time() - start_time, 2)
+            return {
+                "status": "ok",
+                "agent": agent,
+                "model": res.get("model", target_model),
+                "mode": mode,
+                "response": full_text,
+                "code": code,
+                "duration_seconds": dur,
+                "exit_code": 0
+            }
+        except Exception as e:
+            print(f"[Gateway Design Fallback Error] {e}")
+
+    # Fallback to CLI subprocess execution (if mode == 'cli' or fallback requested)
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
-    
     extra_bins = os.pathsep.join([
         str(Path.home() / ".local" / "bin"),
         str(Path.home() / "bin"),
@@ -2892,36 +3812,22 @@ async def chat_with_agent(req: AgentChatRequest):
     ])
     env["PATH"] = f"{extra_bins}{os.pathsep}{env.get('PATH', '')}"
 
-    start_time = time.time()
-
     if agent == "claude":
         env["CLAUDE_CODE_USE_BEDROCK"] = env.get("CLAUDE_CODE_USE_BEDROCK", "1")
         env["AWS_REGION"] = env.get("AWS_REGION", "us-east-1")
         env["AWS_DEFAULT_REGION"] = env.get("AWS_DEFAULT_REGION", "us-east-1")
         env["AWS_PROFILE"] = env.get("AWS_PROFILE", os.environ.get("AWS_PROFILE", "default"))
-        if req.model in ["opus", "claude-opus", "us.anthropic.claude-opus-4-6-v1"]:
-            env["ANTHROPIC_MODEL"] = "us.anthropic.claude-opus-4-6-v1"
-        elif req.model in ["sonnet", "claude-sonnet"]:
-            env["ANTHROPIC_MODEL"] = "us.anthropic.claude-sonnet-4-6"
-        else:
-            env["ANTHROPIC_MODEL"] = env.get("ANTHROPIC_MODEL", "us.anthropic.claude-opus-4-6-v1")
-        
+        env["ANTHROPIC_MODEL"] = "us.anthropic.claude-opus-4-6-v1" if (req.model and "opus" in req.model) else "us.anthropic.claude-sonnet-4-6"
         clean_prompt = msg.replace('"', '\\"')
         cmd = f'claude -p "{clean_prompt}" --dangerously-skip-permissions'
 
     elif agent == "codex":
         clean_prompt = msg.replace('"', '\\"')
-        if req.model in ["local", "llama3.2"]:
-            cmd = f'codex exec "{clean_prompt}" --oss --local-provider ollama -m llama3.2:1b --dangerously-bypass-approvals-and-sandbox'
-        elif req.model and req.model not in ["auto", "default"]:
-            cmd = f'codex exec "{clean_prompt}" -m {req.model} --dangerously-bypass-approvals-and-sandbox'
-        else:
-            cmd = f'codex exec "{clean_prompt}" --dangerously-bypass-approvals-and-sandbox'
+        cmd = f'codex exec "{clean_prompt}" --dangerously-bypass-approvals-and-sandbox'
 
     elif agent == "aider":
         clean_prompt = msg.replace('"', '\\"')
-        model_flag = f"--model openai/{req.model}" if (req.model and req.model != "auto") else "--model openai/auto"
-        cmd = f'aider --openai-api-base http://127.0.0.1:8000/v1 --openai-api-key dummy-local-key {model_flag} --message "{clean_prompt}" --exit --no-git --yes-always --no-show-model-warnings'
+        cmd = f'aider --openai-api-base http://127.0.0.1:8000/v1 --openai-api-key dummy-local-key --model openai/auto --message "{clean_prompt}" --exit --no-git --yes-always --no-show-model-warnings'
 
     elif agent == "orchestrator":
         clean_prompt = msg.replace('"', '\\"')
@@ -2929,22 +3835,8 @@ async def chat_with_agent(req: AgentChatRequest):
         orch_py = str((Path(__file__).resolve().parent / "orchestrate.py").resolve())
         cmd = f'"{py_exe}" "{orch_py}" --task "{clean_prompt}" --no-shield'
 
-    elif agent == "opendots":
-        opendots_dir = Path(__file__).resolve().parent / "tools" / "OpenDots"
-        return {
-            "status": "ok",
-            "agent": "opendots",
-            "response": f"OpenDots Canvas is configured at {opendots_dir}.\n\n"
-                        f"• CopilotKit Bridge: http://127.0.0.1:8000/v1 (Linked)\n"
-                        f"• UI Canvas Origin: http://localhost:5173\n"
-                        f"• Backend Port: 4310\n"
-                        f"• Interactive UI Command: cd tools/OpenDots && npm run dev\n\n"
-                        f"Prompt received: {msg}",
-            "duration_seconds": round(time.time() - start_time, 2),
-            "exit_code": 0
-        }
     else:
-        raise HTTPException(status_code=400, detail=f"Unsupported agent: '{agent}'. Choose from: claude, codex, aider, orchestrator, opendots")
+        cmd = f'claude -p "{msg.replace('"', '\\"')}" --dangerously-skip-permissions'
 
     try:
         proc = await asyncio.create_subprocess_shell(
@@ -2959,26 +3851,18 @@ async def chat_with_agent(req: AgentChatRequest):
         dur = round(time.time() - start_time, 2)
         stdout_txt = stdout_b.decode("utf-8", errors="replace").strip()
         stderr_txt = stderr_b.decode("utf-8", errors="replace").strip()
-        
         out = stdout_txt if stdout_txt else stderr_txt
-        if not out:
-            out = f"(Agent completed with exit code {proc.returncode} but produced no text output)"
+        code = _extract_code_block(out)
 
         return {
             "status": "ok" if proc.returncode == 0 else "error",
             "agent": agent,
+            "mode": "cli",
             "response": out,
+            "code": code,
             "stderr": stderr_txt if proc.returncode != 0 else "",
             "duration_seconds": dur,
             "exit_code": proc.returncode
-        }
-    except asyncio.TimeoutError:
-        return {
-            "status": "timeout",
-            "agent": agent,
-            "response": "Agent execution exceeded 180s timeout.",
-            "duration_seconds": round(time.time() - start_time, 2),
-            "exit_code": -1
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Execution error running {agent}: {str(e)}")
