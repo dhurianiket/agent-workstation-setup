@@ -291,14 +291,19 @@ def configure_opendots(gateway_url: str = "http://127.0.0.1:8000/v1") -> Dict[st
         "OWNER_ID=opendots-owner",
         "APP_ORIGIN=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4310,http://127.0.0.1:4310",
         "",
+        "# CopilotKit Intelligence Key (Local Gateway Bridge)",
+        "CPK_INTELLIGENCE_API_KEY=cpk_local_gateway_active",
+        "INTELLIGENCE_API_KEY=cpk_local_gateway_active",
+        "",
         "# Unified Local Gateway (BYOK + 5-Tier Fallback)",
         "OPENAI_API_KEY=dummy-local-key",
         f"OPENAI_BASE_URL={gateway_url}",
         "OPENAI_MODEL=auto",
         "",
-        "WEB_SEARCH_PROVIDER=browser",
+        "WEB_SEARCH_PROVIDER=parallel",
         "BROWSER_URL=http://127.0.0.1:4311",
         "BROWSER_PORT=4311",
+        "BROWSER_SECRET=opendots-local-secret",
     ]
     try:
         opendots_env.write_text("\n".join(lines) + "\n", encoding="utf-8")

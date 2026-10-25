@@ -85,28 +85,62 @@ load_local_env(override=True)
 
 # Pricing per 1,000,000 tokens (USD)
 PRICING_PER_M = {
+    # Frontier Claude Opus 4.6
     "us.anthropic.claude-opus-4-6": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-6-v1": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-6-v1:0": {"input": 15.00, "output": 75.00},
     "us.anthropic.claude-opus-4-5-20251101-v1:0": {"input": 15.00, "output": 75.00},
+    "opus": {"input": 15.00, "output": 75.00},
+    "claude-opus": {"input": 15.00, "output": 75.00},
+    "claude-opus-4.6": {"input": 15.00, "output": 75.00},
+    # Claude Sonnet 4.6
     "us.anthropic.claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
     "us.anthropic.claude-sonnet-4-5-20250929-v1:0": {"input": 3.00, "output": 15.00},
+    "sonnet": {"input": 3.00, "output": 15.00},
+    "claude-sonnet": {"input": 3.00, "output": 15.00},
+    "claude-sonnet-4.6": {"input": 3.00, "output": 15.00},
+    "claude": {"input": 3.00, "output": 15.00},
+    # Claude Haiku
     "us.anthropic.claude-haiku-4-5-20251001-v1:0": {"input": 0.80, "output": 4.00},
+    "haiku": {"input": 0.80, "output": 4.00},
+    # DeepSeek R1
     "us.deepseek.r1-v1:0": {"input": 1.35, "output": 2.19},
+    "reasoner": {"input": 1.35, "output": 2.19},
+    "deepseek-r1": {"input": 1.35, "output": 2.19},
+    # Llama 3.3 70B
     "us.meta.llama3-3-70b-instruct-v1:0": {"input": 0.72, "output": 0.72},
+    "coder": {"input": 0.72, "output": 0.72},
+    "llama3.3": {"input": 0.72, "output": 0.72},
+    # Llama 4 Scout / Maverick
     "us.meta.llama4-maverick-17b-instruct-v1:0": {"input": 0.20, "output": 0.60},
     "us.meta.llama4-scout-17b-instruct-v1:0": {"input": 0.08, "output": 0.30},
+    "fast": {"input": 0.08, "output": 0.30},
+    "llama4-scout": {"input": 0.08, "output": 0.30},
+    # Mistral / Nova
     "us.mistral.pixtral-large-2502-v1:0": {"input": 2.00, "output": 6.00},
     "us.amazon.nova-pro-v1:0": {"input": 0.80, "output": 3.20},
     "us.amazon.nova-2-lite-v1:0": {"input": 0.06, "output": 0.24},
     "us.amazon.nova-lite-v1:0": {"input": 0.06, "output": 0.24},
     "us.amazon.nova-micro-v1:0": {"input": 0.035, "output": 0.14},
+    # BYOK / OpenAI / Codex
     "openrouter": {"input": 1.00, "output": 3.00},
     "nvidia": {"input": 0.50, "output": 1.00},
     "deepseek": {"input": 0.27, "output": 1.10},
     "groq": {"input": 0.59, "output": 0.79},
     "openai": {"input": 2.50, "output": 10.00},
+    "gpt-5.6-terra": {"input": 2.50, "output": 10.00},
+    "gpt-6-luna": {"input": 5.00, "output": 15.00},
+    # Local & Agent CLI
     "llama3.2:1b": {"input": 0.00, "output": 0.00},
+    "qwen2.5-coder:7b": {"input": 0.00, "output": 0.00},
+    "local": {"input": 0.00, "output": 0.00},
+    "auto": {"input": 0.72, "output": 0.72},
+    "opendots": {"input": 3.00, "output": 15.00},
+    "cli-claude": {"input": 3.00, "output": 15.00},
+    "cli-codex": {"input": 2.50, "output": 10.00},
+    "cli-aider": {"input": 0.72, "output": 0.72},
+    "cli-opendots": {"input": 3.00, "output": 15.00},
+    "cli-orchestrator": {"input": 0.72, "output": 0.72},
 }
 
 # Auto-fallback chain: If a model fails or credits deplete, cascade down gracefully
@@ -1647,6 +1681,7 @@ def dashboard():
             <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.74rem; padding: 6px 13px;" onclick="triggerAutoConfig()" id="btn-auto-config" title="Auto-configures Claude Code, Codex, Aider, OpenDots, and Ollama in 1 click">
               ⚡ Auto-Configure
             </button>
+            <span id="auto-config-status-badge" class="mono" style="font-size: 0.72rem; color: var(--success); font-weight: 600; padding: 3px 8px; border-radius: 6px; background: var(--success-soft);">All Agents Ready</span>
           </div>
         </div>
 
@@ -1919,8 +1954,25 @@ def dashboard():
             </div>
 
             <!-- View 5: OpenDots Standalone App -->
-            <div id="view-canvas-app" style="display: none; flex: 1; background: #080c14; position: relative;">
-              <iframe id="opendots-app-iframe" src="http://localhost:5173" style="width: 100%; height: 100%; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
+            <div id="view-canvas-app" style="display: none; flex-direction: column; flex: 1; background: #080c14; position: relative; min-height: 520px;">
+              <div style="background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+                  <span class="mono" style="font-size: 0.72rem; color: var(--text); font-weight: 600;" id="opendots-bar-status">OpenDots Active • Vite :5173 • Backend :4310 • Local Gateway :8000</span>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button type="button" class="btn btn-ghost" style="padding: 4px 9px; font-size: 0.70rem;" onclick="reloadOpenDotsIframe()" title="Reload OpenDots iframe">
+                    🔄 Reload
+                  </button>
+                  <button type="button" class="btn btn-ghost" style="padding: 4px 9px; font-size: 0.70rem;" onclick="startOpenDotsServers()" id="btn-start-opendots" title="Start or restart OpenDots servers">
+                    ⚡ Restart Servers
+                  </button>
+                  <button type="button" class="btn btn-ghost" style="padding: 4px 9px; font-size: 0.70rem;" onclick="window.open('http://localhost:5173', '_blank')" title="Open OpenDots in standalone browser tab">
+                    🌐 Open in New Tab ↗
+                  </button>
+                </div>
+              </div>
+              <iframe id="opendots-app-iframe" src="http://localhost:5173" style="width: 100%; height: 100%; flex: 1; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
             </div>
           </div>
         </div>
@@ -2419,233 +2471,7 @@ def dashboard():
     
     let currentSelectedAgent = 'claude';
 
-    function selectAgent(agentName) {
-      currentSelectedAgent = agentName;
-      ['claude', 'codex', 'aider', 'opendots', 'orchestrator'].forEach(a => {
-        const el = document.getElementById('agent-card-' + a);
-        if (el) el.classList.toggle('active', a === agentName);
-      });
-
-      const label = document.getElementById('agent-input-label');
-      const input = document.getElementById('agent-chat-prompt');
-      const cliCmd = document.getElementById('agent-cli-cmd');
-      const opendotsPanel = document.getElementById('opendots-extra-panel');
-
-      if (opendotsPanel) {
-        opendotsPanel.style.display = agentName === 'opendots' ? 'block' : 'none';
-      }
-
-      const agentMeta = {
-        claude: {
-          label: 'Chat or Dispatch Task to Claude Code (Bedrock Opus 4.6)',
-          placeholder: 'Ask Claude Code to build features, inspect code, or architect solutions...',
-          cli: 'claude -p "<task>"'
-        },
-        codex: {
-          label: 'Chat or Dispatch Task to OpenAI Codex (ChatGPT gpt-5.6-terra)',
-          placeholder: 'Instruct Codex to write, refactor, or test code in the elevated sandbox...',
-          cli: 'codex exec "<task>"'
-        },
-        aider: {
-          label: 'Chat or Dispatch Task to Aider (5-Tier Gateway Router)',
-          placeholder: 'Ask Aider to edit files with automatic commit tracking and model routing...',
-          cli: 'aider --model openai/auto --message "<task>"'
-        },
-        opendots: {
-          label: 'Interact with OpenDots CopilotKit UI Canvas & Channels',
-          placeholder: 'Ask OpenDots to generate UI states, interact with visual canvas dots, or query channels...',
-          cli: 'cd tools/OpenDots && npm run dev'
-        },
-        orchestrator: {
-          label: 'Dispatch Task to Autonomous Orchestrator (AST + ggshield Shield)',
-          placeholder: 'Describe a multi-agent task to orchestrate across AST, model tiers, and security sensors...',
-          cli: 'python orchestrate.py --task "<task>"'
-        }
-      };
-
-      if (agentMeta[agentName]) {
-        if (label) label.innerText = agentMeta[agentName].label;
-        if (input) input.placeholder = agentMeta[agentName].placeholder;
-        if (cliCmd) cliCmd.innerText = agentMeta[agentName].cli;
-      }
-    }
-
-    function setAgentChipPrompt(text) {
-      const input = document.getElementById('agent-chat-prompt');
-      if (input) {
-        input.value = text;
-        input.focus();
-      }
-    }
-
-    function clearAgentConsole() {
-      const consoleEl = document.getElementById('agent-output-console');
-      if (consoleEl) consoleEl.innerText = 'Console cleared. Select an agent and tap "Chat / Dispatch" to start a run.';
-      document.getElementById('agent-chat-status').innerText = 'Ready for input';
-    }
-
-    function copyAgentConsole() {
-      const consoleEl = document.getElementById('agent-output-console');
-      if (consoleEl && consoleEl.innerText) {
-        navigator.clipboard.writeText(consoleEl.innerText);
-        const st = document.getElementById('agent-chat-status');
-        if (st) {
-          const old = st.innerText;
-          st.innerText = '✓ Copied to clipboard!';
-          setTimeout(() => st.innerText = old, 2000);
-        }
-      }
-    }
-
-    async function sendAgentMessage() {
-      const input = document.getElementById('agent-chat-prompt');
-      const msg = input.value.trim();
-      if (!msg) {
-        alert('Please enter a prompt or instruction for ' + currentSelectedAgent);
-        return;
-      }
-
-      const model = document.getElementById('agent-model-select').value;
-      const statusEl = document.getElementById('agent-chat-status');
-      const consoleEl = document.getElementById('agent-output-console');
-      const sendBtn = document.getElementById('btn-agent-send');
-
-      sendBtn.disabled = true;
-      sendBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Executing...';
-      statusEl.innerText = `Dispatching to ${currentSelectedAgent.toUpperCase()}...`;
-      consoleEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching task to ${currentSelectedAgent.toUpperCase()}...
-> Prompt: ${msg}
-
-Waiting for response from agent runner...
-`;
-
-      const startT = performance.now();
-      try {
-        const r = await fetch('/v1/agents/chat', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            agent: currentSelectedAgent,
-            message: msg,
-            model: model
-          })
-        });
-        const data = await r.json();
-        const durationSec = ((performance.now() - startT) / 1000).toFixed(2);
-
-        if (r.ok && data.status === 'ok') {
-          consoleEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Exit: ${data.exit_code}]
-
-${data.response}`;
-          statusEl.innerText = `Completed in ${durationSec}s`;
-        } else {
-          consoleEl.innerText = `[ERROR • ${durationSec}s]
-${data.response || data.detail || JSON.stringify(data, null, 2)}`;
-          statusEl.innerText = 'Execution error';
-        }
-      } catch (err) {
-        consoleEl.innerText = `[Network Error]: ${err.message}`;
-        statusEl.innerText = 'Request failed';
-      } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Chat / Dispatch';
-      }
-    }
-
-    async function triggerAutoConfig() {
-      const btn = document.getElementById('btn-auto-config');
-      const badge = document.getElementById('auto-config-status-badge');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = '⚡ Auto-Configuring...';
-      }
-      if (badge) badge.innerText = 'Configuring all agents...';
-
-      try {
-        const r = await fetch('/v1/config/auto-configure', {method: 'POST'});
-        const d = await r.json();
-        if (badge) {
-          badge.innerText = '✓ All 5 Agents Auto-Configured';
-          badge.style.color = 'var(--success)';
-        }
-        await fetchAgentStatus();
-      } catch (err) {
-        if (badge) {
-          badge.innerText = 'Config notice: ' + err.message;
-          badge.style.color = 'var(--warning)';
-        }
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerText = '⚡ Auto-Configure All Agents';
-        }
-      }
-    }
-
-    async function configureOpenDots() {
-      try {
-        const r = await fetch('/v1/opendots/configure', {method: 'POST'});
-        const d = await r.json();
-        alert('OpenDots configured! Linked to http://127.0.0.1:8000/v1.\n\nTo launch UI canvas: cd tools/OpenDots && npm run dev');
-        fetchAgentStatus();
-      } catch (err) {
-        alert('OpenDots configuration notice: ' + err.message);
-      }
-    }
-
-    async function fetchAgentStatus() {
-      try {
-        const r = await fetch('/v1/agents/status');
-        if (!r.ok) return;
-        const d = await r.json();
-
-        // Claude status
-        if (d.claude) {
-          const pill = document.getElementById('status-pill-claude');
-          if (pill) {
-            pill.innerText = d.claude.configured ? 'ONLINE' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.claude.configured ? 'status-online' : 'status-pending');
-          }
-          const mod = document.getElementById('badge-claude-model');
-          if (mod) mod.innerText = d.claude.model ? d.claude.model.replace('us.anthropic.', '') : 'Opus 4.6';
-          const prof = document.getElementById('badge-claude-prof');
-          if (prof) prof.innerText = d.claude.profile || 'Bedrock Active';
-        }
-
-        // Codex status
-        if (d.codex) {
-          const pill = document.getElementById('status-pill-codex');
-          if (pill) {
-            pill.innerText = d.codex.authenticated ? 'ONLINE' : 'READY';
-            pill.className = 'agent-status-pill ' + (d.codex.authenticated ? 'status-online' : 'status-pending');
-          }
-          const mod = document.getElementById('badge-codex-model');
-          if (mod) mod.innerText = d.codex.model || 'gpt-5.6-terra';
-        }
-
-        // Aider status
-        if (d.aider) {
-          const pill = document.getElementById('status-pill-aider');
-          if (pill) {
-            pill.innerText = d.aider.configured ? 'ONLINE' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.aider.configured ? 'status-online' : 'status-pending');
-          }
-        }
-
-        // OpenDots status
-        if (d.opendots) {
-          const pill = document.getElementById('status-pill-opendots');
-          if (pill) {
-            pill.innerText = d.opendots.configured ? 'READY' : 'PENDING';
-            pill.className = 'agent-status-pill ' + (d.opendots.configured ? 'status-online' : 'status-pending');
-          }
-        }
-      } catch (e) {
-        console.warn('Agent status fetch:', e);
-      }
-    }
-
-/* ==========================================================================
+    /* ==========================================================================
        MULTI-AGENT DESIGN STUDIO & OPENDOTS ENGINE JAVASCRIPT
        ========================================================================== */
     let currentAgent = 'claude';
@@ -2665,37 +2491,41 @@ ${data.response || data.detail || JSON.stringify(data, null, 2)}`;
 
       const label = document.getElementById('studio-prompt-label');
       const input = document.getElementById('studio-prompt-input');
+      const modelSel = document.getElementById('studio-model-select');
+      const statusEl = document.getElementById('studio-exec-status');
 
       if (agentName === 'opendots') {
-        if (label) label.innerText = 'Design with OpenDots Generative UI Canvas & Visual Dots';
-        if (input && !input.value) input.placeholder = 'Ask OpenDots to generate an interactive canvas component with visual state dots and channels...';
-        switchStudioTab('dots');
+        if (label) label.innerText = 'OpenDots CopilotKit Generative UI Canvas & Live App';
+        if (input && !input.value) input.placeholder = 'Generate living document cards, visual state dots, or query live agent channels...';
+        if (modelSel) modelSel.value = 'opus';
+        if (statusEl) statusEl.innerText = 'Active: OpenDots (Port 5173 / 4310)';
+        switchStudioTab('app');
       } else if (agentName === 'claude') {
-        if (label) label.innerText = 'Design & Architect with Claude Code (Bedrock Opus 4.6)';
-        if (input && !input.value) input.placeholder = 'Describe a component, layout, or visual design to build and preview live...';
+        if (label) label.innerText = 'Instruct Claude Code • Bedrock Opus 4.6 & Sonnet 4.6';
+        if (input && !input.value) input.placeholder = 'Ask Claude Code to build features, inspect architecture, or design liquid-glass UI...';
+        if (modelSel) modelSel.value = 'opus';
+        if (statusEl) statusEl.innerText = 'Active: Claude Code (Bedrock Opus 4.6)';
+        switchStudioTab('preview');
       } else if (agentName === 'codex') {
-        if (label) label.innerText = 'Build & Prototype with OpenAI Codex (gpt-5.6-terra)';
-        if (input && !input.value) input.placeholder = 'Instruct Codex to build and test code in the sandbox...';
+        if (label) label.innerText = 'Instruct OpenAI Codex • ChatGPT gpt-5.6-terra';
+        if (input && !input.value) input.placeholder = 'Instruct Codex to write, refactor, or test code in the sandbox...';
+        if (modelSel) modelSel.value = 'gpt-5.6-terra';
+        if (statusEl) statusEl.innerText = 'Active: OpenAI Codex';
+        switchStudioTab('preview');
       } else if (agentName === 'aider') {
-        if (label) label.innerText = 'Pair-Program & Refactor with Aider (5-Tier Gateway)';
-        if (input && !input.value) input.placeholder = 'Ask Aider to modify code or design with model auto-routing...';
-      } else {
-        if (label) label.innerText = 'Orchestrate Multi-Agent Swarm & AST Sensor';
+        if (label) label.innerText = 'Instruct Aider • 5-Tier Gateway Router (:8000/v1)';
+        if (input && !input.value) input.placeholder = 'Ask Aider to edit files with automatic commit tracking and model routing...';
+        if (modelSel) modelSel.value = 'auto';
+        if (statusEl) statusEl.innerText = 'Active: Aider (5-Tier Gateway)';
+        switchStudioTab('preview');
+      } else if (agentName === 'orchestrator') {
+        if (label) label.innerText = 'Dispatch to Autonomous Orchestrator • AST + ggshield';
+        if (input && !input.value) input.placeholder = 'Describe a multi-agent task across Tree-sitter AST, model tiers, and security sensors...';
+        if (modelSel) modelSel.value = 'auto';
+        if (statusEl) statusEl.innerText = 'Active: Workstation Orchestrator';
+        switchStudioTab('logs');
       }
     }
-
-    function setStudioMode(mode) {
-      currentStudioMode = mode;
-      ['design', 'dots', 'code', 'cli'].forEach(m => {
-        const el = document.getElementById('mode-' + m + '-btn');
-        if (el) el.classList.toggle('active', m === mode);
-      });
-      if (mode === 'dots') switchStudioTab('dots');
-      else if (mode === 'code') switchStudioTab('code');
-      else if (mode === 'cli') switchStudioTab('logs');
-      else switchStudioTab('preview');
-    }
-
     function setPresetPrompt(text, mode) {
       const input = document.getElementById('studio-prompt-input');
       if (input) {
@@ -2826,21 +2656,24 @@ ${data.response || data.detail || JSON.stringify(data, null, 2)}`;
 
     async function generateDesign() {
       const input = document.getElementById('studio-prompt-input');
-      const msg = input.value.trim();
+      const msg = input ? input.value.trim() : '';
       if (!msg) {
-        alert('Please enter a prompt or instruction.');
+        alert('Please enter a prompt or instruction for ' + (currentAgent || 'claude'));
         return;
       }
 
-      const model = document.getElementById('studio-model-select').value;
+      const modelSel = document.getElementById('studio-model-select');
+      const model = modelSel ? modelSel.value : 'auto';
       const statusEl = document.getElementById('studio-exec-status');
       const genBtn = document.getElementById('btn-studio-generate');
       const diagEl = document.getElementById('studio-diagnostics-text');
 
-      genBtn.disabled = true;
-      genBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Generating...';
-      statusEl.innerText = `Generating design with ${currentAgent.toUpperCase()}...`;
-      diagEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching design prompt to ${currentAgent} (Model: ${model}, Mode: ${currentStudioMode})...\n> Prompt: ${msg}\n`;
+      if (genBtn) {
+        genBtn.disabled = true;
+        genBtn.innerHTML = '<span class="dot" style="display:inline-block;animation:pulse 1s infinite;"></span> Executing...';
+      }
+      if (statusEl) statusEl.innerText = `Dispatching to ${(currentAgent || 'claude').toUpperCase()} (${model})...`;
+      if (diagEl) diagEl.innerText = `[${new Date().toLocaleTimeString()}] Dispatching task to ${(currentAgent || 'claude').toUpperCase()} (Model: ${model}, Mode: ${currentStudioMode})...\n> Prompt: ${msg}\n\nWaiting for response from gateway...`;
 
       const startT = performance.now();
       try {
@@ -2848,7 +2681,7 @@ ${data.response || data.detail || JSON.stringify(data, null, 2)}`;
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            agent: currentAgent,
+            agent: currentAgent || 'claude',
             message: msg,
             model: model,
             mode: currentStudioMode
@@ -2858,32 +2691,67 @@ ${data.response || data.detail || JSON.stringify(data, null, 2)}`;
         const durationSec = ((performance.now() - startT) / 1000).toFixed(2);
 
         if (r.ok && data.status === 'ok') {
-          statusEl.innerText = `✓ Generated in ${durationSec}s`;
-          diagEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Agent: ${data.agent}]\n\n${data.response}`;
+          const tok = data.tokens || {};
+          const pTok = tok.prompt || Math.round(msg.length / 4);
+          const cTok = tok.completion || Math.round((data.response || '').length / 4);
+          const costStr = data.estimated_usd !== undefined ? `$${data.estimated_usd.toFixed(4)}` : '';
+
+          if (statusEl) statusEl.innerText = `✓ Done in ${durationSec}s • ${(pTok + cTok).toLocaleString()} tokens ${costStr ? '(' + costStr + ')' : ''}`;
+          if (diagEl) {
+            diagEl.innerText = `[${new Date().toLocaleTimeString()} • ${durationSec}s • Agent: ${data.agent} • Model: ${data.model}]\nTokens: ${pTok.toLocaleString()} prompt / ${cTok.toLocaleString()} completion ${costStr ? '• Est. Cost: ' + costStr : ''}\n\n${data.response}`;
+          }
 
           if (data.code) {
             renderInCanvas(data.code);
-            if (currentStudioMode !== 'dots') {
+            if (currentStudioMode !== 'dots' && currentStudioMode !== 'cli') {
               switchStudioTab('preview');
             }
           } else {
-            const wrapped = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#090d16;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;padding:32px;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}.card{background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:28px;max-width:620px;line-height:1.65;box-shadow:0 20px 50px rgba(0,0,0,0.6);}</style></head><body><div class="card">' + data.response.replace(/\n/g, '<br>') + '</div>' + '<' + '/body>' + '<' + '/html>';
+            const wrapped = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#090d16;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;padding:32px;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}.card{background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:28px;max-width:620px;line-height:1.65;box-shadow:0 20px 50px rgba(0,0,0,0.6);}</style></head><body><div class="card">' + (data.response || '').replace(/\n/g, '<br>') + '</div>' + '<' + '/body>' + '<' + '/html>';
             renderInCanvas(wrapped);
-            switchStudioTab('preview');
+            if (currentStudioMode === 'cli') {
+              switchStudioTab('logs');
+            }
           }
         } else {
-          statusEl.innerText = 'Generation error';
-          diagEl.innerText = `[ERROR • ${durationSec}s]\n${data.response || data.detail || JSON.stringify(data, null, 2)}`;
+          if (statusEl) statusEl.innerText = 'Execution notice: ' + (data.detail || data.message || 'Check logs');
+          if (diagEl) diagEl.innerText = `[ERROR • ${durationSec}s]\n` + JSON.stringify(data, null, 2);
         }
+        await fetchStats();
       } catch (err) {
-        statusEl.innerText = 'Request failed';
-        diagEl.innerText = `[Network Error]: ${err.message}`;
+        if (statusEl) statusEl.innerText = 'Network error: ' + err.message;
+        if (diagEl) diagEl.innerText = `[CONNECTION ERROR]: ${err.message}`;
       } finally {
-        genBtn.disabled = false;
-        genBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Generate &amp; Render Design';
+        if (genBtn) {
+          genBtn.disabled = false;
+          genBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Generate &amp; Render Design';
+        }
       }
     }
 
+    const sendAgentMessage = generateDesign;
+
+    function reloadOpenDotsIframe() {
+      const ifr = document.getElementById('opendots-app-iframe');
+      if (ifr) ifr.src = ifr.src;
+    }
+
+    async function startOpenDotsServers() {
+      const btn = document.getElementById('btn-start-opendots');
+      const statusEl = document.getElementById('opendots-bar-status');
+      if (btn) btn.disabled = true;
+      if (statusEl) statusEl.innerText = 'Starting OpenDots backend & frontend servers...';
+      try {
+        const r = await fetch('/v1/opendots/start', {method: 'POST'});
+        const d = await r.json();
+        if (statusEl) statusEl.innerText = d.message || 'OpenDots online!';
+        setTimeout(reloadOpenDotsIframe, 1500);
+      } catch (e) {
+        if (statusEl) statusEl.innerText = 'Error: ' + e.message;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
     // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to generate design
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -3690,16 +3558,14 @@ def get_opendots_status_endpoint():
     port_4310_online = False
     try:
         import urllib.request
-
         with urllib.request.urlopen("http://127.0.0.1:5173/", timeout=0.8) as r:
             port_5173_online = (r.status == 200)
     except Exception:
         pass
     try:
         import urllib.request
-
-        with urllib.request.urlopen("http://127.0.0.1:4310/", timeout=0.8) as r:
-            port_4310_online = True
+        with urllib.request.urlopen("http://127.0.0.1:4310/api/workspace", timeout=0.8) as r:
+            port_4310_online = (r.status == 200)
     except Exception:
         pass
 
@@ -3716,26 +3582,42 @@ def get_opendots_status_endpoint():
 
 @app.post("/v1/opendots/start")
 def start_opendots_server_endpoint():
-    """Starts OpenDots Vite frontend server on port 5173 in the background."""
+    """Starts OpenDots backend (port 4310) and Vite frontend (port 5173) if not already running."""
     opendots_dir = TOOLS_DIR / "OpenDots"
     if not (opendots_dir / "node_modules").exists():
         return {"status": "error", "message": "node_modules missing. Please run npm install first."}
     
     st = get_opendots_status_endpoint()
-    if st["vite_online"]:
-        return {"status": "already_running", "message": "OpenDots is already online on http://localhost:5173", "url": "http://localhost:5173"}
-    
-    try:
-        subprocess.Popen(
-            ["npx", "vite", "--port", "5173"],
-            cwd=str(opendots_dir),
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        return {"status": "starting", "message": "Launched OpenDots Vite server on http://localhost:5173", "url": "http://localhost:5173"}
-    except Exception as e:
-        return {"status": "error", "message": f"Failed to start OpenDots: {e}"}
+    started = []
+    if not st["server_online"]:
+        try:
+            subprocess.Popen(
+                ["node", "--env-file=.env", "--import", "tsx", "src/server/index.ts"],
+                cwd=str(opendots_dir),
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            started.append("backend (port 4310)")
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to start backend: {e}"}
+
+    if not st["vite_online"]:
+        try:
+            subprocess.Popen(
+                ["npx", "vite", "--port", "5173"],
+                cwd=str(opendots_dir),
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            started.append("vite (port 5173)")
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to start vite: {e}"}
+
+    if started:
+        return {"status": "starting", "message": f"Launched OpenDots {', '.join(started)}", "url": "http://localhost:5173"}
+    return {"status": "already_running", "message": "OpenDots is already online on http://localhost:5173", "url": "http://localhost:5173"}
 
 
 def _extract_code_block(text: str) -> str:
@@ -3764,6 +3646,7 @@ async def chat_with_agent(req: AgentChatRequest):
     """
     Direct interactive chat, visual design, and code generation endpoint for Claude Code, Codex, Aider, OpenDots, and Orchestrator.
     Supports instant visual UI generation (mode='design') and non-interactive CLI dispatch (mode='cli').
+    Accurately tracks and records token consumption and expenditure in usage_stats.json.
     """
     cwd = req.working_dir or str(Path(__file__).resolve().parent)
     agent = req.agent.lower().strip()
@@ -3805,6 +3688,14 @@ async def chat_with_agent(req: AgentChatRequest):
                 full_text = "\n".join(text_parts).strip()
                 code = _extract_code_block(full_text)
                 dur = round(time.time() - start_time, 2)
+                
+                resp_usage = resp.get("usage", {})
+                p_tokens = resp_usage.get("inputTokens", max(1, len(msg) // 4))
+                c_tokens = resp_usage.get("outputTokens", max(1, len(full_text) // 4))
+                record_usage(model_id, p_tokens, c_tokens)
+                rates = PRICING_PER_M.get(model_id, {"input": 3.0, "output": 15.0})
+                est_cost = (p_tokens * rates["input"] / 1_000_000) + (c_tokens * rates["output"] / 1_000_000)
+
                 return {
                     "status": "ok",
                     "agent": "claude",
@@ -3813,6 +3704,8 @@ async def chat_with_agent(req: AgentChatRequest):
                     "response": full_text,
                     "code": code,
                     "duration_seconds": dur,
+                    "tokens": {"prompt": p_tokens, "completion": c_tokens, "total": p_tokens + c_tokens},
+                    "estimated_usd": round(est_cost, 5),
                     "exit_code": 0
                 }
             except Exception as e:
@@ -3839,6 +3732,15 @@ async def chat_with_agent(req: AgentChatRequest):
                     )
                     full_text = "\n".join([b["text"] for b in resp["output"]["message"].get("content", []) if "text" in b]).strip()
                     code = _extract_code_block(full_text)
+                    dur = round(time.time() - start_time, 2)
+                    
+                    resp_usage = resp.get("usage", {})
+                    p_tokens = resp_usage.get("inputTokens", max(1, len(opendots_prompt) // 4))
+                    c_tokens = resp_usage.get("outputTokens", max(1, len(full_text) // 4))
+                    record_usage("us.anthropic.claude-opus-4-6-v1", p_tokens, c_tokens)
+                    rates = PRICING_PER_M.get("us.anthropic.claude-opus-4-6-v1", {"input": 15.0, "output": 75.0})
+                    est_cost = (p_tokens * rates["input"] / 1_000_000) + (c_tokens * rates["output"] / 1_000_000)
+
                     return {
                         "status": "ok",
                         "agent": "opendots",
@@ -3846,7 +3748,9 @@ async def chat_with_agent(req: AgentChatRequest):
                         "mode": mode,
                         "response": full_text,
                         "code": code,
-                        "duration_seconds": round(time.time() - start_time, 2),
+                        "duration_seconds": dur,
+                        "tokens": {"prompt": p_tokens, "completion": c_tokens, "total": p_tokens + c_tokens},
+                        "estimated_usd": round(est_cost, 5),
                         "exit_code": 0
                     }
                 except Exception as e:
@@ -3868,14 +3772,24 @@ async def chat_with_agent(req: AgentChatRequest):
             full_text = res.get("choices", [{}])[0].get("message", {}).get("content", "")
             code = _extract_code_block(full_text)
             dur = round(time.time() - start_time, 2)
+            
+            tok_info = res.get("usage", {})
+            p_tokens = tok_info.get("prompt_tokens", max(1, len(msg) // 4))
+            c_tokens = tok_info.get("completion_tokens", max(1, len(full_text) // 4))
+            resolved_model = res.get("model", target_model)
+            rates = PRICING_PER_M.get(resolved_model, {"input": 1.0, "output": 2.0})
+            est_cost = (p_tokens * rates["input"] / 1_000_000) + (c_tokens * rates["output"] / 1_000_000)
+
             return {
                 "status": "ok",
                 "agent": agent,
-                "model": res.get("model", target_model),
+                "model": resolved_model,
                 "mode": mode,
                 "response": full_text,
                 "code": code,
                 "duration_seconds": dur,
+                "tokens": {"prompt": p_tokens, "completion": c_tokens, "total": p_tokens + c_tokens},
+                "estimated_usd": round(est_cost, 5),
                 "exit_code": 0
             }
         except Exception as e:
@@ -3918,7 +3832,8 @@ async def chat_with_agent(req: AgentChatRequest):
         cmd = f'"{py_exe}" "{orch_py}" --task "{clean_prompt}" --no-shield'
 
     else:
-        cmd = f'claude -p "{msg.replace('"', '\\"')}" --dangerously-skip-permissions'
+        clean_prompt = msg.replace('"', '\\"')
+        cmd = f'claude -p "{clean_prompt}" --dangerously-skip-permissions'
 
     try:
         proc = await asyncio.create_subprocess_shell(
@@ -3936,14 +3851,23 @@ async def chat_with_agent(req: AgentChatRequest):
         out = stdout_txt if stdout_txt else stderr_txt
         code = _extract_code_block(out)
 
+        p_tokens = max(1, len(msg) // 4)
+        c_tokens = max(1, len(out) // 4)
+        record_usage(f"cli-{agent}", p_tokens, c_tokens)
+        rates = PRICING_PER_M.get(f"cli-{agent}", {"input": 1.0, "output": 2.0})
+        est_cost = (p_tokens * rates["input"] / 1_000_000) + (c_tokens * rates["output"] / 1_000_000)
+
         return {
             "status": "ok" if proc.returncode == 0 else "error",
             "agent": agent,
+            "model": f"cli-{agent}",
             "mode": "cli",
             "response": out,
             "code": code,
             "stderr": stderr_txt if proc.returncode != 0 else "",
             "duration_seconds": dur,
+            "tokens": {"prompt": p_tokens, "completion": c_tokens, "total": p_tokens + c_tokens},
+            "estimated_usd": round(est_cost, 5),
             "exit_code": proc.returncode
         }
     except Exception as e:
