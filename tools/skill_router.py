@@ -39,6 +39,81 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
             "MiroFish/README.md"
         ]
     },
+    {
+        "domain": "AI Engineering Curriculum & Claude Tutor",
+        "repos": ["ai-engineering-from-scratch"],
+        "keywords": [
+            "ai engineering", "from scratch", "math for ai", "pretraining", "mini-gpt",
+            "placement quiz", "find your level", "ai curriculum", "learn ai", "tutor",
+            "542 lessons", "transformer architecture"
+        ],
+        "priority_files": [
+            "ai-engineering-from-scratch/.claude/skills/find-your-level/SKILL.md",
+            "ai-engineering-from-scratch/.claude/skills/learn/SKILL.md",
+            "ai-engineering-from-scratch/README.md"
+        ]
+    },
+    {
+        "domain": "Up-To-Date Library Documentation (Context7)",
+        "repos": ["context7"],
+        "keywords": [
+            "context7", "up-to-date docs", "library docs", "deprecated api", "latest docs",
+            "documentation mcp", "react docs", "next.js docs", "cloudflare docs", "supabase docs"
+        ],
+        "priority_files": [
+            "context7/README.md"
+        ]
+    },
+    {
+        "domain": "Instant UI Components & Design System MCP (21st)",
+        "repos": ["magic-mcp", "ui-ux-pro-max-skill", "open-design"],
+        "keywords": [
+            "magic-mcp", "magic mcp", "21st mcp", "21st.dev", "instant component",
+            "ui component library", "tailwind component", "ready component", "inject component"
+        ],
+        "priority_files": [
+            "magic-mcp/README.md"
+        ]
+    },
+    {
+        "domain": "Multi-Agent Financial & Quantitative Trading",
+        "repos": ["TradingAgents"],
+        "keywords": [
+            "tradingagents", "trading agents", "market research", "financial agent",
+            "hedge fund", "bull vs bear", "stock analysis", "alpaca", "sec edgar",
+            "quantitative trading", "technical analysis", "fundamental analysis"
+        ],
+        "priority_files": [
+            "TradingAgents/README.md"
+        ]
+    },
+    {
+        "domain": "Engineering Lifecycle Quality Gates & Agent Skills",
+        "repos": ["agent-skills", "archify"],
+        "keywords": [
+            "agent-skills", "agent skills", "spec-driven", "task breakdown", "/spec",
+            "/plan", "/build", "/test", "/constraints", "/review", "/webperf", "/code-simplify",
+            "/ship", "development lifecycle"
+        ],
+        "priority_files": [
+            "agent-skills/skills/planning-and-task-breakdown/SKILL.md",
+            "agent-skills/skills/test-driven-development/SKILL.md",
+            "agent-skills/skills/spec-driven-development/SKILL.md"
+        ]
+    },
+    {
+        "domain": "Adaptive Web Scraping & Stealth Anti-Bot Defense",
+        "repos": ["scrapling", "agent-reach", "strix"],
+        "keywords": [
+            "scrapling", "stealthyfetcher", "stealthy fetcher", "cloudflare", "turnstile",
+            "anti-bot", "bypass cloudflare", "web scraping", "dom tracking", "stealth browser",
+            "waf test", "spider", "crawl", "adaptive scraping"
+        ],
+        "priority_files": [
+            "scrapling/agent-skill/Scrapling-Skill/SKILL.md",
+            "scrapling/README.md"
+        ]
+    },
 
     {
         "domain": "Apple HIG & macOS/iOS Polish",
@@ -91,9 +166,11 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
     },
     {
         "domain": "Security Auditing, Pentesting & Red-Teaming",
-        "repos": ["strix"],
-        "keywords": ["pentest", "vulnerability", "xss", "sqli", "csrf", "owasp", "exploit", "security scan", "penetration test", "cve", "auth bypass", "idor"],
+        "repos": ["cloudflare-security-audit-skill", "strix"],
+        "keywords": ["security audit", "audit skill", "trust boundary", "pentest", "vulnerability", "xss", "sqli", "csrf", "owasp", "exploit", "security scan", "penetration test", "cve", "auth bypass", "idor", "attack classes", "reconnaissance", "threat model"],
         "priority_files": [
+            "cloudflare-security-audit-skill/skills/security-audit/SKILL.md",
+            "cloudflare-security-audit-skill/skills/security-audit/ATTACK-CLASSES.md",
             "strix/README.md"
         ]
     },

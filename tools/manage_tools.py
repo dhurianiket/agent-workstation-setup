@@ -61,6 +61,13 @@ CURATED_REPOS: List[Tuple[str, str]] = [
     ("gods-eye-view", "https://github.com/bilawalsidhu/gods-eye-view"),
     ("go-modern-guidelines", "https://github.com/JetBrains/go-modern-guidelines"),
     ("MiroFish", "https://github.com/666ghj/MiroFish"),
+    ("ai-engineering-from-scratch", "https://github.com/rohitg00/ai-engineering-from-scratch"),
+    ("context7", "https://github.com/upstash/context7"),
+    ("magic-mcp", "https://github.com/21st-dev/magic-mcp"),
+    ("TradingAgents", "https://github.com/TauricResearch/TradingAgents"),
+    ("agent-skills", "https://github.com/addyosmani/agent-skills"),
+    ("scrapling", "https://github.com/D4Vinci/Scrapling"),
+    ("cloudflare-security-audit-skill", "https://github.com/cloudflare/security-audit-skill"),
 ]
 
 REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
@@ -97,6 +104,13 @@ REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
     "gods-eye-view": "3D geospatial telemetry, aerial scene reconstruction, and spatial visualization dashboards. Activate for 3D mapping, WebGL/Three.js spatial views, or geospatial visualization.",
     "go-modern-guidelines": "JetBrains Modern Go (`use-modern-go`) idioms, Go 1.22+ standard library routing, concurrency patterns, and zero-allocation Go engineering. Activate whenever writing or reviewing Go (Golang) code.",
     "MiroFish": "High-fidelity parallel digital world social simulation and swarm intelligence prediction engine. Simulates public opinion dynamics, policy outcomes, and counterfactual events via multi-agent OASIS environment.",
+    "ai-engineering-from-scratch": "542-lesson AI engineering curriculum from raw math to mini-GPT, including interactive Claude tutor skills (/find-your-level, /learn, /learn-mcp). Activate for AI engineering education, model pretraining guides, or placement assessment.",
+    "context7": "Context7 up-to-date documentation engine and MCP server for AI coding agents. Feeds real-time, version-specific library docs (React, Next.js, Cloudflare, Supabase) to prevent hallucinated or deprecated APIs.",
+    "magic-mcp": "21st Magic MCP server: instant access to 10,000+ production-ready React and Tailwind UI components with AI component generation directly in your coding agent.",
+    "TradingAgents": "Multi-agent LLM financial trading and quantitative market research framework. Parallel analyst teams (fundamentals, sentiment, technicals) with Bull vs. Bear debate loops and risk management.",
+    "agent-skills": "Addy Osmani's 25 production-grade software lifecycle skills for AI coding agents: /spec, /plan, /build, /test, /constraints, /review, /webperf, /code-simplify, and /ship.",
+    "scrapling": "Adaptive web scraping, Cloudflare stealth engine (StealthyFetcher), anti-bot bypass, self-healing DOM tracking, and high-speed HTML parsing MCP server. Activate for web scraping, anti-bot handling, or WAF defense testing.",
+    "cloudflare-security-audit-skill": "Cloudflare's defensive security audit skill for source-first vulnerability review, trust boundary verification, attack surface mapping, and safe reproduction across APIs, web apps, and daemons. Activate for security audits, pen tests, or vulnerability research.",
 }
 
 

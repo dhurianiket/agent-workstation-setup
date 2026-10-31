@@ -128,6 +128,10 @@ PRICING_PER_M = {
     "deepseek": {"input": 0.27, "output": 1.10},
     "groq": {"input": 0.59, "output": 0.79},
     "openai": {"input": 2.50, "output": 10.00},
+    "gemini": {"input": 1.00, "output": 3.00},
+    "gemini-4-argon": {"input": 2.00, "output": 8.00},
+    "gemini-3.8-flash": {"input": 0.15, "output": 0.60},
+    "argon": {"input": 2.00, "output": 8.00},
     "gpt-5.6-terra": {"input": 2.50, "output": 10.00},
     "gpt-6-luna": {"input": 5.00, "output": 15.00},
     # Local & Agent CLI
@@ -145,6 +149,12 @@ PRICING_PER_M = {
 
 # Auto-fallback chain: If a model fails or credits deplete, cascade down gracefully
 FALLBACK_CHAINS = {
+    "argon": ["gemini-4-argon", "claude", "reasoner", "coder", "fast", "local"],
+    "gemini-4-argon": ["claude", "reasoner", "coder", "fast", "local"],
+    "gemini-flash": ["fast", "local"],
+    "gemini-pro": ["coder", "fast", "local"],
+    "opus-4.6": ["claude-sonnet-4.6", "claude", "reasoner", "coder", "fast", "local"],
+    "claude-opus-4.6": ["claude-sonnet-4.6", "claude", "reasoner", "coder", "fast", "local"],
     "opus": ["claude", "reasoner", "coder", "fast", "local"],
     "claude-opus": ["claude", "reasoner", "coder", "fast", "local"],
     "claude": ["reasoner", "coder", "fast", "local"],
@@ -266,12 +276,29 @@ BYOK_PROVIDERS = {
             "coder": "gpt-4o",
             "fast": "gpt-4o-mini"
         }
+    },
+    "gemini": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        "key": os.environ.get("GEMINI_API_KEY"),
+        "headers": {},
+        "models": {
+            "argon": "gemini-4-argon",
+            "gemini-4-argon": "gemini-4-argon",
+            "gemini-flash": "gemini-3.8-flash",
+            "gemini-pro": "gemini-3.1-pro-preview",
+            "coder": "gemini-4-argon"
+        }
     }
 }
 
 MODEL_MAP = {
     # Smart 5-Tier Auto Router
     "auto": {"provider": "router", "id": "smart-5-tier-router", "tier": "auto_router"},
+    # Google Gemini & Argon (BYOK Dedicated GCP Project)
+    "argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
+    "gemini-4-argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
+    "gemini-flash": {"provider": "gemini", "id": "gemini-3.8-flash", "tier": "scout"},
+    "gemini-pro": {"provider": "gemini", "id": "gemini-3.1-pro-preview", "tier": "coding"},
     # Frontier Claude (Bedrock)
     "claude": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "claude-sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
@@ -392,6 +419,8 @@ class ApiKeysUpdateRequest(BaseModel):
     deepseek_api_key: Optional[str] = None
     groq_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    gcp_project: Optional[str] = None
     aws_profile: Optional[str] = None
     aws_region: Optional[str] = None
 
@@ -420,6 +449,8 @@ def reload_runtime_credentials() -> None:
     BYOK_PROVIDERS["deepseek"]["key"] = os.environ.get("DEEPSEEK_API_KEY", "").strip() or None
     BYOK_PROVIDERS["groq"]["key"] = os.environ.get("GROQ_API_KEY", "").strip() or None
     BYOK_PROVIDERS["openai"]["key"] = os.environ.get("OPENAI_API_KEY", "").strip() or None
+    if "gemini" in BYOK_PROVIDERS:
+        BYOK_PROVIDERS["gemini"]["key"] = os.environ.get("GEMINI_API_KEY", "").strip() or None
 
 
 def _mask_secret(val: Optional[str]) -> str:
@@ -2190,6 +2221,14 @@ def dashboard():
           <input type="password" id="cfg-openai" placeholder="sk-proj-... (Leave blank to keep current)">
         </div>
         <div>
+          <label class="field-label" for="cfg-gemini">Google Gemini / Argon API Key (<span class="mono" id="mask-gemini">not set</span>)</label>
+          <input type="password" id="cfg-gemini" placeholder="AIzaSy... (Leave blank to keep current)">
+        </div>
+        <div>
+          <label class="field-label" for="cfg-gcp-project">GCP Project ID (<span class="mono" id="mask-gcp-project">not set</span>)</label>
+          <input type="text" id="cfg-gcp-project" placeholder="e.g. ag-mac-deoyani-2">
+        </div>
+        <div>
           <label class="field-label" for="cfg-aws-profile">AWS Profile (<span class="mono" id="mask-aws">not set</span>)</label>
           <input type="text" id="cfg-aws-profile" placeholder="e.g. antigravity-workstation or default">
         </div>
@@ -2227,6 +2266,9 @@ def dashboard():
         document.getElementById('mask-deepseek').innerText = d.deepseek || 'not set';
         document.getElementById('mask-groq').innerText = d.groq || 'not set';
         document.getElementById('mask-openai').innerText = d.openai || 'not set';
+        document.getElementById('mask-gemini').innerText = d.gemini || 'not set';
+        document.getElementById('mask-gcp-project').innerText = d.gcp_project || 'not set';
+        if (d.gcp_project) document.getElementById('cfg-gcp-project').value = d.gcp_project;
         document.getElementById('mask-aws').innerText = d.aws_profile || 'not set';
         if (d.aws_profile) document.getElementById('cfg-aws-profile').value = d.aws_profile;
       } catch (e) {}
@@ -2247,6 +2289,8 @@ def dashboard():
           deepseek_api_key: document.getElementById('cfg-deepseek').value.trim(),
           groq_api_key: document.getElementById('cfg-groq').value.trim(),
           openai_api_key: document.getElementById('cfg-openai').value.trim(),
+          gemini_api_key: document.getElementById('cfg-gemini').value.trim(),
+          gcp_project: document.getElementById('cfg-gcp-project').value.trim(),
           aws_profile: document.getElementById('cfg-aws-profile').value.trim()
         };
         const r = await fetch('/v1/config/keys', {
@@ -2257,7 +2301,7 @@ def dashboard():
         const d = await r.json();
         msg.style.color = 'var(--success)';
         msg.innerText = d.message || 'Saved & hot-reloaded!';
-        ['cfg-nvidia','cfg-openrouter','cfg-deepseek','cfg-groq','cfg-openai'].forEach(id => {
+        ['cfg-nvidia','cfg-openrouter','cfg-deepseek','cfg-groq','cfg-openai','cfg-gemini'].forEach(id => {
           document.getElementById(id).value = '';
         });
         await openKeysModal();
@@ -2839,6 +2883,7 @@ def health():
             "deepseek": bool(os.environ.get("DEEPSEEK_API_KEY")),
             "groq": bool(os.environ.get("GROQ_API_KEY")),
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
+            "gemini": bool(os.environ.get("GEMINI_API_KEY")),
             "ollama": True
         },
         "active_models": len(MODEL_MAP)
@@ -2858,6 +2903,8 @@ def get_config_status():
         "deepseek": _mask_secret(os.environ.get("DEEPSEEK_API_KEY")),
         "groq": _mask_secret(os.environ.get("GROQ_API_KEY")),
         "openai": _mask_secret(os.environ.get("OPENAI_API_KEY")),
+        "gemini": _mask_secret(os.environ.get("GEMINI_API_KEY")),
+        "gcp_project": os.environ.get("GCP_PROJECT", ""),
     }
 
 
@@ -2885,6 +2932,8 @@ def update_config_keys(req: ApiKeysUpdateRequest):
     ds_key = _clean(req.deepseek_api_key, "DEEPSEEK_API_KEY")
     gq_key = _clean(req.groq_api_key, "GROQ_API_KEY")
     oa_key = _clean(req.openai_api_key, "OPENAI_API_KEY")
+    gem_key = _clean(req.gemini_api_key, "GEMINI_API_KEY")
+    gcp_proj = _clean(req.gcp_project, "GCP_PROJECT")
 
     lines = [
         "# Antigravity Autonomous Workstation — Local Environment Configuration",
@@ -2898,6 +2947,8 @@ def update_config_keys(req: ApiKeysUpdateRequest):
         f"DEEPSEEK_API_KEY={ds_key}",
         f"GROQ_API_KEY={gq_key}",
         f"OPENAI_API_KEY={oa_key}",
+        f"GEMINI_API_KEY={gem_key}",
+        f"GCP_PROJECT={gcp_proj}",
         "",
         f"OLLAMA_HOST={existing.get('OLLAMA_HOST', 'http://127.0.0.1:11434')}",
     ]

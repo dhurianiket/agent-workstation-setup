@@ -62,3 +62,6 @@ Thumbs.db
 .idea/
 server.log
 server.err
+
+# Added by ggshield
+.cache_ggshield

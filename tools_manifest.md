@@ -28,6 +28,8 @@ These repositories focus on local/cloud agent execution, persistent memory, and 
 | [**`CopilotKit/OpenDots`**](https://github.com/CopilotKit/OpenDots) | **Autonomous AI Coworker**: Framework for embedding collaborative agentic workflows directly into applications. | Installed (`tools/OpenDots`) |
 | [**`templetongroup/radiant`**](https://github.com/templetongroup/radiant) | **Shared Conversation Swarms**: Enables multi-agent collaboration within a single shared conversation thread. | Installed (`tools/radiant`) |
 | [**`ChromeDevTools/chrome-devtools-mcp`**](https://github.com/ChromeDevTools/chrome-devtools-mcp) | **Chrome DevTools MCP**: Official MCP server giving coding agents live access to Chrome DevTools for DOM inspection and debugging. | Configured & Active |
+| [**`rohitg00/ai-engineering-from-scratch`**](https://github.com/rohitg00/ai-engineering-from-scratch) | **542-Lesson AI Curriculum & Claude Tutor**: 20-phase AI curriculum from raw math to mini-GPT with built-in Claude tutor skills (`/find-your-level`, `/learn`, `/learn-mcp`). | Installed (`tools/ai-engineering-from-scratch`) |
+| [**`addyosmani/agent-skills`**](https://github.com/addyosmani/agent-skills) | **Production-Grade Engineering Skills Pack**: 25 modular dev-lifecycle skills (`/spec`, `/plan`, `/build`, `/test`, `/constraints`, `/review`, `/ship`) for coding agents. | Installed (`tools/agent-skills`) |
 
 ---
 
@@ -61,6 +63,8 @@ Useful for polishing React/Next.js/Vite frontends, designing high-craft interfac
 | [**`chenglou/pretext`**](https://github.com/chenglou/pretext) | **DOM-Less Text Layout**: Pure arithmetic text measurement bypassing DOM reflows for 10x faster canvas, markdown, and chat rendering. | Installed (`tools/pretext`) |
 | [**`Kayforkind/reimagine-it`**](https://github.com/Kayforkind/reimagine-it) | **Content-Derived UI Refactoring**: Reimagines and refactors existing web interfaces directly from page content. | Installed (`tools/reimagine-it`) |
 | [**`lucasmarkes/hairline`**](https://github.com/lucasmarkes/hairline) | **Interactive Isometric Graphics**: Interactive pointer-reactive line figures for React and DOM applications. | Installed (`tools/hairline`) |
+| [**`upstash/context7`**](https://github.com/upstash/context7) | **Live Up-To-Date Library Documentation**: Context7 platform & MCP feeding version-specific docs (React, Next.js, Cloudflare, Supabase) to prevent hallucinated APIs. | Installed (`tools/context7`) |
+| [**`21st-dev/magic-mcp`**](https://github.com/21st-dev/magic-mcp) | **10,000+ UI Component Library MCP**: 21st Magic MCP granting coding agents instant search and injection of production-ready React/Tailwind components. | Installed (`tools/magic-mcp`) |
 
 ---
 
@@ -71,6 +75,8 @@ Tools for auditing deployments, training compact models, and specialized analyti
 | Repository | Purpose & Superpower | Local Status |
 | :--- | :--- | :--- |
 | [**`usestrix/strix`**](https://github.com/usestrix/strix) | **AI Penetration Testing**: Autonomous security pentesting agent discovering OWASP vulnerabilities and generating verified patch diffs. | Installed (`tools/strix`) |
+| [**`cloudflare/security-audit-skill`**](https://github.com/cloudflare/security-audit-skill) | **Cloudflare Security Audit**: Source-first defensive vulnerability review, trust boundary verification, attack surface mapping, and finding validation across 13 specialized security domains. | Installed (`tools/cloudflare-security-audit-skill`) |
+| [**`D4Vinci/Scrapling`**](https://github.com/D4Vinci/Scrapling) | **Adaptive Scraping & Cloudflare Stealth Engine**: High-speed DOM parsing (~700x faster than bs4), self-healing selectors (`auto_save`), and `StealthyFetcher` for Cloudflare interstitial/Turnstile defensive WAF testing and agentic web research. | Installed (`tools/scrapling`) |
 | [**`every-app/open-seo`**](https://github.com/every-app/open-seo) | **Self-Hostable SEO Audit**: Automated SEO audit and optimization skills to boost organic discoverability for web platforms. | Installed (`tools/open-seo`) |
 | [**`morluto/rea`**](https://github.com/morluto/rea) | **Reverse Engineering**: Agentic decompilation of native binaries, protocols, and undocumented APIs. | Installed (`tools/rea`) |
 | [**`google-research/timesfm`**](https://github.com/google-research/timesfm) | **Time-Series Foundation Model**: Google Research foundation model for zero-shot time-series forecasting. | Installed (`tools/timesfm`) |
@@ -80,5 +86,6 @@ Tools for auditing deployments, training compact models, and specialized analyti
 | [**`ruvnet/RuView`**](https://github.com/ruvnet/RuView) | **WiFi Spatial Sensing**: Real-time vital sign monitoring and presence detection using ambient WiFi signals. | Installed (`tools/RuView`) |
 | [**`bilawalsidhu/gods-eye-view`**](https://github.com/bilawalsidhu/gods-eye-view) | **3D Global Visualizer**: Real-time 3D global data feed visualization and spatial telemetry tracking. | Installed (`tools/gods-eye-view`) |
 | [**`666ghj/MiroFish`**](https://github.com/666ghj/MiroFish) | **Swarm Intelligence & Prediction Engine**: High-fidelity parallel digital world sandbox for multi-agent social simulations and future event prediction. | Installed (`tools/MiroFish`) |
+| [**`TauricResearch/TradingAgents`**](https://github.com/TauricResearch/TradingAgents) | **Multi-Agent Financial & Market Research**: Parallelized analyst teams (fundamentals, sentiment, technicals) with Bull vs. Bear debate loops and HTML reports. | Installed (`tools/TradingAgents`) |
 | [**`omacom/omarchy`**](https://github.com/omacom/omarchy) | **Keyboard Developer Linux Setup**: DHH's keyboard-centric developer OS setup for maximum coding speed. | Documented & Linked |
 | [**`JetBrains/go-modern-guidelines`**](https://github.com/JetBrains/go-modern-guidelines) | **Modern Go Conventions**: Official guidelines and idiomatic practices for modern Go development. | Installed (`tools/go-modern-guidelines`) |

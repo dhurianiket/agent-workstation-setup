@@ -469,6 +469,11 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
         "reasoner": "Deep Reasoning (DeepSeek R1 ~1.1s)",
         "claude": "Frontier Tier (Claude Sonnet 4.6)",
         "opus": "Flagship Tier (Claude Opus 4.6)",
+        "opus-4.6": "Flagship Tier (Claude Opus 4.6)",
+        "claude-opus-4.6": "Flagship Tier (Claude Opus 4.6)",
+        "argon": "Frontier Tier (Gemini 4 Argon 1M Context)",
+        "gemini-4-argon": "Frontier Tier (Gemini 4 Argon 1M Context)",
+        "gemini": "Google Gemini (BYOK Dedicated Project)",
     }.get(resolved_model, "Custom Tier")
 
     print(f"\n=======================================================")
@@ -584,7 +589,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Multi-Agent Orchestration Dispatcher with GitGuardian & AST Shield")
     parser.add_argument("--task", "-t", help="The instruction or task prompt for the agent")
     parser.add_argument("--agent", "-a", default="aider", choices=["aider", "claude", "codex", "opencode"], help="Agent harness to dispatch")
-    parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "sonnet", "reasoner", "coder", "fast", "local"], help="Model routing profile (defaults to auto)")
+    parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "opus-4.6", "claude-opus-4.6", "sonnet", "reasoner", "coder", "fast", "local", "argon", "gemini-4-argon", "gemini"], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
     parser.add_argument("--guide", action="store_true", help="Display 'How It Works & How It Functions' architecture & usage guide")
     parser.add_argument("--setup", action="store_true", help="Run the interactive cross-platform hardware, Ollama, API key & 32-repo setup wizard")
