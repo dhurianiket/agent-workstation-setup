@@ -124,13 +124,30 @@ PRICING_PER_M = {
     "us.amazon.nova-micro-v1:0": {"input": 0.035, "output": 0.14},
     # BYOK / OpenAI / Codex
     "openrouter": {"input": 1.00, "output": 3.00},
-    "nvidia": {"input": 0.50, "output": 1.00},
+    "nvidia": {"input": 0.00, "output": 0.00},
+    "nvidia-default": {"input": 0.00, "output": 0.00},
+    "nemotron-ultra": {"input": 0.00, "output": 0.00},
+    "nvidia/nemotron-3-ultra-550b-a55b": {"input": 0.00, "output": 0.00},
+    "mistral-1t": {"input": 0.00, "output": 0.00},
+    "mistralai/mistral-large-4-1t-a52b": {"input": 0.00, "output": 0.00},
+    "nemotron-vision": {"input": 0.00, "output": 0.00},
+    "nvidia/nemotron-3.5-super-vl-120b-a12b": {"input": 0.00, "output": 0.00},
+    "nemotron-reasoning": {"input": 0.00, "output": 0.00},
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {"input": 0.00, "output": 0.00},
+    "nemotron-lightning": {"input": 0.00, "output": 0.00},
+    "nvidia/nemotron-3.5-lightning-30b-a3b": {"input": 0.00, "output": 0.00},
+    "nemotron-bolt": {"input": 0.00, "output": 0.00},
+    "nvidia/nemotron-3.5-bolt-e4b": {"input": 0.00, "output": 0.00},
+    "llama-vision-90b": {"input": 0.00, "output": 0.00},
+    "meta/llama-3.2-90b-vision-instruct": {"input": 0.00, "output": 0.00},
     "deepseek": {"input": 0.27, "output": 1.10},
     "groq": {"input": 0.59, "output": 0.79},
     "openai": {"input": 2.50, "output": 10.00},
-    "gemini": {"input": 1.00, "output": 3.00},
+    "gemini": {"input": 2.00, "output": 8.00},
     "gemini-4-argon": {"input": 2.00, "output": 8.00},
     "gemini-3.8-flash": {"input": 0.15, "output": 0.60},
+    "gemini-flash": {"input": 0.15, "output": 0.60},
+    "gemini-4-ultra": {"input": 5.00, "output": 15.00},
     "argon": {"input": 2.00, "output": 8.00},
     "gpt-5.6-terra": {"input": 2.50, "output": 10.00},
     "gpt-6-luna": {"input": 5.00, "output": 15.00},
@@ -149,22 +166,38 @@ PRICING_PER_M = {
 
 # Auto-fallback chain: If a model fails or credits deplete, cascade down gracefully
 FALLBACK_CHAINS = {
-    "argon": ["gemini-4-argon", "claude", "reasoner", "coder", "fast", "local"],
-    "gemini-4-argon": ["claude", "reasoner", "coder", "fast", "local"],
-    "gemini-flash": ["fast", "local"],
-    "gemini-pro": ["coder", "fast", "local"],
-    "opus-4.6": ["claude-sonnet-4.6", "claude", "reasoner", "coder", "fast", "local"],
-    "claude-opus-4.6": ["claude-sonnet-4.6", "claude", "reasoner", "coder", "fast", "local"],
-    "opus": ["claude", "reasoner", "coder", "fast", "local"],
-    "claude-opus": ["claude", "reasoner", "coder", "fast", "local"],
-    "claude": ["reasoner", "coder", "fast", "local"],
-    "sonnet": ["reasoner", "coder", "fast", "local"],
-    "reasoner": ["coder", "fast", "local"],
-    "deepseek-r1": ["coder", "fast", "local"],
-    "coder": ["fast", "local"],
-    "llama-3.3-70b": ["fast", "local"],
-    "fast": ["local"],
-    "llama-4-scout": ["local"],
+    # Gemini Higher-Tier Models (Cascade to NVIDIA NIM Free Tier -> Bedrock -> Local)
+    "argon": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
+    "gemini-4-argon": ["gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
+    "gemini": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
+    "gemini-flash": ["gemini-3.8-flash", "nemotron-bolt", "fast", "local"],
+    "gemini-3.8-flash": ["nemotron-bolt", "fast", "local"],
+    "gemini-ultra": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-opus-4.6", "local"],
+    "gemini-4-ultra": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-opus-4.6", "local"],
+
+    # NVIDIA NIM Developer Free Models (Free Developer Credit Fallbacks)
+    "nemotron-ultra": ["mistral-1t", "nemotron-lightning", "nemotron-bolt", "local"],
+    "mistral-1t": ["nemotron-ultra", "nemotron-lightning", "nemotron-bolt", "local"],
+    "nemotron-reasoning": ["deepseek-r1", "nemotron-lightning", "nemotron-bolt", "local"],
+    "nemotron-lightning": ["coder", "nemotron-bolt", "fast", "local"],
+    "nemotron-bolt": ["fast", "local"],
+    "nemotron-vision": ["llama-vision-90b", "pixtral", "local"],
+    "llama-vision-90b": ["nemotron-vision", "pixtral", "local"],
+    "nvidia": ["nemotron-ultra", "nemotron-lightning", "nemotron-bolt", "local"],
+
+    # Frontier Claude & Deep Reasoning
+    "opus-4.6": ["claude-opus-4.6", "gemini-4-argon", "nemotron-ultra", "claude-sonnet-4.6", "reasoner", "coder", "fast", "local"],
+    "claude-opus-4.6": ["gemini-4-argon", "nemotron-ultra", "claude-sonnet-4.6", "reasoner", "coder", "fast", "local"],
+    "opus": ["claude-opus-4.6", "gemini-4-argon", "nemotron-ultra", "claude-sonnet-4.6", "reasoner", "coder", "fast", "local"],
+    "claude-opus": ["claude-opus-4.6", "gemini-4-argon", "nemotron-ultra", "claude-sonnet-4.6", "reasoner", "coder", "fast", "local"],
+    "claude": ["gemini-4-argon", "nemotron-ultra", "reasoner", "nemotron-lightning", "fast", "local"],
+    "sonnet": ["claude", "gemini-4-argon", "nemotron-ultra", "reasoner", "nemotron-lightning", "fast", "local"],
+    "reasoner": ["nemotron-reasoning", "coder", "nemotron-lightning", "fast", "local"],
+    "deepseek-r1": ["nemotron-reasoning", "coder", "nemotron-lightning", "fast", "local"],
+    "coder": ["nemotron-lightning", "fast", "nemotron-bolt", "local"],
+    "llama-3.3-70b": ["nemotron-lightning", "fast", "nemotron-bolt", "local"],
+    "fast": ["nemotron-bolt", "local"],
+    "llama-4-scout": ["nemotron-bolt", "local"],
 }
 
 # Production Engineering Quality Directive injected into system prompt
@@ -219,6 +252,31 @@ BYOK_PROVIDERS = {
         "key": os.environ.get("NVIDIA_API_KEY"),
         "headers": {},
         "models": {
+            # Verified working models on NVIDIA NIM Developer Key ($0.00 Free Limits)
+            "nemotron-ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+            "nvidia-ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+            "nvidia/nemotron-3-ultra-550b-a55b": "nvidia/nemotron-3-ultra-550b-a55b",
+            "mistral-1t": "mistralai/mistral-large-4-1t-a52b",
+            "nvidia-mistral-large": "mistralai/mistral-large-4-1t-a52b",
+            "mistralai/mistral-large-4-1t-a52b": "mistralai/mistral-large-4-1t-a52b",
+            "nemotron-vision": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "nemotron-super-vl": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "nvidia/nemotron-3.5-super-vl-120b-a12b": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "nemotron-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "nvidia-reasoner": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "nemotron-lightning": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "nvidia-coder": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "nvidia/nemotron-3.5-lightning-30b-a3b": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "nemotron-bolt": "nvidia/nemotron-3.5-bolt-e4b",
+            "nvidia-fast": "nvidia/nemotron-3.5-bolt-e4b",
+            "nvidia/nemotron-3.5-bolt-e4b": "nvidia/nemotron-3.5-bolt-e4b",
+            "llama-vision-90b": "meta/llama-3.2-90b-vision-instruct",
+            "nvidia-vision": "meta/llama-3.2-90b-vision-instruct",
+            "meta/llama-3.2-90b-vision-instruct": "meta/llama-3.2-90b-vision-instruct",
+            # Standard tier aliases for NVIDIA NIM
+            "nvidia": "nvidia/nemotron-3-ultra-550b-a55b",
+            "nvidia-default": "nvidia/nemotron-3.5-lightning-30b-a3b",
             "opus": "nvidia/nemotron-3-ultra-550b-a55b",
             "claude": "nvidia/nemotron-3-ultra-550b-a55b",
             "sonnet": "nvidia/nemotron-3-ultra-550b-a55b",
@@ -226,24 +284,8 @@ BYOK_PROVIDERS = {
             "deepseek-r1": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
             "coder": "nvidia/nemotron-3.5-lightning-30b-a3b",
             "llama-3.3-70b": "nvidia/nemotron-3.5-lightning-30b-a3b",
-            "fast": "meta/llama-3.2-11b-vision-instruct",
-            "llama-4-scout": "meta/llama-3.2-11b-vision-instruct",
-            "nvidia-default": "meta/llama-3.2-11b-vision-instruct",
-            "nemotron-ultra": "nvidia/nemotron-3-ultra-550b-a55b",
-            "nemotron-super": "nvidia/nemotron-3-super-120b-a12b",
-            "nemotron-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-            "nemotron-lightning": "nvidia/nemotron-3.5-lightning-30b-a3b",
-            "llama-3.2-vision": "meta/llama-3.2-11b-vision-instruct",
-            "gemma-4-31b": "google/gemma-4-31b-it",
-            "meta/llama-3.2-11b-vision-instruct": "meta/llama-3.2-11b-vision-instruct",
-            "nvidia/nemotron-3-ultra-550b-a55b": "nvidia/nemotron-3-ultra-550b-a55b",
-            "nvidia/nemotron-3-super-120b-a12b": "nvidia/nemotron-3-super-120b-a12b",
-            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-            "nvidia/nemotron-3.5-lightning-30b-a3b": "nvidia/nemotron-3.5-lightning-30b-a3b",
-            "google/gemma-4-31b-it": "google/gemma-4-31b-it",
-            "nvidia/nemotron-parse-2.0": "nvidia/nemotron-parse-2.0",
-            "nvidia/riva-translate-4b-instruct-v2": "nvidia/riva-translate-4b-instruct-v2",
-            "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+            "fast": "nvidia/nemotron-3.5-bolt-e4b",
+            "llama-4-scout": "nvidia/nemotron-3.5-bolt-e4b",
         }
     },
     "deepseek": {
@@ -282,11 +324,15 @@ BYOK_PROVIDERS = {
         "key": os.environ.get("GEMINI_API_KEY"),
         "headers": {},
         "models": {
+            # Higher-Tier Gemini Models (Lower models removed per policy)
             "argon": "gemini-4-argon",
             "gemini-4-argon": "gemini-4-argon",
             "gemini-flash": "gemini-3.8-flash",
-            "gemini-pro": "gemini-3.1-pro-preview",
-            "coder": "gemini-4-argon"
+            "gemini-3.8-flash": "gemini-3.8-flash",
+            "gemini-ultra": "gemini-4-ultra",
+            "gemini-4-ultra": "gemini-4-ultra",
+            "gemini-future": "gemini-4-ultra",
+            "gemini": "gemini-4-argon",
         }
     }
 }
@@ -294,11 +340,14 @@ BYOK_PROVIDERS = {
 MODEL_MAP = {
     # Smart 5-Tier Auto Router
     "auto": {"provider": "router", "id": "smart-5-tier-router", "tier": "auto_router"},
-    # Google Gemini & Argon (BYOK Dedicated GCP Project)
+    # Google Gemini & Argon (Higher-Tier Models Only: 3.8 Flash & 4 Argon / Ultra)
     "argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
     "gemini-4-argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
     "gemini-flash": {"provider": "gemini", "id": "gemini-3.8-flash", "tier": "scout"},
-    "gemini-pro": {"provider": "gemini", "id": "gemini-3.1-pro-preview", "tier": "coding"},
+    "gemini-3.8-flash": {"provider": "gemini", "id": "gemini-3.8-flash", "tier": "scout"},
+    "gemini-ultra": {"provider": "gemini", "id": "gemini-4-ultra", "tier": "flagship"},
+    "gemini-4-ultra": {"provider": "gemini", "id": "gemini-4-ultra", "tier": "flagship"},
+    "gemini": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
     # Frontier Claude (Bedrock)
     "claude": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
     "claude-sonnet": {"provider": "bedrock", "id": "us.anthropic.claude-sonnet-4-6", "tier": "frontier"},
@@ -328,23 +377,23 @@ MODEL_MAP = {
     "nova-2-lite": {"provider": "bedrock", "id": "us.amazon.nova-2-lite-v1:0", "tier": "scout"},
     "nova-lite": {"provider": "bedrock", "id": "us.amazon.nova-lite-v1:0", "tier": "scout"},
     "nova-micro": {"provider": "bedrock", "id": "us.amazon.nova-micro-v1:0", "tier": "micro"},
-    # NVIDIA NIM Direct Models (Aegis AI Verified)
-    "nvidia-default": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
+    # NVIDIA NIM Direct Models (Verified on Free Developer Key: $0.00)
+    "nvidia": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "nvidia_nim"},
+    "nvidia-default": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
     "nemotron-ultra": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "nvidia_nim"},
-    "nemotron-super": {"provider": "nvidia", "id": "nvidia/nemotron-3-super-120b-a12b", "tier": "nvidia_nim"},
-    "nemotron-reasoning": {"provider": "nvidia", "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "tier": "nvidia_nim"},
-    "nemotron-lightning": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
-    "llama-3.2-vision": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
-    "gemma-4-31b": {"provider": "nvidia", "id": "google/gemma-4-31b-it", "tier": "nvidia_nim"},
-    "meta/llama-3.2-11b-vision-instruct": {"provider": "nvidia", "id": "meta/llama-3.2-11b-vision-instruct", "tier": "nvidia_nim"},
     "nvidia/nemotron-3-ultra-550b-a55b": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "nvidia_nim"},
-    "nvidia/nemotron-3-super-120b-a12b": {"provider": "nvidia", "id": "nvidia/nemotron-3-super-120b-a12b", "tier": "nvidia_nim"},
+    "mistral-1t": {"provider": "nvidia", "id": "mistralai/mistral-large-4-1t-a52b", "tier": "nvidia_nim"},
+    "mistralai/mistral-large-4-1t-a52b": {"provider": "nvidia", "id": "mistralai/mistral-large-4-1t-a52b", "tier": "nvidia_nim"},
+    "nemotron-reasoning": {"provider": "nvidia", "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "tier": "nvidia_nim"},
     "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {"provider": "nvidia", "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "tier": "nvidia_nim"},
+    "nemotron-lightning": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
     "nvidia/nemotron-3.5-lightning-30b-a3b": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-lightning-30b-a3b", "tier": "nvidia_nim"},
-    "google/gemma-4-31b-it": {"provider": "nvidia", "id": "google/gemma-4-31b-it", "tier": "nvidia_nim"},
-    "nvidia/nemotron-parse-2.0": {"provider": "nvidia", "id": "nvidia/nemotron-parse-2.0", "tier": "nvidia_nim"},
-    "nvidia/riva-translate-4b-instruct-v2": {"provider": "nvidia", "id": "nvidia/riva-translate-4b-instruct-v2", "tier": "nvidia_nim"},
-    "nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {"provider": "nvidia", "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3", "tier": "nvidia_nim"},
+    "nemotron-bolt": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-bolt-e4b", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3.5-bolt-e4b": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-bolt-e4b", "tier": "nvidia_nim"},
+    "nemotron-vision": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-super-vl-120b-a12b", "tier": "nvidia_nim"},
+    "nvidia/nemotron-3.5-super-vl-120b-a12b": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-super-vl-120b-a12b", "tier": "nvidia_nim"},
+    "llama-vision-90b": {"provider": "nvidia", "id": "meta/llama-3.2-90b-vision-instruct", "tier": "nvidia_nim"},
+    "meta/llama-3.2-90b-vision-instruct": {"provider": "nvidia", "id": "meta/llama-3.2-90b-vision-instruct", "tier": "nvidia_nim"},
     # Local GPU Models (Ollama - Free)
     "local": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
     "llama3.2:1b": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
@@ -1803,6 +1852,13 @@ def dashboard():
               <select id="studio-model-select" style="margin-bottom: 0;">
                 <option value="sonnet" selected>Claude Sonnet 4.6 (Fast Bedrock)</option>
                 <option value="opus">Claude Opus 4.6 (Frontier Bedrock)</option>
+                <option value="argon">Gemini 4 Argon (1M Frontier GCP)</option>
+                <option value="gemini-3.8-flash">Gemini 3.8 Flash (High-Speed GCP)</option>
+                <option value="nemotron-ultra">NVIDIA Nemotron 550B (Developer Free $0)</option>
+                <option value="mistral-1t">Mistral 1T Flagship (NVIDIA Free $0)</option>
+                <option value="nemotron-reasoning">NVIDIA Nemotron Reasoning 30B (Free $0)</option>
+                <option value="nemotron-lightning">NVIDIA Nemotron Coder 30B (Free $0)</option>
+                <option value="nemotron-bolt">NVIDIA Nemotron Bolt 4B (Free $0)</option>
                 <option value="auto">Auto 5-Tier Fallback Router</option>
                 <option value="gpt-5.6-terra">ChatGPT gpt-5.6-terra (Codex)</option>
                 <option value="gpt-6-luna">ChatGPT gpt-6-luna (Codex)</option>
@@ -2028,11 +2084,18 @@ def dashboard():
         <select id="test-model">
           <option value="auto">auto — 5-Tier Smart Auto-Router</option>
           <option value="local">local — Ollama GPU ($0.00)</option>
+          <option value="nemotron-bolt">nemotron-bolt — NVIDIA Bolt 4B (Developer Free $0)</option>
+          <option value="gemini-3.8-flash">gemini-3.8-flash — Google 3.8 Flash</option>
           <option value="fast">fast — Llama 4 Scout ($0.08/M)</option>
+          <option value="nemotron-lightning">nemotron-lightning — NVIDIA Coder 30B (Developer Free $0)</option>
           <option value="coder">coder — Llama 3.3 70B ($0.72/M)</option>
+          <option value="nemotron-reasoning">nemotron-reasoning — NVIDIA Reasoning 30B (Developer Free $0)</option>
           <option value="reasoner">reasoner — DeepSeek R1 ($1.35/M)</option>
-          <option value="claude">claude — Claude Sonnet 4.5 ($3.00/M)</option>
-          <option value="opus">opus — Claude Opus 4.5 ($15.00/M)</option>
+          <option value="nemotron-ultra">nemotron-ultra — NVIDIA Nemotron 550B (Developer Free $0)</option>
+          <option value="mistral-1t">mistral-1t — Mistral 1T Flagship (Developer Free $0)</option>
+          <option value="argon">argon — Gemini 4 Argon (1M Frontier)</option>
+          <option value="claude">claude — Claude Sonnet 4.6 ($3.00/M)</option>
+          <option value="opus">opus — Claude Opus 4.6 ($15.00/M)</option>
         </select>
 
         <div class="chips-row" aria-label="Quick Prompt Presets">
@@ -3478,6 +3541,30 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
 def resolve_auto_model_from_messages(messages: List[ChatMessage]) -> str:
     """Smart 5-Tier router for /v1/chat/completions when model='auto'."""
     user_text = " ".join(str(m.content) for m in messages if m.role == "user").lower()
+
+    # Explicit Gemini Higher-Tier routing
+    if any(k in user_text for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
+        return "gemini-4-argon"
+    if any(k in user_text for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
+        return "gemini-3.8-flash"
+    if "gemini" in user_text:
+        return "gemini-4-argon"
+
+    # Explicit NVIDIA NIM routing (Free developer credits)
+    if any(k in user_text for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t", "mistral 1t"]):
+        return "nemotron-ultra"
+    if any(k in user_text for k in ["nemotron-reasoning", "nemotron reasoning"]):
+        return "nemotron-reasoning"
+    if any(k in user_text for k in ["nemotron-lightning", "nemotron lightning", "nemotron coder"]):
+        return "nemotron-lightning"
+    if any(k in user_text for k in ["nemotron-bolt", "nemotron bolt"]):
+        return "nemotron-bolt"
+    if any(k in user_text for k in ["nemotron-vision", "nemotron vision", "llama vision", "llama-vision"]):
+        return "nemotron-vision"
+    if any(k in user_text for k in ["nvidia", "nemotron", "nim"]):
+        return "nemotron-lightning"
+
+    # Complexity-based Tier Classification
     if any(k in user_text for k in ["format", "lint", "docstring", "comment", "typo", "spelling", "1 sentence"]):
         return "local"
     if any(k in user_text for k in ["test", "unit test", "boilerplate", "config", "readme", "commit", "html", "css", "rename"]):

@@ -270,20 +270,19 @@ flowchart LR
     R -->|"System Design / Security / Auth"| F["🔴 Tier 5: Frontier<br/>Claude 4.5 ($3–$15/M)"]
 ```
 
-### Zero-Downtime 6-Step Fallback Cascade
-If any cloud model encounters a rate limit, expired token, or network timeout, [`invoke_model_with_fallback`](laptop_api_server.py) automatically cascades down the chain without interrupting your coding session:
+### Zero-Downtime Multi-Cloud Fallback Cascade
+If any cloud model encounters a rate limit, credit ceiling, or network timeout, [`invoke_model_with_fallback`](laptop_api_server.py) automatically cascades down the multi-provider chain without interrupting your coding session:
 
-$$\text{Claude Opus 4.6} \longrightarrow \text{Gemini 4 Argon} \longrightarrow \text{Claude Sonnet 4.6} \longrightarrow \text{DeepSeek R1} \longrightarrow \text{Llama 3.3 70B} \longrightarrow \text{Llama 4 Scout / Gemini Flash} \longrightarrow \text{Local GPU (Ollama \$0.00)}$$
+$$\text{Claude Opus 4.6} \longrightarrow \text{Gemini 4 Argon} \longrightarrow \text{Gemini 3.8 Flash} \longrightarrow \text{Nemotron Ultra 550B} \longrightarrow \text{Claude Sonnet 4.6} \longrightarrow \text{DeepSeek R1} \longrightarrow \text{Nemotron Lightning 30B} \longrightarrow \text{Nemotron Bolt 4B} \longrightarrow \text{Local GPU (\$0.00)}$$
 
-| Tier | Alias | Primary Engine | Measured Latency | Cost / 1M Tokens | Ideal Workload |
+| Tier | Alias | Primary Engine & Provider | Measured Latency | Cost / 1M Tokens | Ideal Workload |
 | :--- | :--- | :--- | :---: | :---: | :--- |
 | **Tier 1: Local Free** | `local` | `llama3.2:1b` / `qwen2.5-coder` (Local GPU) | **`148ms`** | **`$0.00`** | Docstrings, formatting, commit messages, offline mode |
-| **Tier 2: Fast Scout** | `fast` | `Llama 4 Scout 17B` / `Gemini 3.8 Flash` | `~190ms` | `$0.08–$0.15 in / $0.30–$0.60 out` | Unit tests, config files, boilerplate, CSS tweaks |
-| **Tier 3: Workhorse** | `coder` | `Llama 3.3 70B Instruct` / `Gemini 3.1 Pro Preview` | `~300ms` | `$0.72–$1.00 in / $0.72–$3.00 out` | Full-stack features, React/TS components, REST APIs |
-| **Tier 4: Reasoner** | `reasoner` | `DeepSeek R1` | `~1.1s` | `$1.35 in / $2.19 out` | Complex debugging, concurrency, Frontier Critic review |
-| **Tier 5: Frontier** | `claude` | `Claude Sonnet 4.6` | `~2.0s` | `$3.00 in / $15.00 out` | High-stakes architecture, cryptography, auth flows |
-| **Tier 5+: Google Argon** | `argon` | `Gemini 4 Argon` (Dedicated GCP) | `~1.5s` | `$2.00 in / $8.00 out` | Frontier multi-modal code generation on GCP credits |
-| **Tier 5+: Flagship Opus** | `opus` | `Claude Opus 4.6` | `~4.2s` | `$15.00 in / $75.00 out` | Multi-repository design and deep security audits |
+| **Tier 2: Fast Scout** | `fast`, `gemini-flash`, `nemotron-bolt` | `Gemini 3.8 Flash` / `Nemotron Bolt 4B` | `~190ms` | **`$0.00`** (NVIDIA NIM) / `$0.15` (GCP) | Unit tests, config files, boilerplate, CSS tweaks |
+| **Tier 3: Workhorse** | `coder`, `nemotron-lightning` | `Llama 3.3 70B` / `Nemotron Lightning 30B` | `~300ms` | **`$0.00`** (NVIDIA NIM) / `$0.72` (Bedrock) | Full-stack features, React/TS components, REST APIs |
+| **Tier 4: Reasoner** | `reasoner`, `nemotron-reasoning` | `DeepSeek R1` / `Nemotron Reasoning 30B` | `~1.1s` | **`$0.00`** (NVIDIA NIM) / `$1.35` (Bedrock) | Complex debugging, concurrency, Frontier Critic review |
+| **Tier 5: Frontier** | `claude`, `argon` | `Claude Sonnet 4.6` / `Gemini 4 Argon` | `~1.8s` | `$2.00 in / $8.00 out` (Argon) | High-stakes architecture, cryptography, auth flows |
+| **Tier 5+: Flagship** | `opus`, `nemotron-ultra`, `mistral-1t` | `Claude Opus 4.6` / `Nemotron 3 Ultra 550B` / `Mistral 1T` | `~2.5s` | **`$0.00`** (NVIDIA NIM) / `$15.00` (Bedrock) | Multi-repo system design, deep security audits, and complex refactors |
 
 ---
 
@@ -314,7 +313,8 @@ Open **`http://127.0.0.1:8000/dashboard`** in any browser to inspect real-time t
 ### 🤖 Multi-Agent Studio & Live Console
 The control plane dashboard includes a live interactive studio to test, chat with, and dispatch work to every agent without opening separate terminal windows:
 - **🟣 Claude Code**: Runs natively with your AWS Bedrock account (Opus 4.6 / Sonnet 4.6) with zero interactive setup prompts.
-- **🔵 Google Gemini & Argon**: Direct integration with Gemini 4 Argon (`gemini-4-argon`), Gemini 3.8 Flash, and Gemini 3.1 Pro Preview via personal API key or dedicated GCP project billing.
+- **🔵 Google Gemini Higher-Tier**: Direct integration with Gemini 4 Argon (`gemini-4-argon`), Gemini 3.8 Flash, and future Gemini 4 Ultra via personal API key or dedicated GCP project billing (all lower/preview models removed).
+- **🟢 NVIDIA NIM Developer Suite**: Verified integration via personal developer key to access Nemotron 3 Ultra 550B, Mistral 1T Flagship, Nemotron 30B Reasoning, Nemotron 30B Lightning Coder, Nemotron Bolt 4B, and Nemotron Vision 120B at **`$0.00` cost** within free developer limits.
 - **🟢 OpenAI Codex**: Operates in the elevated sandbox with stored ChatGPT account authentication (`gpt-5.6-terra`, `gpt-6-luna`).
 - **🔵 Aider**: Dispatches pair-programming tasks directly through the 5-Tier Gateway auto-router.
 - **🟠 OpenDots**: Integrates CopilotKit Generative UI canvas, visual state dots, and intelligence channels on port 4310.

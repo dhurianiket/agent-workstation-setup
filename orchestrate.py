@@ -132,6 +132,28 @@ def resolve_smart_model(task: str, explicit_model: str) -> str:
         return explicit_model
 
     t = task.lower()
+    # Explicit Gemini Higher-Tier routing
+    if any(k in t for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
+        return "gemini-4-argon"
+    if any(k in t for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
+        return "gemini-3.8-flash"
+    if "gemini" in t:
+        return "gemini-4-argon"
+
+    # Explicit NVIDIA NIM Developer Free Tier routing
+    if any(k in t for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t", "mistral 1t"]):
+        return "nemotron-ultra"
+    if any(k in t for k in ["nemotron-reasoning", "nemotron reasoning"]):
+        return "nemotron-reasoning"
+    if any(k in t for k in ["nemotron-lightning", "nemotron lightning", "nemotron coder"]):
+        return "nemotron-lightning"
+    if any(k in t for k in ["nemotron-bolt", "nemotron bolt"]):
+        return "nemotron-bolt"
+    if any(k in t for k in ["nemotron-vision", "nemotron vision", "llama vision", "llama-vision"]):
+        return "nemotron-vision"
+    if any(k in t for k in ["nvidia", "nemotron", "nim"]):
+        return "nemotron-lightning"
+
     # 1. Local Tier ($0.00)
     if any(k in t for k in ["format", "lint", "organize import", "docstring", "comment", "typo", "spelling"]):
         return "local"
@@ -473,7 +495,18 @@ def run_agent(agent: str, task: str, model: str = "auto", verify: bool = True, s
         "claude-opus-4.6": "Flagship Tier (Claude Opus 4.6)",
         "argon": "Frontier Tier (Gemini 4 Argon 1M Context)",
         "gemini-4-argon": "Frontier Tier (Gemini 4 Argon 1M Context)",
-        "gemini": "Google Gemini (BYOK Dedicated Project)",
+        "gemini-3.8-flash": "High-Speed Scout (Gemini 3.8 Flash)",
+        "gemini-flash": "High-Speed Scout (Gemini 3.8 Flash)",
+        "gemini-ultra": "Flagship Tier (Gemini 4 Ultra)",
+        "gemini": "Google Gemini Higher-Tier (BYOK Dedicated Project)",
+        "nemotron-ultra": "NVIDIA Ultra Tier (Nemotron 3 550B - Free Developer Limit)",
+        "mistral-1t": "NVIDIA Flagship (Mistral Large 1T MoE - Free Developer Limit)",
+        "nemotron-reasoning": "NVIDIA Reasoning (Nemotron 30B CoT - Free Developer Limit)",
+        "nemotron-lightning": "NVIDIA Coder (Nemotron 3.5 30B - Free Developer Limit)",
+        "nemotron-bolt": "NVIDIA Fast Scout (Nemotron Bolt 4B - Free Developer Limit)",
+        "nemotron-vision": "NVIDIA Vision (Nemotron 120B Multimodal - Free Developer Limit)",
+        "llama-vision-90b": "NVIDIA Vision (Llama 3.2 90B Vision - Free Developer Limit)",
+        "nvidia": "NVIDIA NIM Developer Free Tier (Nemotron 550B)",
     }.get(resolved_model, "Custom Tier")
 
     print(f"\n=======================================================")
@@ -589,7 +622,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Multi-Agent Orchestration Dispatcher with GitGuardian & AST Shield")
     parser.add_argument("--task", "-t", help="The instruction or task prompt for the agent")
     parser.add_argument("--agent", "-a", default="aider", choices=["aider", "claude", "codex", "opencode"], help="Agent harness to dispatch")
-    parser.add_argument("--model", "-m", default="auto", choices=["auto", "claude", "opus", "opus-4.6", "claude-opus-4.6", "sonnet", "reasoner", "coder", "fast", "local", "argon", "gemini-4-argon", "gemini"], help="Model routing profile (defaults to auto)")
+    parser.add_argument("--model", "-m", default="auto", choices=[
+        "auto", "claude", "opus", "opus-4.6", "claude-opus-4.6", "sonnet", "reasoner", "coder", "fast", "local",
+        "argon", "gemini-4-argon", "gemini-3.8-flash", "gemini-flash", "gemini-ultra", "gemini",
+        "nvidia", "nemotron-ultra", "mistral-1t", "nemotron-reasoning", "nemotron-lightning", "nemotron-bolt",
+        "nemotron-vision", "llama-vision-90b"
+    ], help="Model routing profile (defaults to auto)")
     parser.add_argument("--usage", action="store_true", help="Display live credit and token analytics")
     parser.add_argument("--guide", action="store_true", help="Display 'How It Works & How It Functions' architecture & usage guide")
     parser.add_argument("--setup", action="store_true", help="Run the interactive cross-platform hardware, Ollama, API key & 32-repo setup wizard")
