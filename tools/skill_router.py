@@ -27,6 +27,22 @@ SKILL_INDEX_CACHE = CACHE_DIR / "skills_index_v1.json"
 # Deterministic Domain-to-Repo Intent Matrix covering all 32 Curated Repos + Eko + Skyvern
 DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
     {
+        "domain": "Workstation Orchestration, Auto-Router & Model Routing",
+        "repos": ["agent-orchestrator", "workstation-auto-router", "9router"],
+        "keywords": [
+            "banner", "auto-router", "auto router", "skill router", "auto skill", "auto model",
+            "auto ai model", "ai model", "model routing", "model tier", "telemetry", "pre_invocation",
+            "preinvocation", "hook", "orchestrate", "orchestrator", "workstation", "smart model",
+            "model selection", "routing status", "gateway routing", "5-tier", "fastmcp", "nemotron",
+            "argon", "gemini-4-argon", "gemini-3.8-flash", "manage_tools", "setup_wizard"
+        ],
+        "priority_files": [
+            "workstation-auto-router/SKILL.md",
+            "agent-orchestrator/SKILL.md",
+            "9router/skills/9router/SKILL.md"
+        ]
+    },
+    {
         "domain": "Swarm Intelligence & Parallel World Social Simulation",
         "repos": ["MiroFish", "ruflo", "gods-eye-view"],
         "keywords": [
@@ -93,7 +109,7 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
         "keywords": [
             "agent-skills", "agent skills", "spec-driven", "task breakdown", "/spec",
             "/plan", "/build", "/test", "/constraints", "/review", "/webperf", "/code-simplify",
-            "/ship", "development lifecycle"
+            "/ship", "development lifecycle", "unit test", "unit tests", "tdd", "test suite", "test case", "write test"
         ],
         "priority_files": [
             "agent-skills/skills/planning-and-task-breakdown/SKILL.md",
@@ -371,6 +387,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
     matched_repos: List[str] = []
     selected_excerpts: List[str] = []
     matched_skills: List[str] = []
+    matched_skill_names: List[str] = []
 
     # 1. Deterministic Domain Matrix Check (Round-Robin across matched domains)
     matched_rules = []
@@ -389,6 +406,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
             if full_f.exists() and rel_f not in matched_skills and len(matched_skills) < max_skills:
                 meta = _extract_frontmatter_and_summary(full_f)
                 matched_skills.append(rel_f)
+                matched_skill_names.append(meta.get("name") or full_f.parent.name)
                 selected_excerpts.append(
                     f"### [{meta['name']}] (from `tools/{rel_f}`)\n{meta['excerpt'][:480]}"
                 )
@@ -402,6 +420,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
                 if full_f.exists() and rel_f not in matched_skills and len(matched_skills) < max_skills:
                     meta = _extract_frontmatter_and_summary(full_f)
                     matched_skills.append(rel_f)
+                    matched_skill_names.append(meta.get("name") or full_f.parent.name)
                     selected_excerpts.append(
                         f"### [{meta['name']}] (from `tools/{rel_f}`)\n{meta['excerpt'][:480]}"
                     )
@@ -418,7 +437,10 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
             "activated", "automatically", "auto", "install", "installed",
             "give", "status", "what", "when", "why", "how", "who", "our", "your",
             "can", "will", "just", "like", "also", "created", "other", "others",
-            "work", "working", "setup", "set", "everything", "right", "now", "okay"
+            "work", "working", "setup", "set", "everything", "right", "now", "okay",
+            "model", "models", "mode", "modes", "banner", "banners", "showing",
+            "shows", "uses", "used", "properly", "proper", "which", "does", "dont",
+            "look", "looks"
         }
         tokens = [
             w for w in re.findall(r"[a-z0-9_-]{3,}", t_lower)
@@ -437,6 +459,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
             scored.sort(key=lambda x: x[0], reverse=True)
             for _, winner in scored[: (max_skills - len(matched_skills))]:
                 matched_skills.append(winner["rel_path"])
+                matched_skill_names.append(winner.get("name") or winner["rel_path"].split("/")[0])
                 if winner["repo"] not in matched_repos:
                     matched_repos.append(winner["repo"])
                 selected_excerpts.append(
@@ -448,6 +471,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
             "matched_domains": [],
             "matched_repos": [],
             "matched_skills": [],
+            "matched_skill_names": [],
             "matched_skill_abs_paths": [],
             "context_block": ""
         }
@@ -466,7 +490,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
     header = (
         f"\n[AUTO-ACTIVATED WORKSTATION SKILLS & REPOS]\n"
         f"Activated Repos: {', '.join(matched_repos[:6])}\n"
-        f"Activated Skills: {', '.join(matched_skills)}\n"
+        f"Activated Skills: {', '.join(matched_skill_names or matched_skills)}\n"
         f"Native Skill Paths: {', '.join(matched_skill_abs_paths[:3])}\n"
     )
     body = "\n\n".join(selected_excerpts)
@@ -476,6 +500,7 @@ def auto_route_domain_tools(task: str, max_skills: int = 3, max_chars: int = 160
         "matched_domains": matched_domains,
         "matched_repos": matched_repos,
         "matched_skills": matched_skills,
+        "matched_skill_names": matched_skill_names,
         "matched_skill_abs_paths": matched_skill_abs_paths,
         "context_block": context_block
     }
@@ -494,7 +519,8 @@ if __name__ == "__main__":
         "query": query,
         "matched_domains": res["matched_domains"],
         "matched_repos": res["matched_repos"],
-        "matched_skills": res["matched_skills"]
+        "matched_skills": res["matched_skills"],
+        "matched_skill_names": res.get("matched_skill_names", [])
     }, indent=2))
     if res["context_block"]:
         print(res["context_block"])

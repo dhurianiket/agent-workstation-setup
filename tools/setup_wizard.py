@@ -623,7 +623,7 @@ These rules apply globally across **EVERY project and workspace** on this machin
 ## 1. Mandatory Step 0: Automatic Request Routing & Telemetry Banner
 - On **EVERY** prompt in this chat, automatic 5-Tier Model Routing and 32-Repo Skill Routing are active via `PreInvocation` hook and `{router_py}`.
 - Always begin your response with a concise 1-line routing status banner:
-  `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Activated Repos = <matched_repos> | Graphify AST = Synced`
+  `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Auto Skill = <skill> | Activated Repos = <matched_repos> | Graphify AST = Synced`
 - Enforce Principal Engineer standards: **zero placeholders** (`# rest unchanged` / `// TODO` are forbidden), explicit type annotations, defensive error handling, and closed-loop verification (`py_compile` / `tsc` / tests) before completion.
 
 ## 2. Zero-Name Automatic Repository & Skill Routing (32 Installed Repos)

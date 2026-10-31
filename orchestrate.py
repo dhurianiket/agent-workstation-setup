@@ -124,51 +124,202 @@ def show_usage():
     except Exception as e:
         print(f"[!] Could not retrieve usage stats: {e}")
 
+def resolve_smart_model_telemetry(task: str, explicit_model: str = "auto") -> dict:
+    """
+    Intelligently resolves task complexity to the 5-tier architecture,
+    identifying the exact primary model, fallback model, and telemetry display.
+    Respects NVIDIA NIM Developer Free Tier ($0.00) and Gemini Higher-Tier limits.
+    """
+    t = task.lower()
+    req = explicit_model.lower().strip() if explicit_model and explicit_model != "auto" else ""
+
+    # 1. Explicit Model Overrides or Mentions
+    # Google Gemini Higher-Tier (3.8 Flash, 4 Argon, 4 Ultra)
+    if req in ["gemini-4-argon", "argon", "gemini-argon"] or any(k in t for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
+        return {
+            "tier": "frontier",
+            "model_name": "Gemini 4 Argon",
+            "model_id": "gemini-4-argon",
+            "display": "Gemini 4 Argon",
+            "provider": "gemini",
+            "cost_tier": "Cloud Frontier",
+        }
+    if req in ["gemini-3.8-flash", "3.8 flash", "gemini-flash"] or any(k in t for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
+        return {
+            "tier": "scout",
+            "model_name": "Gemini 3.8 Flash",
+            "model_id": "gemini-3.8-flash",
+            "display": "Gemini 3.8 Flash",
+            "provider": "gemini",
+            "cost_tier": "Cloud Scout",
+        }
+    if req in ["gemini-ultra", "gemini-4-ultra"] or any(k in t for k in ["gemini-ultra", "gemini-4-ultra"]):
+        return {
+            "tier": "flagship",
+            "model_name": "Gemini 4 Ultra",
+            "model_id": "gemini-4-ultra",
+            "display": "Gemini 4 Ultra",
+            "provider": "gemini",
+            "cost_tier": "Cloud Flagship",
+        }
+    if "gemini" in t and not any(k in t for k in ["gemini-api", "gemini.md", "gemini docs"]):
+        return {
+            "tier": "frontier",
+            "model_name": "Gemini 4 Argon",
+            "model_id": "gemini-4-argon",
+            "display": "Gemini 4 Argon",
+            "provider": "gemini",
+            "cost_tier": "Cloud Frontier",
+        }
+
+    # NVIDIA NIM Developer Free Models ($0.00 within free limits)
+    if req in ["nemotron-ultra", "ultra-550b", "mistral-1t"] or any(k in t for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t", "mistral 1t"]):
+        return {
+            "tier": "flagship",
+            "model_name": "Nemotron Ultra 550B",
+            "model_id": "nvidia/nemotron-3-ultra-550b-a55b",
+            "display": "Nemotron Ultra 550B (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+    if req in ["nemotron-reasoning"] or any(k in t for k in ["nemotron-reasoning", "nemotron reasoning"]):
+        return {
+            "tier": "reasoner",
+            "model_name": "Nemotron Reasoning 30B",
+            "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "display": "Nemotron Reasoning 30B (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+    if req in ["nemotron-lightning"] or any(k in t for k in ["nemotron-lightning", "nemotron lightning", "nemotron coder"]):
+        return {
+            "tier": "coder",
+            "model_name": "Nemotron 3.5 Lightning",
+            "model_id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "display": "Nemotron 3.5 Lightning (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+    if req in ["nemotron-bolt"] or any(k in t for k in ["nemotron-bolt", "nemotron bolt"]):
+        return {
+            "tier": "fast",
+            "model_name": "Nemotron 3.5 Bolt",
+            "model_id": "nvidia/nemotron-3.5-bolt-e4b",
+            "display": "Nemotron 3.5 Bolt (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+    if req in ["nemotron-vision", "llama-vision-90b"] or any(k in t for k in ["nemotron-vision", "nemotron vision", "llama vision", "llama-vision", "multimodal"]):
+        return {
+            "tier": "multimodal",
+            "model_name": "Nemotron 3.5 Super VL 120B",
+            "model_id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "display": "Nemotron 3.5 Super VL 120B (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+    if any(k in t for k in ["nvidia", "nemotron", "nim"]):
+        return {
+            "tier": "coder",
+            "model_name": "Nemotron 3.5 Lightning",
+            "model_id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "display": "Nemotron 3.5 Lightning (NVIDIA $0)",
+            "provider": "nvidia",
+            "cost_tier": "NVIDIA Free Dev Limit ($0.00)",
+        }
+
+    # Frontier Claude Models (Bedrock)
+    if req in ["opus", "claude-opus", "claude-opus-4.6"] or any(k in t for k in ["claude opus", "opus 4.6", "opus-4.6", "opus"]):
+        return {
+            "tier": "flagship",
+            "model_name": "Claude Opus 4.6",
+            "model_id": "us.anthropic.claude-opus-4-6-v1",
+            "display": "Claude Opus 4.6 / Nemotron Ultra ($0)",
+            "provider": "bedrock",
+            "cost_tier": "Cloud Flagship",
+        }
+    if req in ["claude", "sonnet", "claude-sonnet", "claude-sonnet-4.6"] or any(k in t for k in ["claude 4", "claude sonnet", "sonnet 4.6", "sonnet-4.6"]):
+        return {
+            "tier": "frontier",
+            "model_name": "Claude Sonnet 4.6",
+            "model_id": "us.anthropic.claude-sonnet-4-6",
+            "display": "Claude Sonnet 4.6 / Gemini 4 Argon",
+            "provider": "bedrock",
+            "cost_tier": "Cloud Frontier",
+        }
+    if req in ["deepseek", "deepseek-r1", "r1"] or any(k in t for k in ["deepseek r1", "deepseek-r1"]):
+        return {
+            "tier": "reasoner",
+            "model_name": "DeepSeek R1",
+            "model_id": "us.deepseek.r1-v1:0",
+            "display": "DeepSeek R1 / Nemotron Reasoning ($0)",
+            "provider": "bedrock",
+            "cost_tier": "Cloud Reasoning",
+        }
+
+    # 2. Automated 5-Tier Complexity Classification (Highest Complexity First)
+    # Tier 4: Frontier Architecture Tier (~$3.00 / M)
+    if any(k in t for k in ["architect", "security audit", "crypto", "system design", "auth overhaul"]):
+        return {
+            "tier": "frontier",
+            "model_name": "Gemini 4 Argon",
+            "model_id": "gemini-4-argon",
+            "display": "Gemini 4 Argon / Claude Sonnet 4.6",
+            "provider": "gemini",
+            "cost_tier": "Frontier Architecture",
+        }
+
+    # Tier 3: Deep Reasoning Tier (~$1.35 / M or NVIDIA $0)
+    if any(k in t for k in ["debug", "why does", "algorithm", "race condition", "memory leak", "fix crash", "root cause", "diagnose"]):
+        return {
+            "tier": "reasoner",
+            "model_name": "Nemotron Reasoning 30B",
+            "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "display": "Nemotron Reasoning 30B (NVIDIA $0) / DeepSeek R1",
+            "provider": "nvidia",
+            "cost_tier": "Deep Reasoning ($0.00)",
+        }
+
+    # Tier 2: Fast Scout Tier (~$0.08 / M or NVIDIA $0)
+    if any(k in t for k in ["unit test", "test", "boilerplate", "config", "readme", "git commit", "html", "css", "rename"]):
+        return {
+            "tier": "fast",
+            "model_name": "Nemotron 3.5 Bolt",
+            "model_id": "nvidia/nemotron-3.5-bolt-e4b",
+            "display": "Nemotron 3.5 Bolt (NVIDIA $0) / Gemini 3.8 Flash",
+            "provider": "nvidia",
+            "cost_tier": "Fast Scout ($0.00)",
+        }
+
+    # Tier 1: Local Tier ($0.00)
+    if any(k in t for k in ["format", "lint", "organize import", "docstring", "comment", "typo", "spelling"]):
+        return {
+            "tier": "local",
+            "model_name": "Llama 3.2 1B / Qwen 2.5 Coder",
+            "model_id": "ollama/qwen2.5-coder:7b",
+            "display": "Llama 3.2 1B / Qwen 2.5 Coder ($0.00)",
+            "provider": "ollama",
+            "cost_tier": "Local GPU ($0.00)",
+        }
+
+    # Tier 5: Default Workhorse Coding Tier (NVIDIA Developer Free limit first, Bedrock fallback)
+    return {
+        "tier": "coder",
+        "model_name": "Nemotron 3.5 Lightning",
+        "model_id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "display": "Nemotron 3.5 Lightning (NVIDIA $0) / Llama 3.3 70B",
+        "provider": "nvidia",
+        "cost_tier": "Workhorse Coder ($0.00)",
+    }
+
 def resolve_smart_model(task: str, explicit_model: str) -> str:
     """
     Intelligently assigns the model tier based on task complexity to avoid credit burnout.
     """
     if explicit_model != "auto":
         return explicit_model
-
-    t = task.lower()
-    # Explicit Gemini Higher-Tier routing
-    if any(k in t for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
-        return "gemini-4-argon"
-    if any(k in t for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
-        return "gemini-3.8-flash"
-    if "gemini" in t:
-        return "gemini-4-argon"
-
-    # Explicit NVIDIA NIM Developer Free Tier routing
-    if any(k in t for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t", "mistral 1t"]):
-        return "nemotron-ultra"
-    if any(k in t for k in ["nemotron-reasoning", "nemotron reasoning"]):
-        return "nemotron-reasoning"
-    if any(k in t for k in ["nemotron-lightning", "nemotron lightning", "nemotron coder"]):
-        return "nemotron-lightning"
-    if any(k in t for k in ["nemotron-bolt", "nemotron bolt"]):
-        return "nemotron-bolt"
-    if any(k in t for k in ["nemotron-vision", "nemotron vision", "llama vision", "llama-vision"]):
-        return "nemotron-vision"
-    if any(k in t for k in ["nvidia", "nemotron", "nim"]):
-        return "nemotron-lightning"
-
-    # 1. Local Tier ($0.00)
-    if any(k in t for k in ["format", "lint", "organize import", "docstring", "comment", "typo", "spelling"]):
-        return "local"
-    # 2. Fast Scout Tier (~$0.08 / M)
-    elif any(k in t for k in ["test", "unit test", "boilerplate", "config", "readme", "git commit", "html", "css", "rename"]):
-        return "fast"
-    # 3. Deep Reasoning Tier (~$1.35 / M)
-    elif any(k in t for k in ["debug", "why does", "algorithm", "race condition", "memory leak", "fix crash", "root cause"]):
-        return "reasoner"
-    # 4. Frontier Architecture Tier (~$3.00 / M)
-    elif any(k in t for k in ["architect", "security audit", "crypto", "system design", "auth overhaul"]):
-        return "claude"
-    # 5. Default Workhorse (~$0.72 / M)
-    else:
-        return "coder"
+    telemetry = resolve_smart_model_telemetry(task, explicit_model)
+    return telemetry.get("tier", "coder")
 
 def record_postmortem(task: str, error_message: str, cwd: str):
     """Records past debugging and syntax errors to prevent repetitive regression loops."""

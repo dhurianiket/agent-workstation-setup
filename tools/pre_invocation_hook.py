@@ -196,15 +196,24 @@ def main() -> None:
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
 
+    model_info = {
+        "tier": "coder",
+        "model_name": "Nemotron 3.5 Lightning",
+        "display": "Nemotron 3.5 Lightning (NVIDIA $0) / Llama 3.3 70B",
+        "provider": "nvidia",
+        "cost_tier": "Workhorse Coder ($0.00)",
+    }
     resolved_tier = "coder"
     try:
         import orchestrate
-        resolved_tier = orchestrate.resolve_smart_model(user_prompt, "auto")
+        model_info = orchestrate.resolve_smart_model_telemetry(user_prompt, "auto")
+        resolved_tier = model_info.get("tier", "coder")
     except Exception:
         pass
 
     matched_repos = []
     matched_skills = []
+    matched_skill_names = []
     matched_domains = []
     matched_skill_abs_paths = []
     context_block = ""
@@ -213,11 +222,17 @@ def main() -> None:
         routed = skill_router.auto_route_domain_tools(user_prompt, max_skills=3, max_chars=1800)
         matched_repos = routed.get("matched_repos", [])
         matched_skills = routed.get("matched_skills", [])
+        matched_skill_names = routed.get("matched_skill_names", [])
         matched_domains = routed.get("matched_domains", [])
         matched_skill_abs_paths = routed.get("matched_skill_abs_paths", [])
         context_block = routed.get("context_block", "")
     except Exception:
         pass
+
+    model_display = model_info.get("display", "Nemotron 3.5 Lightning (NVIDIA $0) / Llama 3.3 70B")
+    model_name = model_info.get("model_name", "Nemotron 3.5 Lightning")
+    skills_str = ", ".join(matched_skill_names) if matched_skill_names else (", ".join(matched_skills) if matched_skills else "workstation-auto-router, agent-orchestrator")
+    repos_str = ", ".join(matched_repos[:5]) if matched_repos else "agent-orchestrator, workstation-auto-router, 9router"
 
     # Persist latest route telemetry for /dashboard
     route_record = {
@@ -228,9 +243,12 @@ def main() -> None:
         "prompt_preview": user_prompt[:180],
         "tier": resolved_tier,
         "resolved_tier": resolved_tier,
+        "model_name": model_name,
+        "model_display": model_display,
         "matched_domains": matched_domains,
         "matched_repos": matched_repos[:6],
         "matched_skills": matched_skills,
+        "matched_skill_names": matched_skill_names,
         "matched_skill_abs_paths": matched_skill_abs_paths[:3],
     }
     try:
@@ -238,8 +256,6 @@ def main() -> None:
     except Exception:
         pass
 
-    repos_str = ", ".join(matched_repos[:5]) if matched_repos else "Core Workstation Engine"
-    skills_str = ", ".join(matched_skills) if matched_skills else "Principal Engineering Constitution"
     creds_ok = check_credentials_configured()
     bootstrap_note = ""
     if bootstrapped_now:
@@ -262,11 +278,12 @@ def main() -> None:
     injected_msg = (
         f"[AUTONOMOUS WORKSTATION PRE-INVOCATION ROUTER — ACTIVE]\n"
         f"• Prompt Auto-Classified Tier : {resolved_tier.upper()}\n"
-        f"• Auto-Activated Repositories : {repos_str}\n"
-        f"• Auto-Injected Skill Runbooks: {skills_str}{bootstrap_note}{native_skill_note}\n"
+        f"• Auto-Resolved AI Model      : {model_display}\n"
+        f"• Auto-Routed Active Skills   : {skills_str}\n"
+        f"• Auto-Activated Repositories : {repos_str}{bootstrap_note}{native_skill_note}\n"
         f"{context_block}\n"
         f"MANDATORY RESPONSE REQUIREMENT: Start your response to the user with this exact 1-line status banner:\n"
-        f"> ⚡ **Auto-Router**: Tier = `{resolved_tier}` | Activated Repos = `{repos_str}` | Graphify AST = `Synced`"
+        f"> ⚡ **Auto-Router**: Tier = `{resolved_tier}` (`{model_display}`) | Auto Skill = `{skills_str}` | Activated Repos = `{repos_str}` | Graphify AST = `Synced`"
     )
 
     print(json.dumps({

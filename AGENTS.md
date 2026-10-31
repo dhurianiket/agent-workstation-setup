@@ -19,7 +19,7 @@ When a user clones or pulls this repository into **Antigravity, Claude Code, Cur
 - Operates with the **Antigravity Pro Autonomous Developer Workstation**.
 - Every prompt in chat is automatically routed via the native `PreInvocation` hook (`tools/pre_invocation_hook.py`) and Zero-Name Skill Router (`tools/skill_router.py`).
 - **Mandatory Telemetry Banner**: Begin every response with a concise 1-line routing summary so the user can verify automatic routing in real time:
-  `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Activated Repos = <matched_repos> | Graphify AST = Synced`
+  `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Auto Skill = <skill> | Activated Repos = <matched_repos> | Graphify AST = Synced`
 - When ANY task is requested (coding, refactoring, bug fixes, architecture, UI/UX, reviews), automatically orchestrate:
   1. **Zero-Name Skill & Repo Injection**: Match the prompt against the 32 installed repositories and 456+ `SKILL.md` runbooks (`tools/skill_router.py`) without waiting for the user to name a tool.
   2. **Planning & AST Analysis**: Formulate architectural approach using `graphify-out/graph.json` when present in the active workspace (never auto-creating `graphify-out/` inside external personal/private repositories).
