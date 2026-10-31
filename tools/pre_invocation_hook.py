@@ -282,8 +282,11 @@ def main() -> None:
         f"• Auto-Routed Active Skills   : {skills_str}\n"
         f"• Auto-Activated Repositories : {repos_str}{bootstrap_note}{native_skill_note}\n"
         f"{context_block}\n"
-        f"MANDATORY RESPONSE REQUIREMENT: Start your response to the user with this exact 1-line status banner:\n"
-        f"> ⚡ **Auto-Router**: Tier = `{resolved_tier}` (`{model_display}`) | Auto Skill = `{skills_str}` | Activated Repos = `{repos_str}` | Graphify AST = `Synced`"
+        f"MANDATORY EXECUTION DIRECTIVES:\n"
+        f"1. Mandatory Status Banner: Start your response to the user with this exact 1-line status banner:\n"
+        f"> ⚡ **Auto-Router**: Tier = `{resolved_tier}` (`{model_display}`) | Auto Skill = `{skills_str}` | Activated Repos = `{repos_str}` | Graphify AST = `Synced`\n"
+        f"2. Active Skill Execution: Do NOT merely display the skill name. You MUST actively follow the concrete methodology, tools, and runbook instructions from `{skills_str}`.\n"
+        f"3. Active Model Execution: When generating code, performing architectural analysis, running multi-model verification, or evaluating complex logic, actively dispatch to `{model_display}` via the Unified Gateway (http://127.0.0.1:8000/v1/chat/completions) or `workstation_complete` / `orchestrate.py`."
     )
 
     print(json.dumps({

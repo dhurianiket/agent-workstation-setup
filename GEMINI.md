@@ -9,6 +9,7 @@
 - Every user prompt in this chat is automatically analyzed by the `PreInvocation` hook (`tools/pre_invocation_hook.py`) and Zero-Name Skill Router (`tools/skill_router.py`).
 - **Always start your response** with the 1-line routing telemetry banner so the user can see automatic routing in action:
   `> ⚡ **Auto-Router**: Tier = <tier> (<model>) | Auto Skill = <skill> | Activated Repos = <matched_repos> | Graphify AST = Synced`
+- **Active Execution Mandate**: The banner is strictly functional, not decorative. Actively apply the auto-routed skill runbook and execute tasks with the resolved model (invoking the gateway on `http://127.0.0.1:8000/v1` or `orchestrate.py` whenever multi-model reasoning or generation is needed).
 - Do not wait for manual activation phrases or repository names. Auto-triage, plan, execute with Principal Engineer standards (no placeholders, strict typing, defensive errors), and verify results via syntax checks/tests before completion.
 - Leverage the Unified AI Gateway on port 8000 (`http://127.0.0.1:8000/v1`) with Smart 5-Tier credit guard.
 

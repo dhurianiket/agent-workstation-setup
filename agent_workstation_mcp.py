@@ -10,6 +10,8 @@ Exposes native tools for Cursor, Windsurf, Claude Code, and Antigravity:
   - workstation_judge: Frontier critic consensus review on git diffs.
   - workstation_scan_secrets: GitGuardian (ggshield) zero-leakage secret audit.
   - workstation_list_tools: Inspection and status of all curated tools.
+  - workstation_complete: Live inference through the Unified AI Gateway (NVIDIA/Gemini/Bedrock/Ollama).
+  - workstation_auto_route_skills: Natural language tool & runbook routing.
 """
 
 import os
@@ -230,6 +232,60 @@ async def workstation_list_tools() -> str:
     )
     stdout, stderr = await proc.communicate()
     return stdout.decode("utf-8", errors="replace")
+
+@mcp.tool()
+async def workstation_complete(
+    prompt: str,
+    system: Optional[str] = None,
+    model: str = "auto",
+    max_tokens: int = 4096,
+    temperature: float = 0.2
+) -> str:
+    """
+    Executes live model inference through the Unified AI Gateway (http://127.0.0.1:8000/v1).
+    Supports 'auto' (5-tier router) or explicit models (nemotron-lightning, gemini-4-argon,
+    nemotron-ultra, nemotron-reasoning, claude-opus-4.6, deepseek-r1, llama-3.3-70b).
+    """
+    import urllib.request
+
+    target_model = model
+    if target_model == "auto":
+        try:
+            if str(WORKSPACE_DIR) not in sys.path:
+                sys.path.insert(0, str(WORKSPACE_DIR))
+            import orchestrate
+            telemetry = orchestrate.resolve_smart_model_telemetry(prompt, "auto")
+            target_model = telemetry.get("model_id") or telemetry.get("tier", "coder")
+        except Exception:
+            target_model = "nemotron-lightning"
+
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    payload = {
+        "model": target_model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature
+    }
+
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8000/v1/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            content = ""
+            for choice in data.get("choices", []):
+                msg = choice.get("message", {})
+                content += msg.get("content") or msg.get("reasoning_content") or ""
+            return content if content else json.dumps(data, indent=2)
+    except Exception as e:
+        return f"[GATEWAY ERROR] Failed calling {target_model}: {e}"
 
 @mcp.tool()
 async def workstation_auto_route_skills(prompt: str) -> str:
