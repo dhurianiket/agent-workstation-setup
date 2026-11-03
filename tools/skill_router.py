@@ -104,6 +104,22 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
         ]
     },
     {
+        "domain": "Spec-Driven Architecture, Design Drafting & Subagent Review (EGM)",
+        "repos": ["elephant-goldfish-model", "agent-skills", "archify"],
+        "keywords": [
+            "elephant", "goldfish", "egm", "design doc", "design draft", "concepts brief",
+            "spec-driven", "architectural review", "zero-context review", "drift report",
+            "rfc", "brainstorm architecture", "design review", "subagent review",
+            "egm-brainstorm", "egm-draft", "egm-review", "egm-bootstrap", "egm-drift-report"
+        ],
+        "priority_files": [
+            "elephant-goldfish-model/skills/egm-draft/SKILL.md",
+            "elephant-goldfish-model/skills/egm-review/SKILL.md",
+            "elephant-goldfish-model/skills/egm-brainstorm/SKILL.md",
+            "elephant-goldfish-model/README.md"
+        ]
+    },
+    {
         "domain": "Engineering Lifecycle Quality Gates & Agent Skills",
         "repos": ["agent-skills", "archify"],
         "keywords": [

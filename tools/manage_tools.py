@@ -68,6 +68,7 @@ CURATED_REPOS: List[Tuple[str, str]] = [
     ("agent-skills", "https://github.com/addyosmani/agent-skills"),
     ("scrapling", "https://github.com/D4Vinci/Scrapling"),
     ("cloudflare-security-audit-skill", "https://github.com/cloudflare/security-audit-skill"),
+    ("elephant-goldfish-model", "https://github.com/google/elephant-goldfish-model"),
 ]
 
 REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
@@ -111,6 +112,7 @@ REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
     "agent-skills": "Addy Osmani's 25 production-grade software lifecycle skills for AI coding agents: /spec, /plan, /build, /test, /constraints, /review, /webperf, /code-simplify, and /ship.",
     "scrapling": "Adaptive web scraping, Cloudflare stealth engine (StealthyFetcher), anti-bot bypass, self-healing DOM tracking, and high-speed HTML parsing MCP server. Activate for web scraping, anti-bot handling, or WAF defense testing.",
     "cloudflare-security-audit-skill": "Cloudflare's defensive security audit skill for source-first vulnerability review, trust boundary verification, attack surface mapping, and safe reproduction across APIs, web apps, and daemons. Activate for security audits, pen tests, or vulnerability research.",
+    "elephant-goldfish-model": "Google's Elephant-Goldfish Model (EGM) for spec-driven software design, brainstorm RFCs, and zero-context subagent reviews. Spawns fresh Goldfish reviewers via invoke_subagent to expose blind spots, missing assumptions, and architectural drift.",
 }
 
 
