@@ -580,6 +580,10 @@ def configure_global_agent_integrations() -> None:
             "agent_workstation_mcp": {
                 "command": py_exe,
                 "args": [mcp_py]
+            },
+            "context7": {
+                "command": "npx",
+                "args": ["-y", "@upstash/context7-mcp"]
             }
         }
     }, indent=2), encoding="utf-8")
@@ -590,6 +594,10 @@ def configure_global_agent_integrations() -> None:
         mcp_data = json.loads(global_mcp_cfg.read_text(encoding="utf-8")) if global_mcp_cfg.exists() else {}
     except Exception:
         mcp_data = {}
+    mcp_data.setdefault("mcpServers", {})["context7"] = {
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp"]
+    }
     mcp_data.setdefault("mcpServers", {})["agent_workstation_mcp"] = {
         "command": py_exe,
         "args": [mcp_py]

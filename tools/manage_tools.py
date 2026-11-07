@@ -260,6 +260,98 @@ def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
     return registered
 
 
+
+CURATED_SUBSKILL_SOURCES: List[Tuple[str, str, Optional[str]]] = [
+    # (repo_name, subpath_glob, prefix_or_none)
+    ("agent-skills", "skills/*", None),
+    ("elephant-goldfish-model", "skills/*", None),
+    ("ai-engineering-from-scratch", "skills/*", "aie-"),
+    ("context7", "skills/*", None),
+    ("magic-mcp", "skills/*", None),
+    ("scrapling", "agent-skill/Scrapling-Skill", "scrapling-"),
+    ("cloudflare-security-audit-skill", "skills/*", "cloudflare-"),
+]
+
+
+def register_curated_subskills(extra_skill_roots: List[Path] = None) -> int:
+    """
+    Registers specialized granular sub-skills from curated repos (e.g. Addy Osmani's agent-skills,
+    Google's EGM, Context7, 21st UI, Scrapling, Cloudflare Security) into Antigravity
+    global & workspace discovery directories so they are natively available in `<skills>`.
+    """
+    home = Path.home()
+    target_roots = [
+        home / ".gemini" / "config" / "plugins" / "antigravity-workstation" / "skills",
+        home / ".gemini" / "config" / "skills",
+        REPO_ROOT / ".agents" / "skills",
+        REPO_ROOT / "agent-workstation-setup" / "skills",
+    ]
+    if extra_skill_roots:
+        for r in extra_skill_roots:
+            if r not in target_roots:
+                target_roots.append(r)
+
+    for r in target_roots:
+        r.mkdir(parents=True, exist_ok=True)
+
+    registered = 0
+    for repo_name, pattern, prefix in CURATED_SUBSKILL_SOURCES:
+        repo_dir = TOOLS_DIR / repo_name
+        if not repo_dir.exists():
+            continue
+
+        matches = list(repo_dir.glob(pattern))
+        for skill_dir in sorted(matches):
+            if not skill_dir.is_dir():
+                continue
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.exists():
+                skill_file = skill_dir / "skill.md"
+            if not skill_file.exists():
+                continue
+
+            content = skill_file.read_text(encoding="utf-8", errors="replace")
+            m_name = re.search(r"^name:\s*(.+)$", content, re.MULTILINE)
+            raw_name = m_name.group(1).strip().strip("'\"") if m_name else skill_dir.name
+            target_name = f"{prefix}{raw_name}" if prefix and not raw_name.startswith(prefix) else raw_name
+            target_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "-", target_name).lower()
+
+            m_desc = re.search(r"^description:\s*(?:>-\s*\n)?(.+?)(?:\n\w+:|\n---\Z|\n\n|\Z)", content, re.MULTILINE | re.DOTALL)
+            desc = m_desc.group(1).strip() if m_desc else f"Specialized skill runbook for {target_name} from {repo_name}."
+            desc = " ".join(desc.split())[:300]
+
+            if content.startswith("---"):
+                parts = content.split("---", 2)
+                body = parts[2].strip() if len(parts) >= 3 else content
+            else:
+                body = content
+
+            formatted_skill_md = (
+                f"---\n"
+                f"name: {target_name}\n"
+                f"description: >-\n"
+                f"  {desc}\n"
+                f"---\n\n"
+                f"{body}\n"
+            )
+
+            for root in target_roots:
+                dest = root / target_name
+                dest.mkdir(parents=True, exist_ok=True)
+                (dest / "SKILL.md").write_text(formatted_skill_md, encoding="utf-8")
+                for subdir_name in ["scripts", "resources", "references"]:
+                    sub_src = skill_dir / subdir_name
+                    if sub_src.exists() and sub_src.is_dir():
+                        sub_dst = dest / subdir_name
+                        if sub_dst.exists():
+                            shutil.rmtree(sub_dst, ignore_errors=True)
+                        shutil.copytree(sub_src, sub_dst)
+            registered += 1
+
+    print(f"  [OK] Registered {registered} curated sub-skills across global & workspace skill directories.")
+    return registered
+
+
 def clone_missing_tools() -> None:
     print("=" * 65)
     print("  [TOOLS MANAGER] Verifying & Syncing All Curated Repositories")
@@ -297,6 +389,7 @@ def clone_missing_tools() -> None:
     print(f"Summary: {installed_count}/{len(CURATED_REPOS)} available ({cloned_count} newly cloned, {failed_count} failed)")
     print("-" * 65)
     register_all_32_repo_skills()
+    register_curated_subskills()
 
 
 def audit_tools() -> None:
@@ -336,6 +429,7 @@ if __name__ == "__main__":
         audit_tools()
     elif action == "register-skills":
         register_all_32_repo_skills()
+        register_curated_subskills()
     else:
         clone_missing_tools()
         audit_tools()
