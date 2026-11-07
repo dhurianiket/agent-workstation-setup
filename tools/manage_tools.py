@@ -256,13 +256,13 @@ def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
 
         registered += 1
 
-    print(f"  [OK] Registered {registered}/32 repository skills into Antigravity global & workspace skill directories.")
+    print(f"  [OK] Registered {registered}/{len(CURATED_REPOS)} repository skills into Antigravity global & workspace skill directories.")
     return registered
 
 
 def clone_missing_tools() -> None:
     print("=" * 65)
-    print("  [TOOLS MANAGER] Verifying & Syncing All 32 Curated Repositories")
+    print("  [TOOLS MANAGER] Verifying & Syncing All Curated Repositories")
     print("=" * 65)
 
     installed_count = 0
