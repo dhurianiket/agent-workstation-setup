@@ -352,6 +352,85 @@ def register_curated_subskills(extra_skill_roots: List[Path] = None) -> int:
     return registered
 
 
+
+PERSONAL_REPOS: List[Tuple[str, str, Path]] = [
+    ("Aegis-health-ai-", "https://github.com/dhurianiket/Aegis-health-ai-", Path("E:/Aegis-health-ai-")),
+    ("chate-prep-plus", "https://github.com/dhurianiket/chate-prep-plus", Path("C:/Users/dhuri/Downloads/antigravity ai workspace/CHATE PREP PLUS")),
+    ("aniket-living-cv", "https://github.com/dhurianiket/aniket-living-cv", Path("E:/aniket-living-cv")),
+    ("case-management-system", "https://github.com/dhurianiket/case-management-system", Path("C:/Users/dhuri/Downloads/case-management-system")),
+    ("agent-workstation-setup", "https://github.com/dhurianiket/agent-workstation-setup", REPO_ROOT / "agent-workstation-setup"),
+]
+
+
+def _fetch_or_clone_single_repo(name: str, url: str, target_path: Optional[Path] = None) -> Tuple[str, str, str]:
+    """Clones if missing; fetches latest updates from origin if already present."""
+    if target_path is None:
+        target_path = TOOLS_DIR / name
+
+    if not target_path.exists() or not any(target_path.iterdir()):
+        return _clone_single_repo(name, url)
+
+    git_dir = target_path / ".git"
+    if not git_dir.exists():
+        return (name, "present", "already present (not a git repository)")
+
+    try:
+        res = subprocess.run(
+            ["git", "-C", str(target_path), "fetch", "--depth=1", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+        if res.returncode == 0:
+            return (name, "fetched", "fetched latest updates from origin")
+        else:
+            err = (res.stderr or res.stdout or f"exit {res.returncode}").strip()[:80]
+            return (name, "fetch_failed", err)
+    except Exception as exc:
+        return (name, "fetch_error", str(exc)[:80])
+
+
+def fetch_all_repositories(parallel_workers: int = 6) -> None:
+    """
+    Automatically fetches latest updates for all 41 curated repositories (cloning any missing ones)
+    plus personal ecosystem repositories in parallel.
+    """
+    print("=" * 68)
+    print("  [TOOLS MANAGER] Fetching & Updating All Repositories (Parallel)")
+    print("=" * 68)
+
+    all_targets = [(name, url, TOOLS_DIR / name) for name, url in CURATED_REPOS]
+    for name, url, p in PERSONAL_REPOS:
+        if p.exists():
+            all_targets.append((name, url, p))
+
+    cloned = 0
+    fetched = 0
+    errors = 0
+
+    with ThreadPoolExecutor(max_workers=parallel_workers) as pool:
+        futures = {pool.submit(_fetch_or_clone_single_repo, n, u, p): n for n, u, p in all_targets}
+        for fut in as_completed(futures):
+            name, status, detail = fut.result()
+            if status in ("cloned", "present"):
+                cloned += 1
+                print(f"  [CLONED]  {name:<28} -> {detail}")
+            elif status == "fetched":
+                fetched += 1
+                print(f"  [FETCHED] {name:<28} -> {detail}")
+            else:
+                errors += 1
+                print(f"  [NOTE]    {name:<28} -> {detail}")
+
+    print("-" * 68)
+    print(f"Summary: {fetched} fetched, {cloned} present/cloned, {errors} failed/noted across {len(all_targets)} repositories.")
+    print("-" * 68)
+
+    register_all_32_repo_skills()
+    register_curated_subskills()
+
+
 def clone_missing_tools() -> None:
     print("=" * 65)
     print("  [TOOLS MANAGER] Verifying & Syncing All Curated Repositories")
@@ -430,6 +509,9 @@ if __name__ == "__main__":
     elif action == "register-skills":
         register_all_32_repo_skills()
         register_curated_subskills()
+    elif action in ("fetch", "auto-fetch", "pull"):
+        fetch_all_repositories()
+        audit_tools()
     else:
         clone_missing_tools()
         audit_tools()
