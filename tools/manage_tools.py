@@ -15,7 +15,7 @@ import subprocess
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Any
 
 TOOLS_DIR = Path(__file__).parent.resolve()
 REPO_ROOT = TOOLS_DIR.parent
@@ -122,6 +122,8 @@ def _clone_single_repo(name: str, url: str) -> Tuple[str, str, str]:
     if target_path.exists() and any(target_path.iterdir()):
         return (name, "present", "already installed")
 
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
     for _ in (1, 2):
         if target_path.exists():
             shutil.rmtree(target_path, ignore_errors=True)
@@ -135,6 +137,7 @@ def _clone_single_repo(name: str, url: str) -> Tuple[str, str, str]:
                 text=True,
                 timeout=180,
                 check=False,
+                env=env,
             )
             if res.returncode == 0 and target_path.exists():
                 return (name, "cloned", "cloned successfully")
@@ -374,13 +377,16 @@ def _fetch_or_clone_single_repo(name: str, url: str, target_path: Optional[Path]
     if not git_dir.exists():
         return (name, "present", "already present (not a git repository)")
 
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
     try:
         res = subprocess.run(
             ["git", "-C", str(target_path), "fetch", "--depth=1", "origin"],
             capture_output=True,
             text=True,
-            timeout=40,
+            timeout=15,
             check=False,
+            env=env,
         )
         if res.returncode == 0:
             return (name, "fetched", "fetched latest updates from origin")
@@ -391,19 +397,23 @@ def _fetch_or_clone_single_repo(name: str, url: str, target_path: Optional[Path]
         return (name, "fetch_error", str(exc)[:80])
 
 
-def fetch_all_repositories(parallel_workers: int = 6) -> None:
+def fetch_all_repositories(repo_names: Optional[List[str]] = None, parallel_workers: int = 6) -> None:
     """
     Automatically fetches latest updates for all 41 curated repositories (cloning any missing ones)
-    plus personal ecosystem repositories in parallel.
+    plus personal ecosystem repositories in parallel. If repo_names is specified, only fetches those.
     """
-    print("=" * 68)
-    print("  [TOOLS MANAGER] Fetching & Updating All Repositories (Parallel)")
-    print("=" * 68)
-
     all_targets = [(name, url, TOOLS_DIR / name) for name, url in CURATED_REPOS]
     for name, url, p in PERSONAL_REPOS:
         if p.exists():
             all_targets.append((name, url, p))
+
+    if repo_names:
+        filter_set = set(r.strip().lower() for r in repo_names if r.strip())
+        all_targets = [t for t in all_targets if t[0].lower() in filter_set]
+
+    print("=" * 68, flush=True)
+    print(f"  [TOOLS MANAGER] Fetching & Updating {len(all_targets)} Repositories (Parallel)", flush=True)
+    print("=" * 68, flush=True)
 
     cloned = 0
     fetched = 0
@@ -415,17 +425,17 @@ def fetch_all_repositories(parallel_workers: int = 6) -> None:
             name, status, detail = fut.result()
             if status in ("cloned", "present"):
                 cloned += 1
-                print(f"  [CLONED]  {name:<28} -> {detail}")
+                print(f"  [CLONED]  {name:<28} -> {detail}", flush=True)
             elif status == "fetched":
                 fetched += 1
-                print(f"  [FETCHED] {name:<28} -> {detail}")
+                print(f"  [FETCHED] {name:<28} -> {detail}", flush=True)
             else:
                 errors += 1
-                print(f"  [NOTE]    {name:<28} -> {detail}")
+                print(f"  [NOTE]    {name:<28} -> {detail}", flush=True)
 
-    print("-" * 68)
-    print(f"Summary: {fetched} fetched, {cloned} present/cloned, {errors} failed/noted across {len(all_targets)} repositories.")
-    print("-" * 68)
+    print("-" * 68, flush=True)
+    print(f"Summary: {fetched} fetched, {cloned} present/cloned, {errors} failed/noted across {len(all_targets)} repositories.", flush=True)
+    print("-" * 68, flush=True)
 
     register_all_32_repo_skills()
     register_curated_subskills()
@@ -510,7 +520,8 @@ if __name__ == "__main__":
         register_all_32_repo_skills()
         register_curated_subskills()
     elif action in ("fetch", "auto-fetch", "pull"):
-        fetch_all_repositories()
+        repo_filter = sys.argv[2:] if len(sys.argv) > 2 else None
+        fetch_all_repositories(repo_names=repo_filter)
         audit_tools()
     else:
         clone_missing_tools()

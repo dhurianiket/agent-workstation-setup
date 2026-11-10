@@ -34,6 +34,42 @@ LAST_ROUTE_FILE = STATE_DIR / "last_route.json"
 LAST_FETCH_LOCK = STATE_DIR / "last_fetch.lock"
 
 
+def ensure_run_hook_launcher() -> Path:
+    """Creates a zero-space launcher script in ~/.agent_workstation to avoid Windows cmd.exe quote stripping bugs."""
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        launcher = STATE_DIR / "run_hook.cmd"
+        py_exe = sys.executable
+        hook_py = str((TOOLS_DIR / "pre_invocation_hook.py").resolve())
+        content = (
+            "@echo off\r\n"
+            "setlocal\r\n"
+            f'set "VENV_PY={py_exe}"\r\n'
+            f'set "HOOK_PY={hook_py}"\r\n'
+            'if exist "%VENV_PY%" (\r\n'
+            '    "%VENV_PY%" "%HOOK_PY%" %*\r\n'
+            ") else (\r\n"
+            '    python "%HOOK_PY%" %*\r\n'
+            ")\r\n"
+            "endlocal\r\n"
+        )
+        launcher.write_text(content, encoding="utf-8")
+        return launcher
+    else:
+        launcher = STATE_DIR / "run_hook.sh"
+        hook_py = str((TOOLS_DIR / "pre_invocation_hook.py").resolve())
+        content = (
+            "#!/usr/bin/env bash\n"
+            f'python3 "{hook_py}" "$@"\n'
+        )
+        launcher.write_text(content, encoding="utf-8")
+        try:
+            os.chmod(launcher, 0o755)
+        except Exception:
+            pass
+        return launcher
+
+
 def activate_target_workspace(ws_path: Path) -> bool:
     """Ensures any opened workspace folder is fully activated with workstation hooks & rules."""
     if not ws_path.exists() or not ws_path.is_dir():
@@ -44,10 +80,10 @@ def activate_target_workspace(ws_path: Path) -> bool:
         rules_dir = agents_dir / "rules"
         rules_dir.mkdir(parents=True, exist_ok=True)
 
-        py_exe = sys.executable
-        hook_py = str((TOOLS_DIR / "pre_invocation_hook.py").resolve())
+        launcher = ensure_run_hook_launcher()
+        launcher_str = str(launcher.resolve())
 
-        # 1. Write workspace .agents/hooks.json
+        # 1. Write workspace .agents/hooks.json (zero-quote path avoids cmd.exe quote stripping)
         hooks_file = agents_dir / "hooks.json"
         hooks_payload = {
             "workstation-auto-router": {
@@ -55,14 +91,14 @@ def activate_target_workspace(ws_path: Path) -> bool:
                 "SessionStart": [
                     {
                         "type": "command",
-                        "command": f'"{py_exe}" "{hook_py}" --session-start',
+                        "command": f"{launcher_str} --session-start",
                         "timeout": 15
                     }
                 ],
                 "PreInvocation": [
                     {
                         "type": "command",
-                        "command": f'"{py_exe}" "{hook_py}"',
+                        "command": f"{launcher_str}",
                         "timeout": 15
                     }
                 ]
@@ -72,8 +108,7 @@ def activate_target_workspace(ws_path: Path) -> bool:
 
         # 2. Write workspace .agents/rules/workstation.md
         rules_file = rules_dir / "workstation.md"
-        if not rules_file.exists():
-            rules_content = f"""# Workstation Autonomous Operating Guidelines
+        rules_content = f"""# Workstation Autonomous Operating Guidelines
 
 This project is actively managed by the **Antigravity Pro Autonomous Developer Workstation**.
 
@@ -87,26 +122,60 @@ This project is actively managed by the **Antigravity Pro Autonomous Developer W
 - Never expose API keys or personal credentials in chat or git.
 - Pass code through `ggshield secret scan` before git commit or push.
 """
-            rules_file.write_text(rules_content, encoding="utf-8")
+        rules_file.write_text(rules_content, encoding="utf-8")
         return True
     except Exception:
         return False
 
 
-def ensure_background_repositories_fetched() -> None:
+def activate_all_registered_projects() -> None:
+    """Discovers all Antigravity projects in ~/.gemini/config/projects/ and ensures they are activated."""
+    projects_dir = Path.home() / ".gemini" / "config" / "projects"
+    if not projects_dir.exists():
+        return
+    import urllib.parse
+    for jf in projects_dir.glob("*.json"):
+        try:
+            data = json.loads(jf.read_text(encoding="utf-8"))
+            resources = data.get("projectResources", {}).get("resources", [])
+            for res in resources:
+                for key in ("gitFolder", "folderUri"):
+                    val = res.get(key) if isinstance(res, dict) else None
+                    uri_str = val.get("folderUri", "") if isinstance(val, dict) else (val if isinstance(val, str) else "")
+                    if uri_str.startswith("file:///"):
+                        parsed = urllib.parse.unquote(uri_str.replace("file:///", ""))
+                        if ":" in parsed and parsed.startswith("/"):
+                            parsed = parsed[1:]  # strip leading slash on windows
+                        p = Path(parsed)
+                        if p.exists() and p.is_dir():
+                            activate_target_workspace(p)
+        except Exception:
+            continue
+
+
+def ensure_background_repositories_fetched(target_repos: Optional[List[str]] = None) -> None:
     """Automatically triggers background fetch/clone of repositories if missing or overdue."""
     manage_py = TOOLS_DIR / "manage_tools.py"
     if not manage_py.exists():
         return
 
-    # Check if any curated repos are missing
+    # Check if any targeted repos are missing or need immediate clone
     try:
         if str(TOOLS_DIR) not in sys.path:
             sys.path.insert(0, str(TOOLS_DIR))
         from manage_tools import CURATED_REPOS
-        has_missing = any(not (TOOLS_DIR / name).exists() for name, _ in CURATED_REPOS)
+        curated_names = {name for name, _ in CURATED_REPOS}
+
+        if target_repos:
+            missing_targets = [r for r in target_repos if r in curated_names and not (TOOLS_DIR / r).exists()]
+            if missing_targets:
+                cmd = [sys.executable, str(manage_py), "fetch"] + missing_targets
+                env = os.environ.copy()
+                env["GIT_TERMINAL_PROMPT"] = "0"
+                subprocess.Popen(cmd, cwd=str(REPO_ROOT), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return
     except Exception:
-        has_missing = False
+        pass
 
     overdue = True
     if LAST_FETCH_LOCK.exists():
@@ -116,18 +185,20 @@ def ensure_background_repositories_fetched() -> None:
         except Exception:
             pass
 
-    if has_missing or overdue:
+    if overdue:
         try:
             LAST_FETCH_LOCK.write_text(str(int(time.time())), encoding="utf-8")
             log_path = STATE_DIR / "auto_fetch.log"
             with open(log_path, "a", encoding="utf-8") as lf:
-                cmd = [sys.executable, str(manage_py), "sync" if has_missing else "fetch"]
+                cmd = [sys.executable, str(manage_py), "fetch"]
+                env = os.environ.copy()
+                env["GIT_TERMINAL_PROMPT"] = "0"
                 subprocess.Popen(
                     cmd,
                     cwd=str(REPO_ROOT),
+                    env=env,
                     stdout=lf,
                     stderr=lf,
-                    start_new_session=True,
                 )
         except Exception:
             pass
@@ -214,6 +285,7 @@ def handle_session_start(payload: dict) -> None:
     active_ws_name = active_ws.name
 
     activate_target_workspace(active_ws)
+    activate_all_registered_projects()
     ensure_background_repositories_fetched()
 
     notice = (
@@ -310,6 +382,8 @@ def handle_pre_invocation(payload: dict) -> None:
         matched_domains = routed.get("matched_domains", [])
         matched_skill_abs_paths = routed.get("matched_skill_abs_paths", [])
         context_block = routed.get("context_block", "")
+        if matched_repos:
+            ensure_background_repositories_fetched(target_repos=matched_repos)
     except Exception:
         pass
 

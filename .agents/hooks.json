@@ -4,14 +4,14 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "python3 ./tools/pre_invocation_hook.py --session-start || python ./tools/pre_invocation_hook.py --session-start",
+        "command": "C:\\Users\\dhuri\\.agent_workstation\\run_hook.cmd --session-start",
         "timeout": 15
       }
     ],
     "PreInvocation": [
       {
         "type": "command",
-        "command": "python3 ./tools/pre_invocation_hook.py || python ./tools/pre_invocation_hook.py",
+        "command": "C:\\Users\\dhuri\\.agent_workstation\\run_hook.cmd",
         "timeout": 15
       }
     ]
