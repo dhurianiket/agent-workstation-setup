@@ -24,12 +24,14 @@ import sys
 import time
 import json
 import asyncio
+import threading
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 import boto3
 from botocore.exceptions import ClientError
@@ -51,11 +53,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Usage & Config Directory
 STATS_DIR = Path.home() / ".agent_workstation"
 STATS_DIR.mkdir(parents=True, exist_ok=True)
 STATS_FILE = STATS_DIR / "usage_stats.json"
+
+_FILE_CACHE_LOCK = threading.Lock()
+_FILE_JSON_CACHE: Dict[str, tuple] = {}
+_CATALOG_CACHE: Dict[str, Any] = {"ts": 0.0, "data": None}
+
+
+def _read_json_cached(path: Path, default: Any) -> Any:
+    """Reads and caches JSON files by size + nanosecond mtime to minimize polling disk/JSON overhead."""
+    key = str(path)
+    if not path.exists():
+        with _FILE_CACHE_LOCK:
+            _FILE_JSON_CACHE.pop(key, None)
+        return default
+    try:
+        st = path.stat()
+        sig = (st.st_mtime_ns, st.st_size)
+        with _FILE_CACHE_LOCK:
+            cached = _FILE_JSON_CACHE.get(key)
+            if cached and cached[0] == sig:
+                return cached[1]
+        data = json.loads(path.read_text(encoding="utf-8"))
+        with _FILE_CACHE_LOCK:
+            _FILE_JSON_CACHE[key] = (sig, data)
+        return data
+    except Exception:
+        return default
+
+
+def _invalidate_json_cache(path: Path) -> None:
+    with _FILE_CACHE_LOCK:
+        _FILE_JSON_CACHE.pop(str(path), None)
 
 # Load auto_configurator from tools
 TOOLS_DIR = Path(__file__).resolve().parent / "tools"
@@ -144,6 +178,8 @@ PRICING_PER_M = {
     "groq": {"input": 0.59, "output": 0.79},
     "openai": {"input": 2.50, "output": 10.00},
     "gemini": {"input": 2.00, "output": 8.00},
+    "gemini-4-carbon": {"input": 2.50, "output": 10.00},
+    "carbon": {"input": 2.50, "output": 10.00},
     "gemini-4-argon": {"input": 2.00, "output": 8.00},
     "gemini-3.8-flash": {"input": 0.15, "output": 0.60},
     "gemini-flash": {"input": 0.15, "output": 0.60},
@@ -167,6 +203,8 @@ PRICING_PER_M = {
 # Auto-fallback chain: If a model fails or credits deplete, cascade down gracefully
 FALLBACK_CHAINS = {
     # Gemini Higher-Tier Models (Cascade to NVIDIA NIM Free Tier -> Bedrock -> Local)
+    "carbon": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "local"],
+    "gemini-4-carbon": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "local"],
     "argon": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
     "gemini-4-argon": ["gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
     "gemini": ["gemini-4-argon", "gemini-3.8-flash", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "nemotron-bolt", "local"],
@@ -197,7 +235,11 @@ FALLBACK_CHAINS = {
     "coder": ["nemotron-lightning", "fast", "nemotron-bolt", "local"],
     "llama-3.3-70b": ["nemotron-lightning", "fast", "nemotron-bolt", "local"],
     "fast": ["nemotron-bolt", "local"],
+    "scout": ["gemini-3.8-flash", "nemotron-bolt", "local"],
     "llama-4-scout": ["nemotron-bolt", "local"],
+    "frontier": ["gemini-4-argon", "nemotron-ultra", "claude-sonnet-4.6", "nemotron-lightning", "local"],
+    "flagship": ["nemotron-ultra", "claude-opus-4.6", "gemini-4-argon", "local"],
+    "multimodal": ["nemotron-vision", "llama-vision-90b", "pixtral", "local"],
 }
 
 # Production Engineering Quality Directive injected into system prompt
@@ -325,6 +367,8 @@ BYOK_PROVIDERS = {
         "headers": {},
         "models": {
             # Higher-Tier Gemini Models (Lower models removed per policy)
+            "carbon": "gemini-4-carbon",
+            "gemini-4-carbon": "gemini-4-carbon",
             "argon": "gemini-4-argon",
             "gemini-4-argon": "gemini-4-argon",
             "gemini-flash": "gemini-3.8-flash",
@@ -340,7 +384,9 @@ BYOK_PROVIDERS = {
 MODEL_MAP = {
     # Smart 5-Tier Auto Router
     "auto": {"provider": "router", "id": "smart-5-tier-router", "tier": "auto_router"},
-    # Google Gemini & Argon (Higher-Tier Models Only: 3.8 Flash & 4 Argon / Ultra)
+    # Google Gemini & Carbon / Argon (Higher-Tier Models Only: 3.8 Flash, 4 Argon, 4 Carbon, 4 Ultra)
+    "carbon": {"provider": "gemini", "id": "gemini-4-carbon", "tier": "frontier"},
+    "gemini-4-carbon": {"provider": "gemini", "id": "gemini-4-carbon", "tier": "frontier"},
     "argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
     "gemini-4-argon": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
     "gemini-flash": {"provider": "gemini", "id": "gemini-3.8-flash", "tier": "scout"},
@@ -394,6 +440,10 @@ MODEL_MAP = {
     "nvidia/nemotron-3.5-super-vl-120b-a12b": {"provider": "nvidia", "id": "nvidia/nemotron-3.5-super-vl-120b-a12b", "tier": "nvidia_nim"},
     "llama-vision-90b": {"provider": "nvidia", "id": "meta/llama-3.2-90b-vision-instruct", "tier": "nvidia_nim"},
     "meta/llama-3.2-90b-vision-instruct": {"provider": "nvidia", "id": "meta/llama-3.2-90b-vision-instruct", "tier": "nvidia_nim"},
+    # Tier Aliases (for unified orchestrator -> gateway tier routing)
+    "frontier": {"provider": "gemini", "id": "gemini-4-argon", "tier": "frontier"},
+    "flagship": {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "tier": "flagship"},
+    "scout": {"provider": "gemini", "id": "gemini-3.8-flash", "tier": "scout"},
     # Local GPU Models (Ollama - Free)
     "local": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
     "llama3.2:1b": {"provider": "ollama", "id": "llama3.2:1b", "tier": "local_free"},
@@ -432,6 +482,7 @@ def record_usage(model_id: str, prompt_tokens: int, completion_tokens: int):
         
         with open(STATS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+        _invalidate_json_cache(STATS_FILE)
     except Exception as e:
         print(f"Usage logging error: {e}")
 
@@ -564,6 +615,9 @@ def dashboard():
       --radius-lg: 14px;
       --radius-md: 10px;
       --radius-sm: 6px;
+      color-scheme: dark;
+      accent-color: var(--accent);
+      scrollbar-color: rgba(148, 163, 184, 0.38) var(--surface-inset);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -571,7 +625,6 @@ def dashboard():
     body {
       background-color: var(--bg);
       background-image: var(--bg-mesh);
-      background-attachment: fixed;
       color: var(--text);
       font-family: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5;
@@ -582,6 +635,35 @@ def dashboard():
     .mono, .tabular {
       font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
       font-variant-numeric: tabular-nums;
+    }
+
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      clip-path: inset(50%);
+      height: 1px;
+      overflow: hidden;
+      position: absolute;
+      white-space: nowrap;
+      width: 1px;
+    }
+
+    .skip-link:focus {
+      position: fixed;
+      top: 12px;
+      left: 16px;
+      z-index: 300;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .deferred-section {
+      content-visibility: auto;
+      contain-intrinsic-size: auto none auto 620px;
     }
 
     
@@ -820,7 +902,7 @@ def dashboard():
       transform: scale(0.97);
     }
 
-    .btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, .tier-card:focus-visible, .chip:focus-visible {
+    .btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, .tier-card:focus-visible, .chip:focus-visible, .agent-card:focus-visible, a:focus-visible, .app-dialog button:focus-visible {
       outline: 2px solid var(--ring);
       outline-offset: 2px;
     }
@@ -1050,7 +1132,7 @@ def dashboard():
       margin-bottom: 6px;
     }
 
-    select, textarea, input[type="text"] {
+    select, textarea, input[type="text"], input[type="password"], input[type="search"] {
       width: 100%;
       background: var(--surface-inset);
       border: 1px solid var(--border);
@@ -1063,8 +1145,22 @@ def dashboard():
       transition: border-color 150ms var(--ease-out);
     }
 
-    select:hover, textarea:hover, input[type="text"]:hover {
+    select:hover, textarea:hover, input[type="text"]:hover, input[type="password"]:hover, input[type="search"]:hover {
       border-color: var(--border-strong);
+    }
+
+    input:not([type="range"]):user-invalid, textarea:user-invalid, select:user-invalid {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 2px var(--danger-soft);
+    }
+
+    #studio-prompt-input, #test-prompt {
+      field-sizing: content;
+      width: 100%;
+      height: auto;
+      min-block-size: 3lh;
+      max-block-size: 10lh;
+      resize: vertical;
     }
 
     .chips-row {
@@ -1226,32 +1322,37 @@ def dashboard():
       font-size: 0.78rem;
     }
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
+    dialog:modal {
+      overscroll-behavior: contain;
+    }
+
+    dialog::backdrop {
+      overflow: hidden;
+      overscroll-behavior: contain;
       background: rgba(4, 7, 13, 0.82);
       backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
     }
 
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .modal-panel {
+    .app-dialog {
+      margin: auto;
       background: var(--surface);
+      color: var(--text);
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-lg);
       max-width: 960px;
-      width: 100%;
+      width: min(960px, calc(100vw - 32px));
       max-height: 86vh;
       overflow-y: auto;
       padding: 24px;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+    }
+
+    .app-dialog[open] {
+      display: block;
+    }
+
+    .app-dialog h1 {
+      margin: 0;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1324,6 +1425,31 @@ def dashboard():
       cursor: pointer;
       transition: all 0.22s var(--ease-out);
       position: relative;
+      text-align: left;
+      font-family: inherit;
+      color: inherit;
+      width: 100%;
+    }
+
+    .studio-title, .section-title, .brand-title {
+      margin: 0;
+    }
+
+    .graphify-link {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .graphify-link:hover {
+      text-decoration: underline;
+    }
+
+    .skill-catalog-item {
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      margin-bottom: 6px;
     }
     .agent-card:hover {
       border-color: var(--accent);
@@ -1505,6 +1631,7 @@ def dashboard():
   </style>
 </head>
 <body>
+  <a href="#main-heading" class="skip-link visually-hidden">Skip to main content</a>
   <!-- Sticky Liquid-Glass Functional Header -->
   <header class="topbar" role="banner">
     <div class="brand">
@@ -1512,25 +1639,25 @@ def dashboard():
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
       </div>
       <div>
-        <div class="brand-title">
+        <h1 class="brand-title" id="main-heading" tabindex="-1">
           Antigravity Autonomous Workstation
           <span class="version-pill mono">v3.4 OS</span>
-        </div>
-        <div class="brand-sub">Unified 5-Tier AI Gateway • Graphify AST Engine • Hardware-Adaptive Ollama • 32-Repo Auto-Router</div>
+        </h1>
+        <div class="brand-sub">Unified 5-Tier AI Gateway • Graphify AST Engine • Hardware-Adaptive Ollama • <span id="brand-repo-count">47</span>-Repo Auto-Router</div>
       </div>
     </div>
 
     <div class="topbar-controls">
-      <div class="provider-pills" id="provider-pills" aria-label="Active AI Providers">
-        <span class="prov-pill active" id="pill-bedrock"><span class="dot"></span>Bedrock</span>
-        <span class="prov-pill active" id="pill-ollama"><span class="dot"></span>Ollama GPU</span>
-        <span class="prov-pill" id="pill-byok"><span class="dot"></span>BYOK Cloud</span>
+      <div class="provider-pills" id="provider-pills">
+        <span class="prov-pill active" id="pill-bedrock"><span class="dot" aria-hidden="true"></span>Bedrock</span>
+        <span class="prov-pill active" id="pill-ollama"><span class="dot" aria-hidden="true"></span>Ollama GPU</span>
+        <span class="prov-pill" id="pill-byok"><span class="dot" aria-hidden="true"></span>BYOK Cloud</span>
       </div>
       <div class="status-pill mono" id="status-badge" role="status" aria-live="polite">
-        <span class="dot"></span>
+        <span class="dot" aria-hidden="true"></span>
         <span id="status-text">ONLINE • 127.0.0.1:8000</span>
       </div>
-            <button class="btn btn-ghost" onclick="triggerAutoConfig()" title="Auto-configure Claude Code, Codex, Aider, OpenDots & Ollama">
+      <button type="button" class="btn btn-ghost" onclick="triggerAutoConfig()" title="Auto-configure Claude Code, Codex, Aider, OpenDots & Ollama">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
         ⚡ Auto-Configure
       </button>
@@ -1538,22 +1665,22 @@ def dashboard():
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
         Agent Studio
       </a>
-<button class="btn btn-ghost" onclick="openKeysModal()" title="Configure Personal API Keys & Auto-Setup AWS Bedrock">
+      <button type="button" class="btn btn-ghost" onclick="openKeysModal()" title="Configure Personal API Keys & Auto-Setup AWS Bedrock">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
         API Keys &amp; Cloud
       </button>
-      <button class="btn btn-ghost" onclick="window.open('/graphify', '_blank')" title="Open Interactive Graphify AST Graph (graphify-out/graph.html)">
+      <a class="btn btn-ghost" href="/graphify" target="_blank" rel="noopener noreferrer" title="Open Interactive Graphify AST Graph (graphify-out/graph.html)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
         Graphify AST ↗
-      </button>
-      <button class="btn btn-ghost" onclick="openGuideModal()" title="How It Works & Cross-PC Setup Guide">
+      </a>
+      <button type="button" class="btn btn-ghost" onclick="openGuideModal()" title="How It Works & Cross-PC Setup Guide">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         How It Works
       </button>
-      <button class="btn btn-ghost" onclick="togglePolling()" id="pause-btn" title="Pause or resume 5s live telemetry polling">
+      <button type="button" class="btn btn-ghost" onclick="togglePolling()" id="pause-btn" title="Pause or resume 5s live telemetry polling">
         <span id="pause-label">Live: 5s</span>
       </button>
-      <button class="btn" onclick="fetchStats()" title="Refresh all gateway telemetry now">
+      <button type="button" class="btn" onclick="fetchStats()" title="Refresh all gateway telemetry now">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         Refresh
       </button>
@@ -1562,15 +1689,15 @@ def dashboard():
 
   <main class="container">
     <!-- Hardware Profile & Live Chat Auto-Router Strip -->
-    <section class="hw-banner" aria-label="Hardware Profile and Live Chat Auto-Router">
+    <section class="hw-banner">
       <div class="hw-strip">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="kpi-icon" style="background: var(--success-soft); color: var(--success); width: 28px; height: 28px;">
+          <span class="kpi-icon" style="background: var(--success-soft); color: var(--success); width: 28px; height: 28px;" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect></svg>
           </span>
           <div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Detected Host Hardware & Local Ollama Profile</div>
-            <div id="hw-summary" style="color: var(--text); font-weight: 600; margin-top: 1px;">Detecting PC/Mac GPU & RAM profile...</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Detected Host Hardware &amp; Local Ollama Profile</div>
+            <div id="hw-summary" style="color: var(--text); font-weight: 600; margin-top: 1px;">Detecting PC/Mac GPU &amp; RAM profile...</div>
           </div>
         </div>
         <span class="mono" id="hw-model-pill" style="background: var(--success-soft); color: var(--success); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;">llama3.2:1b</span>
@@ -1578,7 +1705,7 @@ def dashboard():
 
       <div class="hw-strip">
         <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-          <span class="kpi-icon" style="background: var(--purple-soft); color: var(--purple); width: 28px; height: 28px; flex-shrink: 0;">
+          <span class="kpi-icon" style="background: var(--purple-soft); color: var(--purple); width: 28px; height: 28px; flex-shrink: 0;" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           </span>
           <div style="min-width: 0;">
@@ -1591,7 +1718,7 @@ def dashboard():
     </section>
 
     <!-- 5-Card Bento Telemetry Row -->
-    <section class="kpi-grid" aria-label="Key Performance Telemetry">
+    <section class="kpi-grid">
       <div class="card">
         <div class="kpi-header">
           <span class="kpi-title">Actual Spend (USD)</span>
@@ -1636,31 +1763,31 @@ def dashboard():
         <div class="meter-track"><div class="meter-fill" id="token-bar" style="width: 85%; background: var(--warning);"></div></div>
       </div>
 
-      <div class="card card-interactive" id="graphify-card" role="button" tabindex="0" onclick="window.open('/graphify', '_blank')" onkeydown="if(event.key==='Enter'||event.key===' ') window.open('/graphify', '_blank')" title="Click to open interactive Graphify AST Graph (graphify-out/graph.html)">
+      <div class="card card-interactive" id="graphify-card">
         <div class="kpi-header">
-          <span class="kpi-title" style="color: var(--purple);">Graphify AST Graph ↗</span>
+          <a class="kpi-title graphify-link" href="/graphify" target="_blank" rel="noopener noreferrer" style="color: var(--purple);" title="Open interactive Graphify AST Graph (graphify-out/graph.html)">Graphify AST Graph ↗</a>
           <span class="kpi-icon" style="background: var(--purple-soft); color: var(--purple);" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           </span>
         </div>
         <div class="kpi-val tabular" style="color: var(--purple);" id="graph-nodes">2,397 Nodes</div>
         <div class="kpi-sub">
-          <span id="graph-sub" class="tabular">4,445 edges • Tap to open</span>
-          <span class="mono" style="color: var(--purple); font-weight: 600; text-decoration: underline;" onclick="event.stopPropagation(); window.open('/graphify/report', '_blank')" title="Open GRAPH_REPORT.md">Report ↗</span>
+          <a class="tabular graphify-link" href="/graphify" target="_blank" rel="noopener noreferrer" id="graph-sub" title="Open interactive Graphify AST Graph">4,445 edges • Open Graph ↗</a>
+          <a class="mono graphify-link" href="/graphify/report" target="_blank" rel="noopener noreferrer" style="color: var(--purple); font-weight: 600; text-decoration: underline;" title="Open GRAPH_REPORT.md">Report ↗</a>
         </div>
         <div class="meter-track"><div class="meter-fill" style="width: 100%; background: var(--purple);"></div></div>
       </div>
 
       <div class="card">
         <div class="kpi-header">
-          <span class="kpi-title">32-Repo Skill Router</span>
+          <span class="kpi-title" id="kpi-repo-title">47-Repo Skill Router</span>
           <span class="kpi-icon" style="background: var(--pink-soft); color: var(--pink);" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
           </span>
         </div>
-        <div class="kpi-val tabular" style="color: var(--pink);" id="skills-count">456 Skills</div>
+        <div class="kpi-val tabular" style="color: var(--pink);" id="skills-count">693 Skills</div>
         <div class="kpi-sub">
-          <span>32 / 32 Repos Ready</span>
+          <span id="repos-ready-label">47 / 47 Repos Ready</span>
           <span class="mono" id="latency-ms" style="color: var(--success);">-- ms</span>
         </div>
         <div class="meter-track"><div class="meter-fill" style="width: 100%; background: var(--pink);"></div></div>
@@ -1669,14 +1796,14 @@ def dashboard():
 
     <!-- Interactive 5-Tier Smart Auto-Routing Pipeline -->
     <div class="section-bar">
-      <div class="section-title">
+      <h2 class="section-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         5-Tier Smart Auto-Routing Hierarchy
-      </div>
+      </h2>
       <div class="section-hint">Click any tier card to target it in the Live Gateway Playground</div>
     </div>
 
-    <section class="tiers-grid" aria-label="Model Routing Tiers">
+    <section class="tiers-grid">
       <button type="button" class="tier-card" onclick="selectTier('local', this)">
         <div>
           <span class="tier-badge" style="color: var(--success); background: var(--success-soft);">TIER 1 • LOCAL GPU</span>
@@ -1742,15 +1869,15 @@ def dashboard():
     <!-- ==========================================================================
          INTERACTIVE MULTI-AGENT DESIGN STUDIO & OPENDOTS CANVAS
          ========================================================================== -->
-    <section class="agent-studio-section" id="agent-studio-section" aria-label="Interactive Multi-Agent Design Studio and OpenDots Canvas">
+    <section class="agent-studio-section deferred-section" id="agent-studio-section">
       <div class="studio-card">
         <div class="studio-header">
           <div class="studio-title-group">
-            <div class="studio-icon-glow">
+            <div class="studio-icon-glow" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
             </div>
             <div>
-              <div class="studio-title">Interactive Design Studio &amp; OpenDots Canvas</div>
+              <h2 class="studio-title">Interactive Design Studio &amp; OpenDots Canvas</h2>
               <div class="studio-sub">Generate, render, and interact with live UI components, visual state dots, and CopilotKit agent workspaces in real time.</div>
             </div>
           </div>
@@ -1768,69 +1895,69 @@ def dashboard():
         <!-- 5 Agent Cards Grid -->
         <div class="agent-selector-grid">
           <!-- Claude Code -->
-          <div class="agent-card active" id="agent-card-claude" onclick="selectAgent('claude')">
-            <div class="agent-card-header">
+          <button type="button" class="agent-card active" id="agent-card-claude" aria-pressed="true" onclick="selectAgent('claude')">
+            <span class="agent-card-header">
               <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a78bfa;box-shadow:0 0 8px #a78bfa;"></span>Claude Code</span>
               <span class="agent-status-pill status-online" id="status-pill-claude">ONLINE</span>
-            </div>
-            <div class="agent-desc">Architectural lead &amp; high-craft UI component designer on Bedrock Opus 4.6 &amp; Sonnet 4.6.</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            </span>
+            <span class="agent-desc" style="display: block;">Architectural lead &amp; high-craft UI component designer on Bedrock Opus 4.6 &amp; Sonnet 4.6.</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap;">
               <span class="agent-meta-badge" id="badge-claude-model">Sonnet 4.6</span>
               <span class="agent-meta-badge" id="badge-claude-prof">Bedrock</span>
-            </div>
-          </div>
+            </span>
+          </button>
 
           <!-- OpenAI Codex -->
-          <div class="agent-card" id="agent-card-codex" onclick="selectAgent('codex')">
-            <div class="agent-card-header">
+          <button type="button" class="agent-card" id="agent-card-codex" aria-pressed="false" onclick="selectAgent('codex')">
+            <span class="agent-card-header">
               <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;"></span>OpenAI Codex</span>
               <span class="agent-status-pill status-online" id="status-pill-codex">ONLINE</span>
-            </div>
-            <div class="agent-desc">Rapid component generation and elevated sandbox coding engine.</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            </span>
+            <span class="agent-desc" style="display: block;">Rapid component generation and elevated sandbox coding engine.</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap;">
               <span class="agent-meta-badge" id="badge-codex-model">gpt-5.6-terra</span>
               <span class="agent-meta-badge">ChatGPT</span>
-            </div>
-          </div>
+            </span>
+          </button>
 
           <!-- Aider -->
-          <div class="agent-card" id="agent-card-aider" onclick="selectAgent('aider')">
-            <div class="agent-card-header">
+          <button type="button" class="agent-card" id="agent-card-aider" aria-pressed="false" onclick="selectAgent('aider')">
+            <span class="agent-card-header">
               <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></span>Aider</span>
               <span class="agent-status-pill status-online" id="status-pill-aider">ONLINE</span>
-            </div>
-            <div class="agent-desc">Automated pair-programming engine wired to the Unified 5-Tier auto-router.</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            </span>
+            <span class="agent-desc" style="display: block;">Automated pair-programming engine wired to the Unified 5-Tier auto-router.</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap;">
               <span class="agent-meta-badge">openai/auto</span>
               <span class="agent-meta-badge">:8000/v1</span>
-            </div>
-          </div>
+            </span>
+          </button>
 
           <!-- OpenDots Canvas -->
-          <div class="agent-card" id="agent-card-opendots" onclick="selectAgent('opendots')">
-            <div class="agent-card-header">
+          <button type="button" class="agent-card" id="agent-card-opendots" aria-pressed="false" onclick="selectAgent('opendots')">
+            <span class="agent-card-header">
               <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fb923c;box-shadow:0 0 8px #fb923c;"></span>OpenDots</span>
               <span class="agent-status-pill status-ready" id="status-pill-opendots">READY</span>
-            </div>
-            <div class="agent-desc">CopilotKit Generative UI canvas, visual state dots, and agent coworker spaces.</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            </span>
+            <span class="agent-desc" style="display: block;">CopilotKit Generative UI canvas, visual state dots, and agent coworker spaces.</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap;">
               <span class="agent-meta-badge">Port 5173</span>
               <span class="agent-meta-badge">Canvas</span>
-            </div>
-          </div>
+            </span>
+          </button>
 
           <!-- Workstation Orchestrator -->
-          <div class="agent-card" id="agent-card-orchestrator" onclick="selectAgent('orchestrator')">
-            <div class="agent-card-header">
+          <button type="button" class="agent-card" id="agent-card-orchestrator" aria-pressed="false" onclick="selectAgent('orchestrator')">
+            <span class="agent-card-header">
               <span class="agent-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f472b6;box-shadow:0 0 8px #f472b6;"></span>Orchestrator</span>
               <span class="agent-status-pill status-ready" id="status-pill-orchestrator">READY</span>
-            </div>
-            <div class="agent-desc">Multi-agent controller with Tree-sitter AST sensor and GitGuardian shield.</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            </span>
+            <span class="agent-desc" style="display: block;">Multi-agent controller with Tree-sitter AST sensor and GitGuardian shield.</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap;">
               <span class="agent-meta-badge">AST Sensor</span>
               <span class="agent-meta-badge">ggshield</span>
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
 
         <!-- Split-Screen Studio Grid -->
@@ -1838,7 +1965,7 @@ def dashboard():
           <!-- Left: Controls & Prompts -->
           <div class="studio-controls-pane">
             <div>
-              <label class="field-label">Studio Mode</label>
+              <div class="field-label">Studio Mode</div>
               <div class="mode-pills-row">
                 <button type="button" class="mode-pill active" id="mode-design-btn" onclick="setStudioMode('design')">🎨 UI Design</button>
                 <button type="button" class="mode-pill" id="mode-dots-btn" onclick="setStudioMode('dots')">🔮 State Dots</button>
@@ -1852,6 +1979,7 @@ def dashboard():
               <select id="studio-model-select" style="margin-bottom: 0;">
                 <option value="sonnet" selected>Claude Sonnet 4.6 (Fast Bedrock)</option>
                 <option value="opus">Claude Opus 4.6 (Frontier Bedrock)</option>
+                <option value="carbon">Gemini 4 Carbon (Frontier GCP)</option>
                 <option value="argon">Gemini 4 Argon (1M Frontier GCP)</option>
                 <option value="gemini-3.8-flash">Gemini 3.8 Flash (High-Speed GCP)</option>
                 <option value="nemotron-ultra">NVIDIA Nemotron 550B (Developer Free $0)</option>
@@ -1867,7 +1995,7 @@ def dashboard():
             </div>
 
             <div>
-              <label class="field-label">1-Click Design Starters</label>
+              <div class="field-label">1-Click Design Starters</div>
               <div class="chips-row" style="margin-top: 2px;">
                 <button type="button" class="chip" onclick="setPresetPrompt('Design a modern Apple HIG liquid-glass music player card with working play/pause, volume slider, album art, and spring physics', 'design')">✨ Apple HIG Music Player</button>
                 <button type="button" class="chip" onclick="setPresetPrompt('Create an OpenDots interactive visual state canvas with 5 glowing agent dots, connecting bezier arcs, and state channel inspect cards', 'dots')">🔮 OpenDots State Nodes</button>
@@ -1906,25 +2034,25 @@ def dashboard():
                   <div class="traffic-dot traffic-yellow"></div>
                   <div class="traffic-dot traffic-green"></div>
                 </div>
-                <div class="canvas-tabs">
-                  <button type="button" class="canvas-tab-btn active" id="tab-canvas-preview-btn" onclick="switchStudioTab('preview')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <div class="canvas-tabs" role="tablist" aria-label="Studio Output Views">
+                  <button type="button" class="canvas-tab-btn active" id="tab-canvas-preview-btn" role="tab" aria-selected="true" aria-controls="view-canvas-preview" onclick="switchStudioTab('preview')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     Visual Preview
                   </button>
-                  <button type="button" class="canvas-tab-btn" id="tab-canvas-dots-btn" onclick="switchStudioTab('dots')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="18" r="2"></circle><circle cx="5" cy="18" r="2"></circle></svg>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-dots-btn" role="tab" aria-selected="false" aria-controls="view-canvas-dots" onclick="switchStudioTab('dots')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="18" r="2"></circle><circle cx="5" cy="18" r="2"></circle></svg>
                     OpenDots State Dots
                   </button>
-                  <button type="button" class="canvas-tab-btn" id="tab-canvas-code-btn" onclick="switchStudioTab('code')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-code-btn" role="tab" aria-selected="false" aria-controls="view-canvas-code" onclick="switchStudioTab('code')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                     Code Inspector
                   </button>
-                  <button type="button" class="canvas-tab-btn" id="tab-canvas-logs-btn" onclick="switchStudioTab('logs')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-logs-btn" role="tab" aria-selected="false" aria-controls="view-canvas-logs" onclick="switchStudioTab('logs')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     Diagnostics
                   </button>
-                  <button type="button" class="canvas-tab-btn" id="tab-canvas-app-btn" onclick="switchStudioTab('app')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                  <button type="button" class="canvas-tab-btn" id="tab-canvas-app-btn" role="tab" aria-selected="false" aria-controls="view-canvas-app" onclick="switchStudioTab('app')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                     OpenDots App (5173)
                   </button>
                 </div>
@@ -1941,12 +2069,12 @@ def dashboard():
             </div>
 
             <!-- View 1: Visual Sandbox Canvas -->
-            <div class="canvas-viewport-wrap" id="view-canvas-preview">
+            <div class="canvas-viewport-wrap" id="view-canvas-preview" role="tabpanel" aria-labelledby="tab-canvas-preview-btn">
               <iframe id="studio-live-iframe" class="canvas-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin" title="Live Visual Component Sandbox"></iframe>
             </div>
 
             <!-- View 2: OpenDots State Dots Canvas -->
-            <div id="view-canvas-dots" style="display: none; padding: 18px; flex: 1; background: #080c14; overflow-y: auto;">
+            <div id="view-canvas-dots" role="tabpanel" aria-labelledby="tab-canvas-dots-btn" style="display: none; padding: 18px; flex: 1; background: #080c14; overflow-y: auto;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <div>
                   <div style="font-weight: 700; font-size: 0.92rem; color: #fb923c;">OpenDots CopilotKit State Dots Engine</div>
@@ -1956,7 +2084,7 @@ def dashboard():
               </div>
 
               <!-- Interactive SVG Dots Graph -->
-              <svg viewBox="0 0 760 320" style="width: 100%; max-height: 320px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px;">
+              <svg viewBox="0 0 760 320" role="img" aria-label="OpenDots Agent State Graph" style="width: 100%; max-height: 320px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px;">
                 <defs>
                   <linearGradient id="grad-curve" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
@@ -1976,7 +2104,7 @@ def dashboard():
                 <path d="M 380 160 C 380 260, 500 260, 520 250" fill="none" stroke="rgba(244, 114, 182, 0.4)" stroke-width="2"/>
 
                 <!-- Node 1: Research Dot -->
-                <g class="dot-node" onclick="selectDot('research')" style="cursor: pointer;">
+                <g class="dot-node" role="button" tabindex="0" onclick="selectDot('research')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectDot('research');}" style="cursor: pointer;">
                   <circle cx="120" cy="160" r="32" fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="2" filter="url(#glow)"/>
                   <circle cx="120" cy="160" r="12" fill="#38bdf8"/>
                   <text x="120" y="210" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">Research</text>
@@ -1984,7 +2112,7 @@ def dashboard():
                 </g>
 
                 <!-- Node 2: UI Architect Dot (Center) -->
-                <g class="dot-node" onclick="selectDot('architect')" style="cursor: pointer;">
+                <g class="dot-node" role="button" tabindex="0" onclick="selectDot('architect')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectDot('architect');}" style="cursor: pointer;">
                   <circle cx="380" cy="160" r="44" fill="rgba(168, 85, 247, 0.2)" stroke="#a855f7" stroke-width="2.5" filter="url(#glow)"/>
                   <circle cx="380" cy="160" r="16" fill="#a855f7"/>
                   <text x="380" y="222" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">UI Architect</text>
@@ -1992,7 +2120,7 @@ def dashboard():
                 </g>
 
                 <!-- Node 3: Generative Canvas Dot -->
-                <g class="dot-node" onclick="selectDot('canvas')" style="cursor: pointer;">
+                <g class="dot-node" role="button" tabindex="0" onclick="selectDot('canvas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectDot('canvas');}" style="cursor: pointer;">
                   <circle cx="640" cy="160" r="34" fill="rgba(251, 146, 60, 0.2)" stroke="#fb923c" stroke-width="2" filter="url(#glow)"/>
                   <circle cx="640" cy="160" r="13" fill="#fb923c"/>
                   <text x="640" y="212" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">Canvas</text>
@@ -2000,14 +2128,14 @@ def dashboard():
                 </g>
 
                 <!-- Node 4: Security Shield Dot -->
-                <g class="dot-node" onclick="selectDot('security')" style="cursor: pointer;">
+                <g class="dot-node" role="button" tabindex="0" onclick="selectDot('security')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectDot('security');}" style="cursor: pointer;">
                   <circle cx="240" cy="250" r="24" fill="rgba(34, 197, 94, 0.2)" stroke="#22c55e" stroke-width="1.8"/>
                   <circle cx="240" cy="250" r="9" fill="#22c55e"/>
                   <text x="240" y="288" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="600">Security</text>
                 </g>
 
                 <!-- Node 5: Motion & Spring Physics Dot -->
-                <g class="dot-node" onclick="selectDot('motion')" style="cursor: pointer;">
+                <g class="dot-node" role="button" tabindex="0" onclick="selectDot('motion')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectDot('motion');}" style="cursor: pointer;">
                   <circle cx="520" cy="250" r="24" fill="rgba(244, 114, 182, 0.2)" stroke="#f472b6" stroke-width="1.8"/>
                   <circle cx="520" cy="250" r="9" fill="#f472b6"/>
                   <text x="520" y="288" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="600">Spring Motion</text>
@@ -2023,7 +2151,7 @@ def dashboard():
             </div>
 
             <!-- View 3: Code Inspector -->
-            <div id="view-canvas-code" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
+            <div id="view-canvas-code" role="tabpanel" aria-labelledby="tab-canvas-code-btn" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span class="mono" style="font-size: 0.72rem; color: var(--accent);">Active HTML/CSS Component Source</span>
                 <button type="button" class="btn btn-ghost" style="padding: 3px 8px; font-size: 0.70rem;" onclick="copyCanvasCode()">Copy to Clipboard</button>
@@ -2032,7 +2160,7 @@ def dashboard():
             </div>
 
             <!-- View 4: Diagnostics Log -->
-            <div id="view-canvas-logs" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
+            <div id="view-canvas-logs" role="tabpanel" aria-labelledby="tab-canvas-logs-btn" style="display: none; padding: 16px; flex: 1; background: #070a12; overflow-y: auto;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span class="mono" style="font-size: 0.72rem; color: #a78bfa;">Execution Trace &amp; Hardware Sensor</span>
                 <button type="button" class="btn btn-ghost" style="padding: 3px 8px; font-size: 0.70rem;" onclick="document.getElementById('studio-diagnostics-text').innerText=''">Clear Logs</button>
@@ -2041,10 +2169,10 @@ def dashboard():
             </div>
 
             <!-- View 5: OpenDots Standalone App -->
-            <div id="view-canvas-app" style="display: none; flex-direction: column; flex: 1; background: #080c14; position: relative; min-height: 520px;">
+            <div id="view-canvas-app" role="tabpanel" aria-labelledby="tab-canvas-app-btn" style="display: none; flex-direction: column; flex: 1; background: #080c14; position: relative; min-height: 520px;">
               <div style="background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;" aria-hidden="true"></span>
                   <span class="mono" style="font-size: 0.72rem; color: var(--text); font-weight: 600;" id="opendots-bar-status">OpenDots Active • Vite :5173 • Backend :4310 • Local Gateway :8000</span>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
@@ -2059,21 +2187,21 @@ def dashboard():
                   </button>
                 </div>
               </div>
-              <iframe id="opendots-app-iframe" src="http://localhost:5173" style="width: 100%; height: 100%; flex: 1; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
+              <iframe id="opendots-app-iframe" data-src="http://localhost:5173" loading="lazy" style="width: 100%; height: 100%; flex: 1; min-height: 480px; border: none;" title="OpenDots Standalone Web App"></iframe>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="ops-grid" aria-label="Interactive Gateway Tools and Telemetry">
+    <section class="ops-grid deferred-section">
       <!-- Column 1: Live Gateway Playground -->
       <div class="card">
         <div class="section-bar">
-          <div class="section-title">
+          <h2 class="section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" aria-hidden="true"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
             Live Gateway Playground
-          </div>
+          </h2>
           <span class="mono" style="font-size: 0.7rem; color: var(--text-muted);">Ctrl+Enter</span>
         </div>
 
@@ -2091,8 +2219,9 @@ def dashboard():
           <option value="coder">coder — Llama 3.3 70B ($0.72/M)</option>
           <option value="nemotron-reasoning">nemotron-reasoning — NVIDIA Reasoning 30B (Developer Free $0)</option>
           <option value="reasoner">reasoner — DeepSeek R1 ($1.35/M)</option>
-          <option value="nemotron-ultra">nemotron-ultra — NVIDIA Nemotron 550B (Developer Free $0)</option>
+          <option value="nemotron-ultra">NVIDIA Nemotron 550B (Developer Free $0)</option>
           <option value="mistral-1t">mistral-1t — Mistral 1T Flagship (Developer Free $0)</option>
+          <option value="carbon">carbon — Gemini 4 Carbon (Frontier GCP)</option>
           <option value="argon">argon — Gemini 4 Argon (1M Frontier)</option>
           <option value="claude">claude — Claude Sonnet 4.6 ($3.00/M)</option>
           <option value="opus">opus — Claude Opus 4.6 ($15.00/M)</option>
@@ -2115,14 +2244,14 @@ def dashboard():
         <div class="output-box mono" id="test-output" role="region" aria-live="polite">Ready. Select a model tier or use "auto" to test live routing.</div>
       </div>
 
-      <!-- Column 2: Zero-Name 32-Repo Skill Router Inspector -->
+      <!-- Column 2: Zero-Name Skill Router Inspector -->
       <div class="card">
         <div class="section-bar">
-          <div class="section-title">
+          <h2 class="section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            Zero-Name 32-Repo Skill Router
-          </div>
-          <span class="mono" style="font-size: 0.7rem; color: var(--purple);">1,041 SKILL.md</span>
+            Zero-Name <span id="router-repo-count">47</span>-Repo Skill Router
+          </h2>
+          <span class="mono" id="router-skill-badge" style="font-size: 0.7rem; color: var(--purple);">693 SKILL.md</span>
         </div>
 
         <label class="field-label" for="skill-query">Test Natural-Language Task (No Repo Names Needed)</label>
@@ -2130,13 +2259,13 @@ def dashboard():
 
         <div class="chips-row">
           <button type="button" class="chip" onclick="testSkillRoute('Design a macOS dashboard card with smooth spring animations')">Apple HIG + Motion</button>
-          <button type="button" class="chip" onclick="testSkillRoute('Write a Golang HTTP API server and audit XSS vulnerabilities')">Go + Strix Pentest</button>
-          <button type="button" class="chip" onclick="testSkillRoute('Audit landing page SEO and deslop marketing copy')">SEO + Deslop</button>
+          <button type="button" class="chip" onclick="testSkillRoute('Audit Core Web Vitals, light-dismiss modal accessibility, and CSS Baseline')">Modern Web + CWV</button>
+          <button type="button" class="chip" onclick="testSkillRoute('Design Supabase PostgreSQL RLS policy and Edge Function migration')">Supabase + RLS</button>
         </div>
 
         <button type="button" class="btn btn-ghost" style="width: 100%;" onclick="testSkillRoute()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-          Inspect Auto-Activated Repos & Skills
+          Inspect Auto-Activated Repos &amp; Skills
         </button>
 
         <div class="route-box" id="skill-output" role="region" aria-live="polite">
@@ -2144,28 +2273,30 @@ def dashboard():
         </div>
       </div>
 
-      <!-- Column 3: Spend Breakdown, Post-Mortems & Graphify AST Explorer -->
+      <!-- Column 3: Spend Breakdown, Post-Mortems, Graphify AST & Installed Skills Catalog -->
       <div class="card">
         <div class="section-bar">
-          <div class="section-title">
+          <h2 class="section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Telemetry, Memory & AST
-          </div>
-          <div class="tab-group" role="tablist">
-            <button type="button" class="tab-btn active" id="tab-spend-btn" onclick="switchTab('spend')">Spend</button>
-            <button type="button" class="tab-btn" id="tab-pm-btn" onclick="switchTab('pm')">Post-Mortems</button>
-            <button type="button" class="tab-btn" id="tab-ast-btn" onclick="switchTab('ast')">Graphify AST</button>
+            Telemetry, Memory &amp; AST
+          </h2>
+          <div class="tab-group" role="tablist" aria-label="Telemetry Views">
+            <button type="button" class="tab-btn active" id="tab-spend-btn" role="tab" aria-selected="true" aria-controls="tab-spend-view" onclick="switchTab('spend')">Spend</button>
+            <button type="button" class="tab-btn" id="tab-pm-btn" role="tab" aria-selected="false" aria-controls="tab-pm-view" onclick="switchTab('pm')">Post-Mortems</button>
+            <button type="button" class="tab-btn" id="tab-ast-btn" role="tab" aria-selected="false" aria-controls="tab-ast-view" onclick="switchTab('ast')">Graphify AST</button>
+            <button type="button" class="tab-btn" id="tab-skills-btn" role="tab" aria-selected="false" aria-controls="tab-skills-view" onclick="switchTab('skills')">Skills (<span id="catalog-count-badge">47</span>)</button>
           </div>
         </div>
 
-        <div id="tab-spend-view" style="overflow-x: auto; max-height: 365px;">
+        <div id="tab-spend-view" role="tabpanel" aria-labelledby="tab-spend-btn" style="overflow-x: auto; max-height: 365px;">
           <table id="spend-table">
+            <caption class="visually-hidden">Gateway model usage breakdown by requests, tokens, and estimated USD cost</caption>
             <thead>
               <tr>
-                <th>Model Engine</th>
-                <th>Reqs</th>
-                <th>Tokens</th>
-                <th>Cost (USD)</th>
+                <th scope="col">Model Engine</th>
+                <th scope="col">Reqs</th>
+                <th scope="col">Tokens</th>
+                <th scope="col">Cost (USD)</th>
               </tr>
             </thead>
             <tbody id="spend-tbody">
@@ -2174,118 +2305,122 @@ def dashboard():
           </table>
         </div>
 
-        <div id="tab-pm-view" style="display: none; max-height: 365px; overflow-y: auto;">
+        <div id="tab-pm-view" role="tabpanel" aria-labelledby="tab-pm-btn" style="display: none; max-height: 365px; overflow-y: auto;">
           <div id="pm-list" style="font-size: 0.78rem; color: var(--text-secondary);">No post-mortem regressions recorded.</div>
         </div>
 
-        <div id="tab-ast-view" style="display: none; max-height: 365px; overflow-y: auto;">
+        <div id="tab-ast-view" role="tabpanel" aria-labelledby="tab-ast-btn" style="display: none; max-height: 365px; overflow-y: auto;">
           <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-            <button type="button" class="btn" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify', '_blank')">
+            <a class="btn" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" href="/graphify" target="_blank" rel="noopener noreferrer">
               Open Interactive Graph.html ↗
-            </button>
-            <button type="button" class="btn btn-ghost" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" onclick="window.open('/graphify/report', '_blank')">
+            </a>
+            <a class="btn btn-ghost" style="flex: 1; font-size: 0.76rem; padding: 6px 10px;" href="/graphify/report" target="_blank" rel="noopener noreferrer">
               Open GRAPH_REPORT.md ↗
-            </button>
+            </a>
           </div>
           <label class="field-label" for="ast-query-input">Query Graphify AST Knowledge Graph</label>
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
             <input type="text" id="ast-query-input" value="invoke_model_with_fallback" placeholder="Search symbol, function, or module..." style="margin-bottom: 0;">
             <button type="button" class="btn btn-ghost" onclick="runAstQuery()">Query</button>
           </div>
-          <div class="route-box mono" id="ast-query-output" style="font-size: 0.73rem; min-height: 150px; white-space: pre-wrap;">Tap "Query" or click "Open Interactive Graph.html ↗" above to explore the full 2,397-node AST graph.</div>
+          <div class="route-box mono" id="ast-query-output" style="font-size: 0.73rem; min-height: 150px; white-space: pre-wrap;">Tap "Query" or click "Open Interactive Graph.html ↗" above to explore the AST graph.</div>
+        </div>
+
+        <div id="tab-skills-view" role="tabpanel" aria-labelledby="tab-skills-btn" style="display: none; max-height: 365px; overflow-y: auto;">
+          <label class="visually-hidden" for="catalog-filter">Filter installed repositories and skills</label>
+          <input type="search" id="catalog-filter" placeholder="Filter 47 repos &amp; 693 skills (e.g. modern-web, opuscar, supabase, vercel)...">
+          <div id="skills-catalog-list" style="font-size: 0.76rem; color: var(--text-secondary);">Loading installed repository catalog...</div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- How It Works & Cross-Platform Setup Guide Modal -->
-  <div class="modal-backdrop" id="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title" onclick="if(event.target===this) closeGuideModal()">
-    <div class="modal-panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-        <div>
-          <h2 id="guide-modal-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text);">How the Antigravity Autonomous Workstation Works</h2>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Architecture, Automatic Chat Routing, Hardware-Adaptive Ollama & Personal Repo Isolation</div>
-        </div>
-        <button class="btn btn-ghost" onclick="closeGuideModal()">Close ✕</button>
+  <!-- How It Works & Cross-Platform Setup Guide Dialog -->
+  <dialog class="app-dialog" id="guide-modal" closedby="any" aria-labelledby="guide-modal-title">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <div>
+        <h1 id="guide-modal-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text);">How the Antigravity Autonomous Workstation Works</h1>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Architecture, Automatic Chat Routing, Hardware-Adaptive Ollama &amp; Personal Repo Isolation</div>
+      </div>
+      <button type="button" class="btn btn-ghost" onclick="closeGuideModal()" autofocus>Close ✕</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55;">
+      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 6px;">1. Zero-Name Automatic Request Routing</div>
+        Every prompt you type in Antigravity, Claude Code, Codex, or Aider is intercepted by <code>tools/pre_invocation_hook.py</code> and <code>tools/skill_router.py</code>. It automatically classifies task complexity across <strong>5 Model Tiers</strong> and injects the top matching <code>SKILL.md</code> runbooks from all <strong>47 installed repositories (693+ skills)</strong> without you ever typing a repo name.
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55;">
-        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
-          <div style="color: var(--accent); font-weight: 700; margin-bottom: 6px;">1. Zero-Name Automatic Request Routing</div>
-          Every prompt you type in Antigravity, Claude Code, Cursor, or Aider is intercepted by <code>tools/pre_invocation_hook.py</code> and <code>tools/skill_router.py</code>. It automatically classifies task complexity across <strong>5 Model Tiers</strong> and injects the top matching <code>SKILL.md</code> runbooks from all <strong>32 installed repositories (456+ skills)</strong> without you ever typing a repo name.
-        </div>
-
-        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
-          <div style="color: var(--success); font-weight: 700; margin-bottom: 6px;">2. Hardware-Adaptive Ollama LLM Installer</div>
-          When installed on any PC or Mac via <code>.\\install.ps1</code> or <code>./install.sh</code>, <code>tools/setup_wizard.py</code> inspects your OS, CPU cores, RAM, and GPU (Apple Metal, NVIDIA CUDA, AMD Vulkan) and automatically pulls the optimal local Ollama model (<code>llama3.2:1b</code>, <code>qwen2.5-coder:7b</code>, <code>14b</code>, or <code>32b</code>).
-        </div>
-
-        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
-          <div style="color: var(--purple); font-weight: 700; margin-bottom: 6px;">3. 1-Click Graphify AST Knowledge Graph</div>
-          Clicking the <strong>Graphify AST Graph</strong> card opens the interactive 2,397-node AST visualization (<code>/graphify</code> &rarr; <code>graphify-out/graph.html</code>) or the architecture report (<code>/graphify/report</code> &rarr; <code>GRAPH_REPORT.md</code>).
-        </div>
-
-        <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
-          <div style="color: var(--warning); font-weight: 700; margin-bottom: 6px;">4. Strict Personal & Private Repo Isolation</div>
-          All 32 curated repositories live strictly inside the workstation's <code>tools/</code> folder. The workstation never clones or writes <code>graphify-out/</code> files into your personal or private repositories, and <code>ggshield</code> blocks any secret leakage before <code>git commit</code>.
-        </div>
+      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: var(--success); font-weight: 700; margin-bottom: 6px;">2. Hardware-Adaptive Ollama LLM Installer</div>
+        When installed on any PC or Mac via <code>.\\install.ps1</code> or <code>./install.sh</code>, <code>tools/setup_wizard.py</code> inspects your OS, CPU cores, RAM, and GPU (Apple Metal, NVIDIA CUDA, AMD Vulkan) and automatically pulls the optimal local Ollama model (<code>llama3.2:1b</code>, <code>qwen2.5-coder:7b</code>, <code>14b</code>, or <code>32b</code>).
       </div>
 
-      <div style="margin-top: 14px; background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px;">
-        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Quick Commands (Any Terminal)</div>
-        <div class="mono" style="font-size: 0.76rem; color: var(--text); display: grid; gap: 4px;">
-          <div><span style="color: var(--accent);">python tools/setup_wizard.py</span> — Interactive Hardware + Ollama + API Key + 32-Repo Setup Wizard</div>
-          <div><span style="color: var(--success);">python orchestrate.py --guide</span> — Print full architectural guide in terminal</div>
-          <div><span style="color: var(--purple);">python tools/skill_router.py "your task"</span> — Test Zero-Name 32-Repo Skill Router</div>
-          <div><span style="color: var(--warning);">python tools/manage_tools.py sync</span> — Clone or update all 32 GitHub repositories</div>
-        </div>
+      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: var(--purple); font-weight: 700; margin-bottom: 6px;">3. 1-Click Graphify AST Knowledge Graph</div>
+        Clicking the <strong>Graphify AST Graph</strong> link opens the interactive AST visualization (<code>/graphify</code> &rarr; <code>graphify-out/graph.html</code>) or the architecture report (<code>/graphify/report</code> &rarr; <code>GRAPH_REPORT.md</code>).
+      </div>
+
+      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: var(--warning); font-weight: 700; margin-bottom: 6px;">4. Strict Personal &amp; Private Repo Isolation</div>
+        All 47 curated repositories live strictly inside the workstation's <code>tools/</code> folder. The workstation never clones or writes <code>graphify-out/</code> files into your personal or private repositories, and <code>ggshield</code> blocks any secret leakage before <code>git commit</code>.
       </div>
     </div>
-  </div>
 
-  <!-- Personal API Keys & 1-Click AWS Auto-Setup Modal -->
-  <div class="modal-backdrop" id="keys-modal" role="dialog" aria-modal="true" aria-labelledby="keys-modal-title" onclick="if(event.target===this) closeKeysModal()">
-    <div class="modal-panel" style="max-width: 680px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-        <div>
-          <h2 id="keys-modal-title" style="font-size: 1.12rem; font-weight: 700; color: var(--text);">Personal API Keys &amp; Cloud Auto-Setup</h2>
-          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">Stored exclusively in your local git-ignored <code>.env</code> (<code>0600</code> permissions) • Hot-reloads instantly</div>
-        </div>
-        <button class="btn btn-ghost" onclick="closeKeysModal()">Close ✕</button>
+    <div style="margin-top: 14px; background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px;">
+      <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Quick Commands (Any Terminal)</div>
+      <div class="mono" style="font-size: 0.76rem; color: var(--text); display: grid; gap: 4px;">
+        <div><span style="color: var(--accent);">python tools/setup_wizard.py</span> — Interactive Hardware + Ollama + API Key + 47-Repo Setup Wizard</div>
+        <div><span style="color: var(--success);">python orchestrate.py --guide</span> — Print full architectural guide in terminal</div>
+        <div><span style="color: var(--purple);">python tools/skill_router.py "your task"</span> — Test Zero-Name 47-Repo Skill Router</div>
+        <div><span style="color: var(--warning);">python tools/manage_tools.py sync</span> — Clone or update all 47 GitHub repositories</div>
       </div>
+    </div>
+  </dialog>
 
-      <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent);">AWS CLI Login Auto-Detector &amp; Key Creator</div>
-          <div style="font-size: 0.74rem; color: var(--text-secondary);" id="aws-status-line">Detects local ~/.aws login, creates a dedicated workstation IAM profile, and enables Claude Sonnet 4.6 / Opus 4.5 / DeepSeek R1.</div>
-        </div>
-        <button type="button" class="btn" onclick="autoConfigureAws()" id="aws-auto-btn">Auto-Setup AWS Bedrock</button>
+  <!-- Personal API Keys & 1-Click AWS Auto-Setup Dialog -->
+  <dialog class="app-dialog" id="keys-modal" closedby="any" aria-labelledby="keys-modal-title" style="max-width: 680px; width: min(680px, calc(100vw - 32px));">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <div>
+        <h1 id="keys-modal-title" style="font-size: 1.12rem; font-weight: 700; color: var(--text);">Personal API Keys &amp; Cloud Auto-Setup</h1>
+        <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">Stored exclusively in your local git-ignored <code>.env</code> (<code>0600</code> permissions) • Hot-reloads instantly</div>
       </div>
+      <button type="button" class="btn btn-ghost" onclick="closeKeysModal()">Close ✕</button>
+    </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div style="background: var(--surface-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent);">AWS CLI Login Auto-Detector &amp; Key Creator</div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);" id="aws-status-line">Detects local ~/.aws login, creates a dedicated workstation IAM profile, and enables Claude Sonnet 4.6 / Opus 4.6 / DeepSeek R1.</div>
+      </div>
+      <button type="button" class="btn" onclick="autoConfigureAws()" id="aws-auto-btn">Auto-Setup AWS Bedrock</button>
+    </div>
+
+    <form autocomplete="off" onsubmit="event.preventDefault(); saveApiKeys();">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;">
         <div>
           <label class="field-label" for="cfg-nvidia">NVIDIA NIM API Key (<span class="mono" id="mask-nvidia">not set</span>)</label>
-          <input type="password" id="cfg-nvidia" placeholder="nvapi-... (Leave blank to keep current)">
+          <input type="password" id="cfg-nvidia" autocomplete="new-password" placeholder="nvapi-... (Leave blank to keep current)" autofocus>
         </div>
         <div>
           <label class="field-label" for="cfg-openrouter">OpenRouter API Key (<span class="mono" id="mask-openrouter">not set</span>)</label>
-          <input type="password" id="cfg-openrouter" placeholder="sk-or-v1-... (Leave blank to keep current)">
+          <input type="password" id="cfg-openrouter" autocomplete="new-password" placeholder="sk-or-v1-... (Leave blank to keep current)">
         </div>
         <div>
           <label class="field-label" for="cfg-deepseek">DeepSeek API Key (<span class="mono" id="mask-deepseek">not set</span>)</label>
-          <input type="password" id="cfg-deepseek" placeholder="sk-... (Leave blank to keep current)">
+          <input type="password" id="cfg-deepseek" autocomplete="new-password" placeholder="sk-... (Leave blank to keep current)">
         </div>
         <div>
           <label class="field-label" for="cfg-groq">Groq API Key (<span class="mono" id="mask-groq">not set</span>)</label>
-          <input type="password" id="cfg-groq" placeholder="gsk_... (Leave blank to keep current)">
+          <input type="password" id="cfg-groq" autocomplete="new-password" placeholder="gsk_... (Leave blank to keep current)">
         </div>
         <div>
           <label class="field-label" for="cfg-openai">OpenAI API Key (<span class="mono" id="mask-openai">not set</span>)</label>
-          <input type="password" id="cfg-openai" placeholder="sk-proj-... (Leave blank to keep current)">
+          <input type="password" id="cfg-openai" autocomplete="new-password" placeholder="sk-proj-... (Leave blank to keep current)">
         </div>
         <div>
-          <label class="field-label" for="cfg-gemini">Google Gemini / Argon API Key (<span class="mono" id="mask-gemini">not set</span>)</label>
-          <input type="password" id="cfg-gemini" placeholder="AIzaSy... (Leave blank to keep current)">
+          <label class="field-label" for="cfg-gemini">Google Gemini / Carbon / Argon API Key (<span class="mono" id="mask-gemini">not set</span>)</label>
+          <input type="password" id="cfg-gemini" autocomplete="new-password" placeholder="AIzaSy... (Leave blank to keep current)">
         </div>
         <div>
           <label class="field-label" for="cfg-gcp-project">GCP Project ID (<span class="mono" id="mask-gcp-project">not set</span>)</label>
@@ -2301,26 +2436,63 @@ def dashboard():
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
         <button type="button" class="btn btn-ghost" onclick="closeKeysModal()">Cancel</button>
-        <button type="button" class="btn" onclick="saveApiKeys()">Save to Local .env &amp; Hot-Reload</button>
+        <button type="submit" class="btn">Save to Local .env &amp; Hot-Reload</button>
       </div>
-    </div>
-  </div>
+    </form>
+  </dialog>
 
   <script>
     let pollingActive = true;
     let pollTimer = null;
+    let cachedCatalogItems = [];
+    const deferredVisibility = new WeakMap();
+
+    function escapeHtml(val) {
+      return String(val || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function enableDialogLightDismissFallback(dlg) {
+      if (!dlg || ('closedBy' in HTMLDialogElement.prototype)) return;
+      let pressedOutside = false;
+      dlg.addEventListener('pointerdown', (e) => {
+        if (e.target !== dlg) { pressedOutside = false; return; }
+        const r = dlg.getBoundingClientRect();
+        pressedOutside = (
+          e.clientX < r.left || e.clientX > r.right ||
+          e.clientY < r.top || e.clientY > r.bottom
+        );
+      });
+      dlg.addEventListener('pointerup', (e) => {
+        if (!pressedOutside || e.target !== dlg) return;
+        const r = dlg.getBoundingClientRect();
+        const upOutside = (
+          e.clientX < r.left || e.clientX > r.right ||
+          e.clientY < r.top || e.clientY > r.bottom
+        );
+        if (upOutside && dlg.open) dlg.close();
+        pressedOutside = false;
+      });
+    }
+
+    enableDialogLightDismissFallback(document.getElementById('guide-modal'));
+    enableDialogLightDismissFallback(document.getElementById('keys-modal'));
 
     function openGuideModal() {
-      document.getElementById('guide-modal').classList.add('open');
+      const dlg = document.getElementById('guide-modal');
+      if (dlg && !dlg.open) dlg.showModal();
     }
 
     function closeGuideModal() {
-      document.getElementById('guide-modal').classList.remove('open');
+      const dlg = document.getElementById('guide-modal');
+      if (dlg && dlg.open) dlg.close();
     }
 
-    async function openKeysModal() {
-      document.getElementById('keys-modal').classList.add('open');
-      document.getElementById('keys-save-msg').innerText = '';
+    async function refreshConfigMasks() {
       try {
         const r = await fetch('/v1/config/status');
         const d = await r.json();
@@ -2337,8 +2509,16 @@ def dashboard():
       } catch (e) {}
     }
 
+    async function openKeysModal() {
+      const dlg = document.getElementById('keys-modal');
+      document.getElementById('keys-save-msg').innerText = '';
+      if (dlg && !dlg.open) dlg.showModal();
+      await refreshConfigMasks();
+    }
+
     function closeKeysModal() {
-      document.getElementById('keys-modal').classList.remove('open');
+      const dlg = document.getElementById('keys-modal');
+      if (dlg && dlg.open) dlg.close();
     }
 
     async function saveApiKeys() {
@@ -2367,7 +2547,7 @@ def dashboard():
         ['cfg-nvidia','cfg-openrouter','cfg-deepseek','cfg-groq','cfg-openai','cfg-gemini'].forEach(id => {
           document.getElementById(id).value = '';
         });
-        await openKeysModal();
+        await refreshConfigMasks();
         fetchStats();
       } catch (e) {
         msg.style.color = 'var(--danger)';
@@ -2386,7 +2566,7 @@ def dashboard():
         const d = await r.json();
         msg.style.color = d.status === 'ok' ? 'var(--success)' : 'var(--warning)';
         msg.innerText = d.message || 'Completed';
-        await openKeysModal();
+        await refreshConfigMasks();
         fetchStats();
       } catch (e) {
         msg.style.color = 'var(--danger)';
@@ -2400,6 +2580,12 @@ def dashboard():
       pollingActive = !pollingActive;
       const lbl = document.getElementById('pause-label');
       lbl.innerText = pollingActive ? 'Live: 5s' : 'Paused';
+      if (pollingActive) {
+        startPollingLoop();
+        fetchStats();
+      } else {
+        stopPollingLoop();
+      }
     }
 
     function selectTier(tier, btnEl) {
@@ -2415,14 +2601,44 @@ def dashboard():
       document.querySelectorAll('.tier-card').forEach(el => el.classList.remove('selected'));
     }
 
+    function renderCatalog(filterText) {
+      const listEl = document.getElementById('skills-catalog-list');
+      if (!listEl) return;
+      const q = (filterText !== undefined ? filterText : (document.getElementById('catalog-filter')?.value || '')).trim().toLowerCase();
+      const filtered = q
+        ? cachedCatalogItems.filter(it =>
+            (it.name || '').toLowerCase().includes(q) ||
+            (it.description || '').toLowerCase().includes(q)
+          )
+        : cachedCatalogItems;
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div style="color: var(--text-muted);">No matching repositories found.</div>';
+        return;
+      }
+      listEl.innerHTML = filtered.map(it => `
+        <div class="skill-catalog-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <span class="mono" style="font-weight: 700; color: var(--accent);">${escapeHtml(it.name)}</span>
+            <span class="mono" style="font-size: 0.68rem; color: ${it.ready ? 'var(--success)' : 'var(--warning)'};">${it.ready ? 'READY' : 'PENDING'} • ${Number(it.skills || 0)} skills</span>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 3px;">${escapeHtml(it.description || '')}</div>
+        </div>
+      `).join('');
+    }
+
     function switchTab(tab) {
-      document.getElementById('tab-spend-view').style.display = tab === 'spend' ? 'block' : 'none';
-      document.getElementById('tab-pm-view').style.display = tab === 'pm' ? 'block' : 'none';
-      document.getElementById('tab-ast-view').style.display = tab === 'ast' ? 'block' : 'none';
-      document.getElementById('tab-spend-btn').classList.toggle('active', tab === 'spend');
-      document.getElementById('tab-pm-btn').classList.toggle('active', tab === 'pm');
-      document.getElementById('tab-ast-btn').classList.toggle('active', tab === 'ast');
+      const tabs = ['spend', 'pm', 'ast', 'skills'];
+      tabs.forEach(t => {
+        const view = document.getElementById('tab-' + t + '-view');
+        const btn = document.getElementById('tab-' + t + '-btn');
+        if (view) view.style.display = t === tab ? 'block' : 'none';
+        if (btn) {
+          btn.classList.toggle('active', t === tab);
+          btn.setAttribute('aria-selected', String(t === tab));
+        }
+      });
       if (tab === 'ast') runAstQuery();
+      if (tab === 'skills') renderCatalog();
     }
 
     async function runAstQuery() {
@@ -2443,7 +2659,8 @@ def dashboard():
       if (presetQuery) inputEl.value = presetQuery;
       const q = inputEl.value.trim();
       const box = document.getElementById('skill-output');
-      box.innerHTML = '<div class="mono" style="color: var(--text-muted); font-size: 0.76rem;">Routing across 32 repositories...</div>';
+      const repoCount = document.getElementById('router-repo-count')?.innerText || '47';
+      box.innerHTML = `<div class="mono" style="color: var(--text-muted); font-size: 0.76rem;">Routing across ${escapeHtml(repoCount)} repositories...</div>`;
       try {
         const resp = await fetch('/v1/skills/route?q=' + encodeURIComponent(q));
         const data = await resp.json();
@@ -2455,37 +2672,38 @@ def dashboard():
           return;
         }
         let html = '<div style="margin-bottom: 8px; font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Matched Domains (' + domains.length + ')</div>';
-        html += '<div style="margin-bottom: 10px; font-size: 0.78rem; color: var(--text);">' + domains.join(' • ') + '</div>';
+        html += '<div style="margin-bottom: 10px; font-size: 0.78rem; color: var(--text);">' + domains.map(escapeHtml).join(' • ') + '</div>';
         html += '<div style="margin-bottom: 6px; font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Auto-Activated Repos (' + repos.length + ')</div>';
-        html += '<div style="margin-bottom: 10px;">' + repos.map(r => `<span class="repo-tag mono">${r}</span>`).join('') + '</div>';
+        html += '<div style="margin-bottom: 10px;">' + repos.map(r => `<span class="repo-tag mono">${escapeHtml(r)}</span>`).join('') + '</div>';
         html += '<div style="margin-bottom: 6px; font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Injected SKILL.md Runbooks</div>';
-        html += skills.map(s => `<div class="skill-tag mono">tools/${s}</div>`).join('');
+        html += skills.map(s => `<div class="skill-tag mono">tools/${escapeHtml(s)}</div>`).join('');
         box.innerHTML = html;
       } catch (e) {
-        box.innerHTML = `<div style="color: var(--danger); font-size: 0.78rem;">Router error: ${e.message}</div>`;
+        box.innerHTML = `<div style="color: var(--danger); font-size: 0.78rem;">Router error: ${escapeHtml(e.message)}</div>`;
       }
     }
 
     async function fetchStats() {
+      if (document.hidden) return;
       const startT = performance.now();
       try {
-        const hResp = await fetch('/health');
-        const hData = await hResp.json();
+        const resp = await fetch('/v1/telemetry/snapshot');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const snap = await resp.json();
         const lat = Math.round(performance.now() - startT);
+
+        // Health
+        const hData = snap.health || {};
         document.getElementById('latency-ms').innerText = `${lat}ms ping`;
         document.getElementById('status-text').innerText = `ONLINE • ${lat}ms PING`;
         const prov = hData.providers || {};
         document.getElementById('pill-bedrock').classList.toggle('active', !!prov.bedrock);
         document.getElementById('pill-ollama').classList.toggle('active', !!prov.ollama);
-        const anyByok = prov.openrouter || prov.nvidia || prov.deepseek || prov.groq || prov.openai;
+        const anyByok = prov.openrouter || prov.nvidia || prov.deepseek || prov.groq || prov.openai || prov.gemini;
         document.getElementById('pill-byok').classList.toggle('active', !!anyByok);
-      } catch (e) {
-        document.getElementById('status-text').innerText = 'OFFLINE';
-      }
 
-      try {
-        const uResp = await fetch('/v1/usage');
-        const uData = await uResp.json();
+        // Usage & Spend
+        const uData = snap.usage || {};
         const totals = uData.totals || {};
         const totalUsd = totals.estimated_usd || 0;
         const reqs = totals.requests || 0;
@@ -2507,72 +2725,103 @@ def dashboard():
         document.getElementById('savings-bar').style.width = `${pct}%`;
 
         const tbody = document.getElementById('spend-tbody');
-        tbody.innerHTML = '';
         const byModel = uData.by_model || {};
         if (Object.keys(byModel).length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted);">No requests logged yet.</td></tr>';
+          const emptyRow = document.createElement('tr');
+          const emptyCell = document.createElement('td');
+          emptyCell.colSpan = 4;
+          emptyCell.style.color = 'var(--text-muted)';
+          emptyCell.textContent = 'No requests logged yet.';
+          emptyRow.appendChild(emptyCell);
+          tbody.replaceChildren(emptyRow);
         } else {
+          const rows = [];
           for (const [m, stat] of Object.entries(byModel)) {
             const shortName = m.replace('us.meta.', '').replace('us.anthropic.', '').replace('us.deepseek.', '');
             const mToks = (stat.prompt_tokens || 0) + (stat.completion_tokens || 0);
             const mCost = stat.estimated_usd || 0;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="mono" style="color: var(--accent); font-size: 0.75rem;" title="${m}">${shortName}</td>
-              <td class="tabular">${stat.requests}</td>
+              <td class="mono" style="color: var(--accent); font-size: 0.75rem;" title="${escapeHtml(m)}">${escapeHtml(shortName)}</td>
+              <td class="tabular">${Number(stat.requests || 0)}</td>
               <td class="tabular">${mToks.toLocaleString()}</td>
               <td class="tabular" style="color: var(--success); font-weight: 600;">$${mCost.toFixed(4)}</td>
             `;
-            tbody.appendChild(tr);
+            rows.push(tr);
           }
+          tbody.replaceChildren(...rows);
         }
-      } catch (e) {}
 
-      try {
-        const gResp = await fetch('/v1/graph');
-        const gData = await gResp.json();
+        // Graphify AST
+        const gData = snap.graph || {};
         if (gData.nodes) {
           document.getElementById('graph-nodes').innerText = `${gData.nodes.toLocaleString()} Nodes`;
-          document.getElementById('graph-sub').innerText = `${(gData.edges || 0).toLocaleString()} edges • Tap to open`;
+          document.getElementById('graph-sub').innerText = `${(gData.edges || 0).toLocaleString()} edges • Open Graph ↗`;
         }
-      } catch (e) {}
 
-      try {
-        const hwResp = await fetch('/v1/hardware');
-        const hw = await hwResp.json();
+        // Hardware Profile
+        const hw = snap.hardware || {};
         if (hw && hw.os) {
           document.getElementById('hw-summary').innerText = `${hw.os} (${hw.arch}) • ${hw.cpu_cores} Cores • ${hw.ram_gb} GB RAM • ${hw.gpu_name}`;
           document.getElementById('hw-model-pill').innerText = (hw.recommended_models || [hw.primary_local_model]).join(' + ');
         }
-      } catch (e) {}
 
-      try {
-        const lrResp = await fetch('/v1/last-route');
-        const lr = await lrResp.json();
+        // Live PreInvocation Route
+        const lr = snap.last_route || {};
         if (lr && lr.tier) {
+          const modelStr = lr.model_display ? `Model: ${lr.model_display} • ` : '';
+          const skillNames = (lr.matched_skill_names && lr.matched_skill_names.length > 0)
+            ? `Skills: ${lr.matched_skill_names.slice(0, 3).join(', ')} • `
+            : '';
           const repos = (lr.matched_repos && lr.matched_repos.length > 0) ? lr.matched_repos.slice(0, 4).join(', ') : 'Core Engine';
-          document.getElementById('live-route-summary').innerText = `Repos: ${repos} • Prompt: "${(lr.prompt_preview || '').slice(0, 65)}..."`;
-          document.getElementById('live-route-tier').innerText = `TIER: ${lr.tier.toUpperCase()}`;
+          document.getElementById('live-route-summary').innerText = `${modelStr}${skillNames}Repos: ${repos}`;
+          document.getElementById('live-route-tier').innerText = `TIER: ${String(lr.tier).toUpperCase()}${lr.model_display ? ' (' + lr.model_display + ')' : ''}`;
         }
-      } catch (e) {}
 
-      try {
-        const pmResp = await fetch('/v1/postmortems');
-        const pmData = await pmResp.json();
+        // Post-Mortems
+        const pmData = snap.postmortems || {};
         const pms = pmData.postmortems || [];
         const pmList = document.getElementById('pm-list');
         if (pms.length === 0) {
           pmList.innerHTML = '<div style="color: var(--success);">Zero active regressions recorded. Workspace clean.</div>';
         } else {
-          pmList.innerHTML = pms.slice().reverse().slice(0, 8).map(item => `
+          pmList.innerHTML = pms.toReversed().slice(0, 8).map(item => `
             <div style="padding: 8px 10px; border-bottom: 1px solid var(--border);">
-              <div class="mono" style="font-size: 0.68rem; color: var(--warning);">${item.timestamp || ''}</div>
-              <div style="font-weight: 600; color: var(--text); margin-top: 2px;">${item.task || ''}</div>
-              <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${item.error || ''}</div>
+              <div class="mono" style="font-size: 0.68rem; color: var(--warning);">${escapeHtml(item.timestamp || '')}</div>
+              <div style="font-weight: 600; color: var(--text); margin-top: 2px;">${escapeHtml(item.task || '')}</div>
+              <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${escapeHtml(item.error || '')}</div>
             </div>
           `).join('');
         }
-      } catch (e) {}
+
+        // Dynamic Catalog Badges & List
+        const cat = snap.catalog || {};
+        if (typeof cat.repo_count === 'number') {
+          const rc = cat.repo_count;
+          const rr = cat.ready_repos ?? rc;
+          const is = cat.indexed_skills || 0;
+          const brandCount = document.getElementById('brand-repo-count');
+          const kpiTitle = document.getElementById('kpi-repo-title');
+          const skillsCount = document.getElementById('skills-count');
+          const readyLabel = document.getElementById('repos-ready-label');
+          const routerCount = document.getElementById('router-repo-count');
+          const routerBadge = document.getElementById('router-skill-badge');
+          const catBadge = document.getElementById('catalog-count-badge');
+          if (brandCount) brandCount.innerText = String(rc);
+          if (kpiTitle) kpiTitle.innerText = `${rc}-Repo Skill Router`;
+          if (skillsCount && is > 0) skillsCount.innerText = `${is.toLocaleString()} Skills`;
+          if (readyLabel) readyLabel.innerText = `${rr} / ${rc} Repos Ready`;
+          if (routerCount) routerCount.innerText = String(rc);
+          if (routerBadge && is > 0) routerBadge.innerText = `${is.toLocaleString()} SKILL.md`;
+          if (catBadge) catBadge.innerText = String(rc);
+        }
+        if (Array.isArray(cat.items)) {
+          cachedCatalogItems = cat.items;
+          renderCatalog();
+        }
+      } catch (e) {
+        document.getElementById('status-text').innerText = 'OFFLINE';
+      }
     }
 
     
@@ -2593,7 +2842,10 @@ def dashboard():
       currentAgent = agentName;
       ['claude', 'codex', 'aider', 'opendots', 'orchestrator'].forEach(a => {
         const el = document.getElementById('agent-card-' + a);
-        if (el) el.classList.toggle('active', a === agentName);
+        if (el) {
+          el.classList.toggle('active', a === agentName);
+          el.setAttribute('aria-pressed', String(a === agentName));
+        }
       });
 
       const label = document.getElementById('studio-prompt-label');
@@ -2647,9 +2899,18 @@ def dashboard():
       tabs.forEach(t => {
         const btn = document.getElementById('tab-canvas-' + t + '-btn');
         const view = document.getElementById('view-canvas-' + t);
-        if (btn) btn.classList.toggle('active', t === tab);
+        if (btn) {
+          btn.classList.toggle('active', t === tab);
+          btn.setAttribute('aria-selected', String(t === tab));
+        }
         if (view) view.style.display = (t === tab) ? ((t === 'preview' || t === 'app') ? 'flex' : 'block') : 'none';
       });
+      if (tab === 'app') {
+        const ifr = document.getElementById('opendots-app-iframe');
+        if (ifr && !ifr.getAttribute('src') && ifr.dataset.src) {
+          ifr.src = ifr.dataset.src;
+        }
+      }
     }
 
     function setCanvasViewport(size) {
@@ -2840,7 +3101,10 @@ def dashboard():
 
     function reloadOpenDotsIframe() {
       const ifr = document.getElementById('opendots-app-iframe');
-      if (ifr) ifr.src = ifr.src;
+      if (ifr) {
+        const target = ifr.getAttribute('src') || ifr.dataset.src;
+        if (target) ifr.src = target;
+      }
     }
 
     async function startOpenDotsServers() {
@@ -2925,9 +3189,46 @@ def dashboard():
       }
     });
 
+    document.getElementById('catalog-filter')?.addEventListener('input', (e) => {
+      renderCatalog(e.target.value);
+    });
+
+    const opsSectionEl = document.querySelector('.ops-grid.deferred-section');
+    document.querySelectorAll('.deferred-section').forEach(section => {
+      section.addEventListener('contentvisibilityautostatechange', (e) => {
+        deferredVisibility.set(section, !e.skipped);
+        if (!e.skipped && section === opsSectionEl && cachedCatalogItems.length > 0) {
+          renderCatalog();
+        }
+      }, { capture: true });
+    });
+
+    function startPollingLoop() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => {
+        if (pollingActive && !document.hidden) fetchStats();
+      }, 5000);
+    }
+
+    function stopPollingLoop() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopPollingLoop();
+      } else if (pollingActive) {
+        fetchStats();
+        startPollingLoop();
+      }
+    });
+
     fetchStats();
     testSkillRoute();
-    pollTimer = setInterval(() => { if (pollingActive) fetchStats(); }, 5000);
+    startPollingLoop();
   </script>
 </body>
 </html>
@@ -3063,38 +3364,44 @@ def auto_configure_aws_endpoint():
 
 @app.get("/v1/usage")
 def get_usage():
-    if STATS_FILE.exists():
-        with open(STATS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"totals": {"requests": 0, "prompt_tokens": 0, "completion_tokens": 0, "estimated_usd": 0.0}, "by_model": {}}
+    return _read_json_cached(
+        STATS_FILE,
+        {"totals": {"requests": 0, "prompt_tokens": 0, "completion_tokens": 0, "estimated_usd": 0.0}, "by_model": {}},
+    )
+
 
 @app.get("/v1/postmortems")
 def get_postmortems():
     pm_file = STATS_DIR / "postmortems.json"
-    if pm_file.exists():
-        try:
-            with open(pm_file, "r", encoding="utf-8") as f:
-                return {"postmortems": json.load(f)}
-        except Exception:
-            pass
-    return {"postmortems": []}
+    items = _read_json_cached(pm_file, [])
+    return {"postmortems": items if isinstance(items, list) else []}
+
 
 @app.get("/v1/graph")
 def get_graph_summary():
     graph_path = Path(__file__).resolve().parent / "graphify-out" / "graph.json"
     if not graph_path.exists():
         graph_path = Path.cwd() / "graphify-out" / "graph.json"
-    if graph_path.exists():
-        try:
-            with open(graph_path, "r", encoding="utf-8") as f:
-                g = json.load(f)
-            nodes = len(g.get("nodes", []))
-            edges = len(g.get("links", g.get("edges", [])))
-            communities = len({n.get("community") for n in g.get("nodes", []) if n.get("community") is not None})
-            return {"status": "synced", "nodes": nodes, "edges": edges, "communities": communities}
-        except Exception as e:
-            return {"status": "error", "detail": str(e)}
-    return {"status": "missing", "nodes": 0, "edges": 0, "communities": 0}
+    if not graph_path.exists():
+        return {"status": "missing", "nodes": 0, "edges": 0, "communities": 0}
+    try:
+        st = graph_path.stat()
+        cache_key = f"graph_summary:{graph_path}"
+        sig = (st.st_mtime_ns, st.st_size)
+        with _FILE_CACHE_LOCK:
+            cached = _FILE_JSON_CACHE.get(cache_key)
+            if cached and cached[0] == sig:
+                return cached[1]
+        g = _read_json_cached(graph_path, {})
+        nodes = len(g.get("nodes", []))
+        edges = len(g.get("links", g.get("edges", [])))
+        communities = len({n.get("community") for n in g.get("nodes", []) if n.get("community") is not None})
+        summary = {"status": "synced", "nodes": nodes, "edges": edges, "communities": communities}
+        with _FILE_CACHE_LOCK:
+            _FILE_JSON_CACHE[cache_key] = (sig, summary)
+        return summary
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 
 @app.get("/graphify", response_class=HTMLResponse)
@@ -3186,7 +3493,7 @@ def get_hardware_endpoint():
     try:
         hw_cache = STATS_DIR / "hardware_profile.json"
         if hw_cache.exists():
-            return json.loads(hw_cache.read_text(encoding="utf-8"))
+            return _read_json_cached(hw_cache, {"os": "Unknown"})
         tools_dir = Path(__file__).resolve().parent / "tools"
         if str(tools_dir) not in sys.path:
             sys.path.insert(0, str(tools_dir))
@@ -3199,12 +3506,86 @@ def get_hardware_endpoint():
 @app.get("/v1/last-route")
 def get_last_route_endpoint():
     route_file = STATS_DIR / "last_route.json"
-    if route_file.exists():
-        try:
-            return json.loads(route_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {"tier": "auto", "matched_repos": [], "prompt_preview": "Waiting for next prompt..."}
+    return _read_json_cached(
+        route_file,
+        {"tier": "auto", "matched_repos": [], "prompt_preview": "Waiting for next prompt..."},
+    )
+
+
+def get_tools_catalog_summary() -> Dict[str, Any]:
+    """Returns 30s-cached inventory of all curated repositories and indexed SKILL.md runbooks."""
+    now = time.time()
+    with _FILE_CACHE_LOCK:
+        if _CATALOG_CACHE["data"] is not None and (now - _CATALOG_CACHE["ts"]) < 30.0:
+            return _CATALOG_CACHE["data"]
+
+    items: List[Dict[str, Any]] = []
+    ready_count = 0
+    indexed_skills = 0
+    try:
+        if str(TOOLS_DIR) not in sys.path:
+            sys.path.insert(0, str(TOOLS_DIR))
+        import manage_tools
+        import skill_router
+
+        idx = skill_router.build_or_load_skill_index()
+        indexed_skills = len(idx)
+        skill_counts: Dict[str, int] = {}
+        for entry in idx:
+            rname = entry.get("repo", "")
+            skill_counts[rname] = skill_counts.get(rname, 0) + 1
+
+        for name, url in manage_tools.CURATED_REPOS:
+            repo_dir = manage_tools.TOOLS_DIR / name
+            is_ready = repo_dir.exists() and any(repo_dir.iterdir())
+            if is_ready:
+                ready_count += 1
+            items.append({
+                "name": name,
+                "url": url,
+                "ready": is_ready,
+                "skills": skill_counts.get(name, 1 if is_ready else 0),
+                "description": manage_tools.REPO_SKILL_DESCRIPTIONS.get(name, ""),
+            })
+    except Exception as exc:
+        return {
+            "repo_count": len(items),
+            "ready_repos": ready_count,
+            "indexed_skills": indexed_skills,
+            "items": items,
+            "error": str(exc),
+        }
+
+    result = {
+        "repo_count": len(items),
+        "ready_repos": ready_count,
+        "indexed_skills": indexed_skills,
+        "items": items,
+    }
+    with _FILE_CACHE_LOCK:
+        _CATALOG_CACHE["ts"] = now
+        _CATALOG_CACHE["data"] = result
+    return result
+
+
+@app.get("/v1/tools/catalog")
+def tools_catalog_endpoint():
+    return get_tools_catalog_summary()
+
+
+@app.get("/v1/telemetry/snapshot")
+def telemetry_snapshot_endpoint():
+    """Unified single-request snapshot eliminating 6-way dashboard polling waterfalls."""
+    return {
+        "health": health(),
+        "usage": get_usage(),
+        "graph": get_graph_summary(),
+        "hardware": get_hardware_endpoint(),
+        "last_route": get_last_route_endpoint(),
+        "postmortems": get_postmortems(),
+        "catalog": get_tools_catalog_summary(),
+    }
+
 
 @app.get("/v1/skills/route")
 def route_skills_endpoint(q: str = ""):
@@ -3216,7 +3597,8 @@ def route_skills_endpoint(q: str = ""):
         import skill_router
         if not q.strip():
             idx = skill_router.build_or_load_skill_index()
-            return {"status": "ready", "indexed_skills": len(idx), "repositories": 32}
+            cat = get_tools_catalog_summary()
+            return {"status": "ready", "indexed_skills": len(idx), "repositories": cat.get("repo_count", 47)}
         return skill_router.auto_route_domain_tools(q)
     except Exception as e:
         return {"status": "error", "detail": str(e)}
@@ -3339,6 +3721,18 @@ def call_openai_compatible(endpoint_url: str, api_key: str, payload: dict, extra
                 msg["content"] = msg["reasoning_content"]
         return data
 
+def _call_ollama_chat(ollama_body: dict) -> dict:
+    """Blocking Ollama /api/chat call executed on a worker thread via asyncio.to_thread."""
+    req_data = json.dumps(ollama_body).encode("utf-8")
+    url_req = urllib.request.Request(
+        f"{OLLAMA_URL}/api/chat",
+        data=req_data,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(url_req, timeout=60) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias: str):
     """
     Executes model invocation.
@@ -3395,7 +3789,7 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                     last_exception = e
             else:
                 try:
-                    resp = bedrock.converse(**kwargs)
+                    resp = await asyncio.to_thread(bedrock.converse, **kwargs)
                     out_msg = resp["output"]["message"]
                     text_parts = []
                     reasoning_parts = []
@@ -3466,7 +3860,13 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                             media_type="text/event-stream"
                         )
                     
-                    res = call_openai_compatible(prov_cfg["url"], prov_cfg["key"], body, prov_cfg["headers"])
+                    res = await asyncio.to_thread(
+                        call_openai_compatible,
+                        prov_cfg["url"],
+                        prov_cfg["key"],
+                        body,
+                        prov_cfg["headers"],
+                    )
                     usage = res.get("usage", {})
                     record_usage(prov_name, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0))
                     res["model"] = alias
@@ -3500,14 +3900,7 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
                         media_type="text/event-stream"
                     )
                 
-                req_data = json.dumps(ollama_body).encode("utf-8")
-                url_req = urllib.request.Request(
-                    f"{OLLAMA_URL}/api/chat",
-                    data=req_data,
-                    headers={"Content-Type": "application/json"}
-                )
-                with urllib.request.urlopen(url_req, timeout=60) as resp:
-                    res_json = json.loads(resp.read().decode("utf-8"))
+                res_json = await asyncio.to_thread(_call_ollama_chat, ollama_body)
                 
                 content = res_json.get("message", {}).get("content", "")
                 p_tokens = res_json.get("prompt_eval_count", 0)
@@ -3539,41 +3932,41 @@ async def invoke_model_with_fallback(req: ChatCompletionRequest, requested_alias
 
 
 def resolve_auto_model_from_messages(messages: List[ChatMessage]) -> str:
-    """Smart 5-Tier router for /v1/chat/completions when model='auto'."""
-    user_text = " ".join(str(m.content) for m in messages if m.role == "user").lower()
-
-    # Explicit Gemini Higher-Tier routing
-    if any(k in user_text for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
-        return "gemini-4-argon"
-    if any(k in user_text for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
-        return "gemini-3.8-flash"
-    if "gemini" in user_text:
-        return "gemini-4-argon"
-
-    # Explicit NVIDIA NIM routing (Free developer credits)
-    if any(k in user_text for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t", "mistral 1t"]):
-        return "nemotron-ultra"
-    if any(k in user_text for k in ["nemotron-reasoning", "nemotron reasoning"]):
-        return "nemotron-reasoning"
-    if any(k in user_text for k in ["nemotron-lightning", "nemotron lightning", "nemotron coder"]):
-        return "nemotron-lightning"
-    if any(k in user_text for k in ["nemotron-bolt", "nemotron bolt"]):
-        return "nemotron-bolt"
-    if any(k in user_text for k in ["nemotron-vision", "nemotron vision", "llama vision", "llama-vision"]):
-        return "nemotron-vision"
-    if any(k in user_text for k in ["nvidia", "nemotron", "nim"]):
-        return "nemotron-lightning"
-
-    # Complexity-based Tier Classification
-    if any(k in user_text for k in ["format", "lint", "docstring", "comment", "typo", "spelling", "1 sentence"]):
-        return "local"
-    if any(k in user_text for k in ["test", "unit test", "boilerplate", "config", "readme", "commit", "html", "css", "rename"]):
-        return "fast"
-    if any(k in user_text for k in ["debug", "why", "algorithm", "race condition", "memory leak", "root cause", "critique", "diff"]):
-        return "reasoner"
-    if any(k in user_text for k in ["architect", "security audit", "system design", "crypto", "auth overhaul"]):
-        return "claude"
-    return "coder"
+    """Smart 5-Tier router for /v1/chat/completions when model='auto', unified with orchestrate telemetry."""
+    user_text = " ".join(str(m.content) for m in messages if m.role == "user").strip()
+    try:
+        root_dir = str(Path(__file__).resolve().parent)
+        if root_dir not in sys.path:
+            sys.path.insert(0, root_dir)
+        import orchestrate
+        telemetry = orchestrate.resolve_smart_model_telemetry(user_text, "auto")
+        m_id = telemetry.get("model_id", "")
+        if m_id in MODEL_MAP:
+            return m_id
+        return telemetry.get("tier", "coder")
+    except Exception:
+        t = user_text.lower()
+        if any(k in t for k in ["gemini-4-carbon", "carbon"]):
+            return "gemini-4-carbon"
+        if any(k in t for k in ["gemini-4-argon", "argon", "gemini 4", "gemini"]):
+            return "gemini-4-argon"
+        if any(k in t for k in ["gemini-3.8-flash", "3.8 flash", "gemini flash"]):
+            return "gemini-3.8-flash"
+        if any(k in t for k in ["nemotron-ultra", "nemotron ultra", "550b", "mistral-1t"]):
+            return "nemotron-ultra"
+        if any(k in t for k in ["nemotron-reasoning", "nemotron reasoning"]):
+            return "nemotron-reasoning"
+        if any(k in t for k in ["nemotron-lightning", "nemotron", "nvidia"]):
+            return "nemotron-lightning"
+        if any(k in t for k in ["architect", "security audit", "system design", "crypto", "auth overhaul"]):
+            return "claude"
+        if any(k in t for k in ["debug", "why", "algorithm", "race condition", "memory leak", "root cause", "critique", "diff"]):
+            return "reasoner"
+        if any(k in t for k in ["unit test", "test", "boilerplate", "config", "readme", "commit", "html", "css", "rename"]):
+            return "fast"
+        if any(k in t for k in ["format", "lint", "docstring", "comment", "typo", "spelling", "1 sentence"]):
+            return "local"
+        return "coder"
 
 
 @app.post("/v1/chat/completions")
@@ -3594,18 +3987,7 @@ async def orchestrate_agent(req: OrchestrationRequest):
     
     selected_model = req.model
     if selected_model == "auto":
-        # Smart Auto Selection
-        task_lower = req.task.lower()
-        if any(w in task_lower for w in ["format", "lint", "docstring", "comment", "typo", "spelling"]):
-            selected_model = "local"
-        elif any(w in task_lower for w in ["test", "boilerplate", "config", "readme", "commit", "html", "css"]):
-            selected_model = "fast"
-        elif any(w in task_lower for w in ["debug", "why", "algorithm", "race condition", "leak", "optimize"]):
-            selected_model = "reasoner"
-        elif any(w in task_lower for w in ["architect", "security", "audit", "system design"]):
-            selected_model = "claude"
-        else:
-            selected_model = "coder"
+        selected_model = resolve_auto_model_from_messages([ChatMessage(role="user", content=req.task)])
             
     agent_type = req.agent.lower()
     if agent_type == "aider":

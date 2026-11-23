@@ -69,6 +69,14 @@ CURATED_REPOS: List[Tuple[str, str]] = [
     ("scrapling", "https://github.com/D4Vinci/Scrapling"),
     ("cloudflare-security-audit-skill", "https://github.com/cloudflare/security-audit-skill"),
     ("elephant-goldfish-model", "https://github.com/google/elephant-goldfish-model"),
+
+    # Modern Web, Programmatic Cinema & Official Ecosystem Skills
+    ("modern-web-guidance", "https://github.com/GoogleChrome/modern-web-guidance"),
+    ("lemo-opuscar", "https://github.com/lemomo-ai/lemo-opuscar"),
+    ("vercel-agent-skills", "https://github.com/vercel-labs/agent-skills"),
+    ("supabase-agent-skills", "https://github.com/supabase/agent-skills"),
+    ("anthropic-skills", "https://github.com/anthropics/skills"),
+    ("remotion-skills", "https://github.com/remotion-dev/skills"),
 ]
 
 REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
@@ -113,6 +121,60 @@ REPO_SKILL_DESCRIPTIONS: Dict[str, str] = {
     "scrapling": "Adaptive web scraping, Cloudflare stealth engine (StealthyFetcher), anti-bot bypass, self-healing DOM tracking, and high-speed HTML parsing MCP server. Activate for web scraping, anti-bot handling, or WAF defense testing.",
     "cloudflare-security-audit-skill": "Cloudflare's defensive security audit skill for source-first vulnerability review, trust boundary verification, attack surface mapping, and safe reproduction across APIs, web apps, and daemons. Activate for security audits, pen tests, or vulnerability research.",
     "elephant-goldfish-model": "Google's Elephant-Goldfish Model (EGM) for spec-driven software design, brainstorm RFCs, and zero-context subagent reviews. Spawns fresh Goldfish reviewers via invoke_subagent to expose blind spots, missing assumptions, and architectural drift.",
+    "modern-web-guidance": "Google Chrome, Edge, Firefox & MDN Modern Web Guidance CLI & skill suite covering Baseline web APIs, native <dialog>/Popover, Core Web Vitals (INP/LCP/CLS), content-visibility, container queries, View Transitions, and WCAG accessibility.",
+    "lemo-opuscar": "Lemo-Opuscar local programmatic film studio with 99 ready-to-use visual styles rendered entirely in code (HTML5 Canvas/WebGL, Python audio, FFmpeg) without cloud video models.",
+    "vercel-agent-skills": "Vercel Labs official Next.js and React engineering skills including react-best-practices, composition-patterns, react-view-transitions, web-design-guidelines, and vercel-optimize.",
+    "supabase-agent-skills": "Supabase official agent skills for PostgreSQL schema design, Row Level Security (RLS), query/index optimization, Auth, Edge Functions, and vector search.",
+    "anthropic-skills": "Anthropic official agent skills suite covering Playwright webapp-testing, mcp-builder, skill-creator, frontend-design, algorithmic-art, and document generation (pdf, docx, xlsx, pptx).",
+    "remotion-skills": "Remotion official programmatic React video engineering skills including remotion-best-practices, remotion-captions, and remotion-render.",
+}
+
+STANDALONE_SUBSKILL_SOURCES: List[Tuple[str, str]] = [
+    ("modern-web-guidance", "skills/modern-web-guidance"),
+    ("chrome-extensions", "skills/chrome-extensions"),
+    ("lemo-opuscar", "plugin/skills/lemo-opuscar"),
+    ("react-best-practices", "skills/react-best-practices"),
+    ("react-view-transitions", "skills/react-view-transitions"),
+    ("composition-patterns", "skills/composition-patterns"),
+    ("web-design-guidelines", "skills/web-design-guidelines"),
+    ("vercel-optimize", "skills/vercel-optimize"),
+    ("supabase", "skills/supabase"),
+    ("supabase-postgres-best-practices", "skills/supabase-postgres-best-practices"),
+    ("webapp-testing", "skills/webapp-testing"),
+    ("mcp-builder", "skills/mcp-builder"),
+    ("skill-creator", "skills/skill-creator"),
+    ("frontend-design", "skills/frontend-design"),
+    ("pdf", "skills/pdf"),
+    ("docx", "skills/docx"),
+    ("xlsx", "skills/xlsx"),
+    ("pptx", "skills/pptx"),
+    ("remotion-best-practices", "skills/remotion-best-practices"),
+    ("remotion-captions", "skills/remotion-captions"),
+    ("remotion-render", "skills/remotion-render"),
+]
+
+REPO_SUBSKILL_REPO_MAP: Dict[str, str] = {
+    "modern-web-guidance": "modern-web-guidance",
+    "chrome-extensions": "modern-web-guidance",
+    "lemo-opuscar": "lemo-opuscar",
+    "react-best-practices": "vercel-agent-skills",
+    "react-view-transitions": "vercel-agent-skills",
+    "composition-patterns": "vercel-agent-skills",
+    "web-design-guidelines": "vercel-agent-skills",
+    "vercel-optimize": "vercel-agent-skills",
+    "supabase": "supabase-agent-skills",
+    "supabase-postgres-best-practices": "supabase-agent-skills",
+    "webapp-testing": "anthropic-skills",
+    "mcp-builder": "anthropic-skills",
+    "skill-creator": "anthropic-skills",
+    "frontend-design": "anthropic-skills",
+    "pdf": "anthropic-skills",
+    "docx": "anthropic-skills",
+    "xlsx": "anthropic-skills",
+    "pptx": "anthropic-skills",
+    "remotion-best-practices": "remotion-skills",
+    "remotion-captions": "remotion-skills",
+    "remotion-render": "remotion-skills",
 }
 
 
@@ -154,18 +216,105 @@ def _strip_frontmatter(md_text: str) -> str:
     return md_text.strip()
 
 
+def _sync_standalone_native_skills(target_roots: List[Path]) -> set:
+    """
+    Copies native upstream skill folders (including scripts/, guides/, references/) into all
+    global and workspace skill discovery directories so skills like modern-web-guidance and
+    lemo-opuscar preserve their full runnable runtime scripts.
+    Returns the set of folder names whose native SKILL.md must not be overwritten.
+    """
+    preserved_names = set()
+    ignore_fn = shutil.ignore_patterns("._*", "__pycache__", ".DS_Store")
+
+    for skill_name, rel_subpath in STANDALONE_SUBSKILL_SOURCES:
+        repo_name = REPO_SUBSKILL_REPO_MAP[skill_name]
+        src_dir = TOOLS_DIR / repo_name / rel_subpath
+        if not src_dir.exists() or not (src_dir / "SKILL.md").exists():
+            continue
+        for root in target_roots:
+            dest_dir = root / skill_name
+            try:
+                shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True, ignore=ignore_fn)
+            except Exception as exc:
+                print(f"  [WARN] Could not copy sub-skill {skill_name} -> {dest_dir}: {exc}")
+        preserved_names.add(skill_name)
+
+    # Also propagate elephant-goldfish-model/skills/* across global harnesses
+    egm_skills_dir = TOOLS_DIR / "elephant-goldfish-model" / "skills"
+    if egm_skills_dir.exists():
+        for sub_dir in egm_skills_dir.iterdir():
+            if sub_dir.is_dir() and (sub_dir / "SKILL.md").exists():
+                for root in target_roots:
+                    dest_dir = root / sub_dir.name
+                    try:
+                        shutil.copytree(sub_dir, dest_dir, dirs_exist_ok=True, ignore=ignore_fn)
+                    except Exception:
+                        pass
+    return preserved_names
+
+
+def _sync_central_runtime_and_symlinks() -> None:
+    """
+    Mirrors newly added tool repositories into ~/.agent-workstation/repo/tools/ and
+    links ~/lemo-opuscar so programmatic film tools work from any project directory without re-cloning.
+    """
+    home = Path.home()
+    central_repo = home / ".agent-workstation" / "repo"
+    central_tools = central_repo / "tools"
+    if central_tools.exists() and central_tools.resolve() != TOOLS_DIR.resolve():
+        for repo_name, _ in CURATED_REPOS:
+            src_repo = TOOLS_DIR / repo_name
+            dst_repo = central_tools / repo_name
+            if src_repo.exists() and any(src_repo.iterdir()) and not dst_repo.exists():
+                try:
+                    ignore_patterns = ["__pycache__", "._*", ".DS_Store"]
+                    if repo_name != "lemo-opuscar":
+                        ignore_patterns.append(".git")
+                    shutil.copytree(
+                        src_repo,
+                        dst_repo,
+                        symlinks=True,
+                        ignore=shutil.ignore_patterns(*ignore_patterns),
+                    )
+                    print(f"  [SYNC] Mirrored {repo_name} -> {dst_repo}")
+                except Exception as exc:
+                    print(f"  [WARN] Failed mirroring {repo_name}: {exc}")
+
+    # Create ~/lemo-opuscar symlink pointing to central runtime (or workspace tools/lemo-opuscar)
+    lemo_target = central_tools / "lemo-opuscar" if (central_tools / "lemo-opuscar").exists() else (TOOLS_DIR / "lemo-opuscar")
+    lemo_link = home / "lemo-opuscar"
+    if lemo_target.exists():
+        if lemo_link.is_symlink():
+            if not lemo_link.exists() or lemo_link.resolve() != lemo_target.resolve():
+                lemo_link.unlink()
+                lemo_link.symlink_to(lemo_target)
+        elif not lemo_link.exists():
+            try:
+                lemo_link.symlink_to(lemo_target)
+                print(f"  [LINK] Created ~/lemo-opuscar -> {lemo_target}")
+            except Exception as exc:
+                print(f"  [WARN] Could not create ~/lemo-opuscar symlink: {exc}")
+
+
 def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
     """
-    Automatically registers every single one of the 32 curated repositories in `tools/`
-    as a native Antigravity Skill (`<skill_dir>/<repo_name>/SKILL.md`) so Antigravity IDE
-    discovers and activates all 32 repositories natively in `<skills>` and the UI.
+    Automatically registers every curated repository and standalone native sub-skill in `tools/`
+    across all global AI agent harnesses (Antigravity, Claude Code, Codex, Open Agent Skills)
+    so every project on the machine sees and uses them seamlessly.
     """
     home = Path.home()
     target_roots = [
         home / ".gemini" / "config" / "plugins" / "antigravity-workstation" / "skills",
         home / ".gemini" / "config" / "skills",
+        home / ".claude" / "skills",
+        home / ".codex" / "skills",
+        home / ".agents" / "skills",
         REPO_ROOT / ".agents" / "skills",
     ]
+    central_skills_dir = home / ".agent-workstation" / "repo" / ".agents" / "skills"
+    if (home / ".agent-workstation" / "repo").exists() and central_skills_dir not in target_roots:
+        target_roots.append(central_skills_dir)
+
     if extra_skill_roots:
         for r in extra_skill_roots:
             if r not in target_roots:
@@ -174,10 +323,18 @@ def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
     for r in target_roots:
         r.mkdir(parents=True, exist_ok=True)
 
+    _sync_central_runtime_and_symlinks()
+    preserved_native = _sync_standalone_native_skills(target_roots)
+
     registered = 0
     for repo_name, repo_url in CURATED_REPOS:
         repo_dir = TOOLS_DIR / repo_name
         if not repo_dir.exists() or not any(repo_dir.iterdir()):
+            continue
+
+        if repo_name in preserved_native:
+            # Native upstream skill directory (with scripts/, guides/, etc.) already synced intact
+            registered += 1
             continue
 
         desc = REPO_SKILL_DESCRIPTIONS.get(
@@ -256,13 +413,16 @@ def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
 
         registered += 1
 
-    print(f"  [OK] Registered {registered}/32 repository skills into Antigravity global & workspace skill directories.")
+    print(f"  [OK] Registered {registered}/{len(CURATED_REPOS)} repository skills + {len(preserved_native)} native sub-skills globally (Antigravity, Claude, Codex, .agents).")
     return registered
+
+
+register_all_repo_skills = register_all_32_repo_skills
 
 
 def clone_missing_tools() -> None:
     print("=" * 65)
-    print("  [TOOLS MANAGER] Verifying & Syncing All 32 Curated Repositories")
+    print(f"  [TOOLS MANAGER] Verifying & Syncing All {len(CURATED_REPOS)} Curated Repositories")
     print("=" * 65)
 
     installed_count = 0

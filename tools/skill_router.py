@@ -23,8 +23,9 @@ WORKSPACE_ROOT = TOOLS_DIR.parent
 CACHE_DIR = Path.home() / ".agent_workstation"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 SKILL_INDEX_CACHE = CACHE_DIR / "skills_index_v1.json"
+_MEM_INDEX_CACHE: Dict[str, Any] = {"mtime": 0.0, "repo_count": 0, "entries": None}
 
-# Deterministic Domain-to-Repo Intent Matrix covering all 32 Curated Repos + Eko + Skyvern
+# Deterministic Domain-to-Repo Intent Matrix covering all 47 Curated Repos & Bundled Skills
 DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
     {
         "domain": "Workstation Orchestration, Auto-Router & Model Routing",
@@ -34,12 +35,66 @@ DOMAIN_INTENT_MATRIX: List[Dict[str, Any]] = [
             "auto ai model", "ai model", "model routing", "model tier", "telemetry", "pre_invocation",
             "preinvocation", "hook", "orchestrate", "orchestrator", "workstation", "smart model",
             "model selection", "routing status", "gateway routing", "5-tier", "fastmcp", "nemotron",
-            "argon", "gemini-4-argon", "gemini-3.8-flash", "manage_tools", "setup_wizard"
+            "argon", "carbon", "gemini-4-argon", "gemini-4-carbon", "gemini-3.8-flash", "manage_tools", "setup_wizard"
         ],
         "priority_files": [
             "workstation-auto-router/SKILL.md",
             "agent-orchestrator/SKILL.md",
             "9router/skills/9router/SKILL.md"
+        ]
+    },
+    {
+        "domain": "Modern Web Platform, CWV, Accessibility & Browser APIs",
+        "repos": ["modern-web-guidance", "vercel-agent-skills", "ui-ux-pro-max-skill"],
+        "keywords": [
+            "modern web", "modern-web-guidance", "core web vitals", "cwv", "inp", "lcp", "cls",
+            "popover", "dialog", "view transition", "container query", "content-visibility",
+            "wcag", "a11y", "accessible", "chrome extension", "manifest v3", "react performance",
+            "next.js", "field-sizing", "anchor positioning", "web guidance"
+        ],
+        "priority_files": [
+            "modern-web-guidance/skills/modern-web-guidance/SKILL.md",
+            "vercel-agent-skills/skills/react-best-practices/SKILL.md",
+            "vercel-agent-skills/skills/web-design-guidelines/SKILL.md"
+        ]
+    },
+    {
+        "domain": "Programmatic Film Studio, Code-Driven Cinema & Remotion",
+        "repos": ["lemo-opuscar", "remotion-skills", "LongCat-Video"],
+        "keywords": [
+            "opuscar", "lemo-opuscar", "limo opuscar", "lemo", "film style", "short film",
+            "code film", "remotion", "programmatic video", "explainer video", "promo video",
+            "motion graphics", "watercolor film", "impasto", "ukiyo-e"
+        ],
+        "priority_files": [
+            "lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+            "remotion-skills/skills/remotion-best-practices/SKILL.md",
+            "remotion-skills/skills/remotion-render/SKILL.md"
+        ]
+    },
+    {
+        "domain": "Supabase, Postgres RLS, Migrations & Edge Functions",
+        "repos": ["supabase-agent-skills", "context7"],
+        "keywords": [
+            "supabase", "postgres", "postgresql", "rls", "row level security", "pgvector",
+            "edge function", "sql migration", "query optimization"
+        ],
+        "priority_files": [
+            "supabase-agent-skills/skills/supabase/SKILL.md",
+            "supabase-agent-skills/skills/supabase-postgres-best-practices/SKILL.md"
+        ]
+    },
+    {
+        "domain": "Playwright Webapp Testing, MCP Builder & Document Artifacts",
+        "repos": ["anthropic-skills", "scrapling"],
+        "keywords": [
+            "webapp-testing", "e2e test", "mcp server", "mcp-builder", "skill-creator",
+            "generate pdf", "create docx", "create pptx", "create xlsx", "spreadsheet"
+        ],
+        "priority_files": [
+            "anthropic-skills/skills/webapp-testing/SKILL.md",
+            "anthropic-skills/skills/mcp-builder/SKILL.md",
+            "anthropic-skills/skills/skill-creator/SKILL.md"
         ]
     },
     {
@@ -309,16 +364,40 @@ def _extract_frontmatter_and_summary(md_path: Path) -> Dict[str, str]:
     }
 
 
+def _current_tools_repo_count() -> int:
+    if not TOOLS_DIR.exists():
+        return 0
+    return sum(
+        1 for d in TOOLS_DIR.iterdir()
+        if d.is_dir() and not d.name.startswith((".", "_"))
+    )
+
+
 def build_or_load_skill_index(force_rebuild: bool = False) -> List[Dict[str, str]]:
     """
-    Builds or loads a fast cached index of all 1,041+ SKILL.md files and 32 tool repos in tools/.
-    Completes in <5ms when cached.
+    Builds or loads a fast cached index of all indexed SKILL.md files across curated tool repos in tools/.
+    Completes in <1ms when in-memory cached and auto-invalidates when tool directories change.
     """
+    repo_count = _current_tools_repo_count()
     if not force_rebuild and SKILL_INDEX_CACHE.exists():
         try:
-            cache_age = time.time() - SKILL_INDEX_CACHE.stat().st_mtime
+            cache_stat = SKILL_INDEX_CACHE.stat()
+            cache_age = time.time() - cache_stat.st_mtime
             if cache_age < 86400:
-                return json.loads(SKILL_INDEX_CACHE.read_text(encoding="utf-8"))
+                if (
+                    _MEM_INDEX_CACHE["entries"] is not None
+                    and _MEM_INDEX_CACHE["mtime"] == cache_stat.st_mtime
+                    and _MEM_INDEX_CACHE["repo_count"] == repo_count
+                ):
+                    return _MEM_INDEX_CACHE["entries"]
+
+                entries_disk = json.loads(SKILL_INDEX_CACHE.read_text(encoding="utf-8"))
+                indexed_repos = {e.get("repo") for e in entries_disk if not str(e.get("rel_path", "")).startswith("../")}
+                if abs(len(indexed_repos) - repo_count) <= 2:
+                    _MEM_INDEX_CACHE["entries"] = entries_disk
+                    _MEM_INDEX_CACHE["mtime"] = cache_stat.st_mtime
+                    _MEM_INDEX_CACHE["repo_count"] = repo_count
+                    return entries_disk
         except Exception:
             pass
 
@@ -385,6 +464,9 @@ def build_or_load_skill_index(force_rebuild: bool = False) -> List[Dict[str, str
 
     try:
         SKILL_INDEX_CACHE.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+        _MEM_INDEX_CACHE["entries"] = entries
+        _MEM_INDEX_CACHE["mtime"] = SKILL_INDEX_CACHE.stat().st_mtime
+        _MEM_INDEX_CACHE["repo_count"] = repo_count
     except Exception:
         pass
     return entries
@@ -526,7 +608,7 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if len(sys.argv) < 2 or sys.argv[1] == "--index":
         idx = build_or_load_skill_index(force_rebuild=True)
-        print(f"[OK] Built workstation skill index: {len(idx)} skills indexed across 32 repositories.")
+        print(f"[OK] Built workstation skill index: {len(idx)} skills indexed across {_current_tools_repo_count()} repositories.")
         sys.exit(0)
 
     query = " ".join(sys.argv[1:])

@@ -134,7 +134,16 @@ def resolve_smart_model_telemetry(task: str, explicit_model: str = "auto") -> di
     req = explicit_model.lower().strip() if explicit_model and explicit_model != "auto" else ""
 
     # 1. Explicit Model Overrides or Mentions
-    # Google Gemini Higher-Tier (3.8 Flash, 4 Argon, 4 Ultra)
+    # Google Gemini Higher-Tier (3.8 Flash, 4 Argon, 4 Carbon, 4 Ultra)
+    if req in ["gemini-4-carbon", "carbon", "gemini-carbon"] or any(k in t for k in ["gemini-4-carbon", "gemini 4 carbon", "gemini carbon", "carbon"]):
+        return {
+            "tier": "frontier",
+            "model_name": "Gemini 4 Carbon",
+            "model_id": "gemini-4-carbon",
+            "display": "Gemini 4 Carbon",
+            "provider": "gemini",
+            "cost_tier": "Cloud Frontier",
+        }
     if req in ["gemini-4-argon", "argon", "gemini-argon"] or any(k in t for k in ["gemini-4-argon", "argon", "gemini 4", "gemini argon"]):
         return {
             "tier": "frontier",
