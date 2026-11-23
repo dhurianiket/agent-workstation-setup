@@ -15,7 +15,7 @@ import subprocess
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Any
 
 TOOLS_DIR = Path(__file__).parent.resolve()
 REPO_ROOT = TOOLS_DIR.parent
@@ -184,6 +184,8 @@ def _clone_single_repo(name: str, url: str) -> Tuple[str, str, str]:
     if target_path.exists() and any(target_path.iterdir()):
         return (name, "present", "already installed")
 
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
     for _ in (1, 2):
         if target_path.exists():
             shutil.rmtree(target_path, ignore_errors=True)
@@ -197,6 +199,7 @@ def _clone_single_repo(name: str, url: str) -> Tuple[str, str, str]:
                 text=True,
                 timeout=180,
                 check=False,
+                env=env,
             )
             if res.returncode == 0 and target_path.exists():
                 return (name, "cloned", "cloned successfully")
@@ -420,6 +423,193 @@ def register_all_32_repo_skills(extra_skill_roots: List[Path] = None) -> int:
 register_all_repo_skills = register_all_32_repo_skills
 
 
+CURATED_SUBSKILL_SOURCES: List[Tuple[str, str, Optional[str]]] = [
+    # (repo_name, subpath_glob, prefix_or_none)
+    ("agent-skills", "skills/*", None),
+    ("elephant-goldfish-model", "skills/*", None),
+    ("ai-engineering-from-scratch", "skills/*", "aie-"),
+    ("context7", "skills/*", None),
+    ("magic-mcp", "skills/*", None),
+    ("scrapling", "agent-skill/Scrapling-Skill", "scrapling-"),
+    ("cloudflare-security-audit-skill", "skills/*", "cloudflare-"),
+]
+
+
+def register_curated_subskills(extra_skill_roots: List[Path] = None) -> int:
+    """
+    Registers specialized granular sub-skills from curated repos (e.g. Addy Osmani's agent-skills,
+    Google's EGM, Context7, 21st UI, Scrapling, Cloudflare Security) into Antigravity, Claude,
+    Codex, and .agents global & workspace discovery directories so they are natively available in `<skills>`.
+    """
+    home = Path.home()
+    repo_skills_dir = (
+        (REPO_ROOT / "agent-workstation-setup" / "skills")
+        if (REPO_ROOT / "agent-workstation-setup").exists()
+        else (REPO_ROOT / "skills")
+    )
+    target_roots = [
+        home / ".gemini" / "config" / "plugins" / "antigravity-workstation" / "skills",
+        home / ".gemini" / "config" / "skills",
+        home / ".claude" / "skills",
+        home / ".codex" / "skills",
+        home / ".agents" / "skills",
+        REPO_ROOT / ".agents" / "skills",
+        repo_skills_dir,
+    ]
+    central_agents_skills = home / ".agent-workstation" / "repo" / ".agents" / "skills"
+    if central_agents_skills.parent.parent.exists():
+        target_roots.append(central_agents_skills)
+    if extra_skill_roots:
+        for r in extra_skill_roots:
+            if r not in target_roots:
+                target_roots.append(r)
+
+    for r in target_roots:
+        r.mkdir(parents=True, exist_ok=True)
+
+    registered = 0
+    for repo_name, pattern, prefix in CURATED_SUBSKILL_SOURCES:
+        repo_dir = TOOLS_DIR / repo_name
+        if not repo_dir.exists():
+            continue
+
+        matches = list(repo_dir.glob(pattern))
+        for skill_dir in sorted(matches):
+            if not skill_dir.is_dir():
+                continue
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.exists():
+                skill_file = skill_dir / "skill.md"
+            if not skill_file.exists():
+                continue
+
+            content = skill_file.read_text(encoding="utf-8", errors="replace")
+            m_name = re.search(r"^name:\s*(.+)$", content, re.MULTILINE)
+            raw_name = m_name.group(1).strip().strip("'\"") if m_name else skill_dir.name
+            target_name = f"{prefix}{raw_name}" if prefix and not raw_name.startswith(prefix) else raw_name
+            target_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "-", target_name).lower()
+
+            m_desc = re.search(r"^description:\s*(?:>-\s*\n)?(.+?)(?:\n\w+:|\n---\Z|\n\n|\Z)", content, re.MULTILINE | re.DOTALL)
+            desc = m_desc.group(1).strip() if m_desc else f"Specialized skill runbook for {target_name} from {repo_name}."
+            desc = " ".join(desc.split())[:300]
+
+            if content.startswith("---"):
+                parts = content.split("---", 2)
+                body = parts[2].strip() if len(parts) >= 3 else content
+            else:
+                body = content
+
+            formatted_skill_md = (
+                f"---\n"
+                f"name: {target_name}\n"
+                f"description: >-\n"
+                f"  {desc}\n"
+                f"---\n\n"
+                f"{body}\n"
+            )
+
+            for root in target_roots:
+                dest = root / target_name
+                dest.mkdir(parents=True, exist_ok=True)
+                (dest / "SKILL.md").write_text(formatted_skill_md, encoding="utf-8")
+                for subdir_name in ["scripts", "resources", "references"]:
+                    sub_src = skill_dir / subdir_name
+                    if sub_src.exists() and sub_src.is_dir():
+                        sub_dst = dest / subdir_name
+                        if sub_dst.exists():
+                            shutil.rmtree(sub_dst, ignore_errors=True)
+                        shutil.copytree(sub_src, sub_dst)
+            registered += 1
+
+    print(f"  [OK] Registered {registered} curated sub-skills across global & workspace skill directories.")
+    return registered
+
+
+PERSONAL_REPOS: List[Tuple[str, str, Path]] = [
+    ("Aegis-health-ai-", "https://github.com/dhurianiket/Aegis-health-ai-", Path("E:/Aegis-health-ai-")),
+    ("chate-prep-plus", "https://github.com/dhurianiket/chate-prep-plus", Path("C:/Users/dhuri/Downloads/antigravity ai workspace/CHATE PREP PLUS")),
+    ("aniket-living-cv", "https://github.com/dhurianiket/aniket-living-cv", Path("E:/aniket-living-cv")),
+    ("case-management-system", "https://github.com/dhurianiket/case-management-system", Path("C:/Users/dhuri/Downloads/case-management-system")),
+    ("agent-workstation-setup", "https://github.com/dhurianiket/agent-workstation-setup", REPO_ROOT / "agent-workstation-setup"),
+]
+
+
+def _fetch_or_clone_single_repo(name: str, url: str, target_path: Optional[Path] = None) -> Tuple[str, str, str]:
+    """Clones if missing; fetches latest updates from origin if already present."""
+    if target_path is None:
+        target_path = TOOLS_DIR / name
+
+    if not target_path.exists() or not any(target_path.iterdir()):
+        return _clone_single_repo(name, url)
+
+    git_dir = target_path / ".git"
+    if not git_dir.exists():
+        return (name, "present", "already present (not a git repository)")
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    try:
+        res = subprocess.run(
+            ["git", "-C", str(target_path), "fetch", "--depth=1", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+            env=env,
+        )
+        if res.returncode == 0:
+            return (name, "fetched", "fetched latest updates from origin")
+        else:
+            err = (res.stderr or res.stdout or f"exit {res.returncode}").strip()[:80]
+            return (name, "fetch_failed", err)
+    except Exception as exc:
+        return (name, "fetch_error", str(exc)[:80])
+
+
+def fetch_all_repositories(repo_names: Optional[List[str]] = None, parallel_workers: int = 6) -> None:
+    """
+    Automatically fetches latest updates for all 47 curated repositories (cloning any missing ones)
+    plus personal ecosystem repositories in parallel. If repo_names is specified, only fetches those.
+    """
+    all_targets = [(name, url, TOOLS_DIR / name) for name, url in CURATED_REPOS]
+    for name, url, p in PERSONAL_REPOS:
+        if p.exists():
+            all_targets.append((name, url, p))
+
+    if repo_names:
+        filter_set = set(r.strip().lower() for r in repo_names if r.strip())
+        all_targets = [t for t in all_targets if t[0].lower() in filter_set]
+
+    print("=" * 68, flush=True)
+    print(f"  [TOOLS MANAGER] Fetching & Updating {len(all_targets)} Repositories (Parallel)", flush=True)
+    print("=" * 68, flush=True)
+
+    cloned = 0
+    fetched = 0
+    errors = 0
+
+    with ThreadPoolExecutor(max_workers=parallel_workers) as pool:
+        futures = {pool.submit(_fetch_or_clone_single_repo, n, u, p): n for n, u, p in all_targets}
+        for fut in as_completed(futures):
+            name, status, detail = fut.result()
+            if status in ("cloned", "present"):
+                cloned += 1
+                print(f"  [CLONED]  {name:<28} -> {detail}", flush=True)
+            elif status == "fetched":
+                fetched += 1
+                print(f"  [FETCHED] {name:<28} -> {detail}", flush=True)
+            else:
+                errors += 1
+                print(f"  [NOTE]    {name:<28} -> {detail}", flush=True)
+
+    print("-" * 68, flush=True)
+    print(f"Summary: {fetched} fetched, {cloned} present/cloned, {errors} failed/noted across {len(all_targets)} repositories.", flush=True)
+    print("-" * 68, flush=True)
+
+    register_all_32_repo_skills()
+    register_curated_subskills()
+
+
 def clone_missing_tools() -> None:
     print("=" * 65)
     print(f"  [TOOLS MANAGER] Verifying & Syncing All {len(CURATED_REPOS)} Curated Repositories")
@@ -457,6 +647,7 @@ def clone_missing_tools() -> None:
     print(f"Summary: {installed_count}/{len(CURATED_REPOS)} available ({cloned_count} newly cloned, {failed_count} failed)")
     print("-" * 65)
     register_all_32_repo_skills()
+    register_curated_subskills()
 
 
 def audit_tools() -> None:
@@ -496,6 +687,11 @@ if __name__ == "__main__":
         audit_tools()
     elif action == "register-skills":
         register_all_32_repo_skills()
+        register_curated_subskills()
+    elif action in ("fetch", "auto-fetch", "pull"):
+        repo_filter = sys.argv[2:] if len(sys.argv) > 2 else None
+        fetch_all_repositories(repo_names=repo_filter)
+        audit_tools()
     else:
         clone_missing_tools()
         audit_tools()
