@@ -1,6 +1,6 @@
 # Curated Tool Repositories Manifest (47 Repositories)
 
-A unified catalog of all 47 curated GitHub repositories powering full-stack development, AI agent workflows, UI/UX engineering, modern web compliance, database/React mastery, and programmatic cinema across your machines. Automatically cloned and indexed into **693+ `SKILL.md` runbooks** (plus 21 native sub-skills across Antigravity, Claude Code, Codex, and `.agents`) by `python3 tools/setup_wizard.py` and `python3 tools/manage_tools.py sync`.
+A unified catalog of all 47 curated GitHub repositories powering full-stack development, AI agent workflows, UI/UX engineering, modern web compliance, database/React mastery, and programmatic cinema across your machines. Automatically cloned and indexed into **749 indexed `SKILL.md` runbooks** (including `21` native sub-skills and `55` curated sub-skills across Antigravity, Claude Code, Codex, and `.agents`) by `python3 tools/setup_wizard.py` and `python3 tools/manage_tools.py sync`.
 
 ```bash
 # Audit installation status across all 47 repos:
@@ -9,7 +9,10 @@ python3 tools/manage_tools.py audit
 # Clone or update all 47 repositories in parallel & sync global skill symlinks:
 python3 tools/manage_tools.py sync
 
-# Re-register all 47 repos + 21 native sub-skills globally across Antigravity, Claude & Codex:
+# Parallel auto-fetch latest upstream updates across all 47 curated repositories:
+python3 tools/manage_tools.py fetch
+
+# Re-register all 47 repos + 21 native + 55 curated sub-skills globally across Antigravity, Claude & Codex:
 python3 tools/manage_tools.py register-skills
 ```
 

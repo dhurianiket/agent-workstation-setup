@@ -9,8 +9,8 @@
 <p align="center">
   <a href="http://127.0.0.1:8000/dashboard"><img src="https://img.shields.io/badge/Gateway_v3.4-Port_8000_Online-10b981?style=for-the-badge&logo=fastapi&logoColor=white" alt="Gateway v3.4" /></a>
   <a href="#-5-tier-smart-auto-routing--credit-guard"><img src="https://img.shields.io/badge/Credit_Guard-97.8%25_Cost_Saved-f59e0b?style=for-the-badge&logo=lightning&logoColor=white" alt="Credit Guard" /></a>
-  <a href="#-1-click-graphify-ast-knowledge-graph-graphify"><img src="https://img.shields.io/badge/Graphify_AST-2%2C427_Nodes_%7C_4%2C497_Edges-8b5cf6?style=for-the-badge&logo=graphql&logoColor=white" alt="Graphify AST" /></a>
-  <a href="#-zero-name-47-repo--693-skill-auto-router"><img src="https://img.shields.io/badge/Auto--Router-47_Repos_%7C_693_Skills-ec4899?style=for-the-badge&logo=sparkles&logoColor=white" alt="Skill Router" /></a>
+  <a href="#-1-click-graphify-ast-knowledge-graph-graphify"><img src="https://img.shields.io/badge/Graphify_AST-2%2C510_Nodes_%7C_2%2C819_Edges-8b5cf6?style=for-the-badge&logo=graphql&logoColor=white" alt="Graphify AST" /></a>
+  <a href="#-zero-name-47-repo--749-skill-auto-router"><img src="https://img.shields.io/badge/Auto--Router-47_Repos_%7C_749_Skills-ec4899?style=for-the-badge&logo=sparkles&logoColor=white" alt="Skill Router" /></a>
 </p>
 <p align="center">
   <a href="#-hardware-adaptive-installer--api-key-wizard"><img src="https://img.shields.io/badge/Hardware_AI-Apple_Metal_%7C_CUDA_%7C_Vulkan-06b6d4?style=for-the-badge&logo=ollama&logoColor=white" alt="Hardware Adaptive" /></a>
@@ -23,7 +23,7 @@
   <a href="#-1-command-universal-installers"><b>⚡ 1-Command Install</b></a> •
   <a href="#-how-it-works--how-it-functions"><b>🔄 How It Works</b></a> •
   <a href="#-hardware-adaptive-installer--api-key-wizard"><b>💻 Auto-Hardware & Ollama</b></a> •
-  <a href="#-zero-name-47-repo--693-skill-auto-router"><b>✨ 47-Repo Auto-Router</b></a> •
+  <a href="#-zero-name-47-repo--749-skill-auto-router"><b>✨ 47-Repo Auto-Router</b></a> •
   <a href="#-5-tier-smart-auto-routing--credit-guard"><b>🎛️ 5-Tier Router</b></a> •
   <a href="#-interactive-bento-control-plane-dashboard"><b>🌐 Live Dashboard</b></a> •
   <a href="#-1-click-graphify-ast-knowledge-graph-graphify"><b>🧠 Graphify AST</b></a> •
@@ -44,7 +44,7 @@
     </td>
     <td width="50%" valign="top">
       <h3>✨ 2. Zero-Name 47-Repo Auto-Router</h3>
-      <p>Intercepts every chat prompt via <code>tools/pre_invocation_hook.py</code> and matches task intent against <b>47 installed GitHub repositories (693+ indexed <code>SKILL.md</code> runbooks)</b> in <code>&lt;5ms</code> across Antigravity, Claude Code, Codex, and `.agents`. You never have to type a repository or skill name in any project.</p>
+      <p>Intercepts every chat prompt via <code>tools/pre_invocation_hook.py</code> and matches task intent against <b>47 installed GitHub repositories (749 indexed <code>SKILL.md</code> runbooks)</b> in <code>&lt;5ms</code> across Antigravity, Claude Code, Codex, and <code>.agents</code>. You never have to type a repository or skill name in any project.</p>
     </td>
   </tr>
   <tr>
@@ -54,7 +54,7 @@
     </td>
     <td width="50%" valign="top">
       <h3>🧠 4. 1-Click Graphify AST & Strict Repo Isolation</h3>
-      <p>Tapping the <b>Graphify AST Graph</b> link on <code>/dashboard</code> opens the interactive AST visualization (<code>/graphify</code> &rarr; <code>graph.html</code>). Strict isolation ensures the workstation <b>never</b> writes <code>graphify-out/</code> or tool files into your personal or private repositories.</p>
+      <p>Tapping the <b>Graphify AST Graph</b> link on <code>/dashboard</code> opens the interactive 2,510-node visualization (<code>/graphify</code> &rarr; <code>graph.html</code>). Strict isolation ensures the workstation <b>never</b> writes <code>graphify-out/</code> or tool files into your personal or private repositories.</p>
     </td>
   </tr>
 </table>
@@ -74,9 +74,9 @@ curl -fsSL https://raw.githubusercontent.com/dhurianiket/agent-workstation-setup
 ```
 
 ### 🔄 Already Cloned or Opened in Antigravity / Cursor / Claude Code?
-1. **Zero-Touch Auto-Bootstrap (Just Open & Prompt)**:
-   - Opening this cloned repository inside **Google Antigravity** (or any agent harness reading `.agents/hooks.json` / `AGENTS.md`) **automatically triggers background installation** on your first prompt (`tools/pre_invocation_hook.py` &rarr; `tools/setup_wizard.py --auto`).
-   - It automatically creates `.venv`, mirrors the runtime to `~/.agent-workstation/repo` (so even external exFAT SSDs work seamlessly with macOS `launchd`), clones all **47 repositories in parallel (6 workers)**, builds the Graphify AST graph, registers global skills across Antigravity, Claude Code, Codex, and `.agents` + the 9-tool MCP server, and launches the background gateway daemon on `http://127.0.0.1:8000`.
+1. **Zero-Touch Auto-Bootstrap & Universal Multi-Project Activation**:
+   - Opening this cloned repository inside **Google Antigravity** (or any agent harness reading `.agents/hooks.json` / `AGENTS.md`) runs cross-platform `SessionStart` + `PreInvocation` lifecycle hooks via a zero-space launcher (`~/.agent_workstation/run_hook.sh` on macOS/Linux, `~/.agent_workstation/run_hook.cmd` on Windows) and auto-activates registered projects across the machine.
+   - Automatically creates `.venv`, mirrors the runtime to `~/.agent-workstation/repo` (so even external exFAT SSDs work seamlessly with macOS `launchd`), clones & parallel-fetches all **47 repositories (`6` workers)**, builds the Graphify AST graph, registers **`55` curated sub-skills + `21` native sub-skills** globally (`~/.gemini/config/skills`, `~/.gemini/config/plugins/antigravity-workstation/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.agents/skills`, plus `~/lemo-opuscar`), wires both **`agent_workstation_mcp`** and **`context7`** (`@upstash/context7-mcp`) MCP servers, and launches the background gateway daemon on `http://127.0.0.1:8000`.
 2. **Interactive Personal API Key & AWS Setup (CLI or 1-Click Web UI)**:
    ```bash
    # Option A: Run the interactive terminal wizard (prompts for your personal NVIDIA / AWS / OpenRouter / Gemini keys):
@@ -109,7 +109,7 @@ sequenceDiagram
     participant Gate as 🛡️ Verification Gate<br/>(AST + R1 Critic + ggshield)
 
     Dev->>Hook: Submits natural-language prompt (no repo names needed)
-    Hook->>Skills: Matches prompt intent across 47 repos & 693+ SKILL.md files (<5ms)
+    Hook->>Skills: Matches prompt intent across 47 repos & 749 SKILL.md files (<5ms)
     Skills-->>Hook: Returns top domain runbooks (Modern Web, Apple HIG, Supabase, Vercel, Lemo-Opuscar, Strix...)
     Hook->>Graph: Checks if workspace has graphify-out/graph.json (Isolated)
     Graph-->>Hook: Injects BFS depth=2 symbol & line locations
@@ -120,7 +120,7 @@ sequenceDiagram
 ```
 
 ### 🔒 Strict Personal & Private Repository Isolation
-- **Centralized Tooling (`tools/`)**: All 47 curated GitHub repositories are cloned exclusively inside the workstation's `tools/` directory (`~/.agent-workstation/repo/tools/`), with native skill discovery synced across `~/.gemini/config/skills`, `~/.gemini/config/plugins/antigravity-workstation/skills`, `~/.claude/skills`, `~/.codex/skills`, and `~/.agents/skills`.
+- **Centralized Tooling (`tools/`)**: All 47 curated GitHub repositories are cloned exclusively inside the workstation's `tools/` directory (`~/.agent-workstation/repo/tools/`), with native & curated skill discovery synced globally across `~/.gemini/config/skills`, `~/.gemini/config/plugins/antigravity-workstation/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.agents/skills`, and `~/lemo-opuscar`.
 - **Zero Pollution of Your Private Repos**: `orchestrate.py` and the global plugin **never** clone tools or create `graphify-out/` folders inside your personal or client repositories unless you explicitly initialize Graphify in that repository.
 - **Zero Personal Identifiers**: All configuration files, manifests, and scripts use dynamic `$HOME` / `Path(__file__)` resolution and environment variables (`.env`).
 
@@ -173,14 +173,14 @@ Measured across real multi-agent engineering sessions (`94,122` tokens processed
 | :--- | :--- | :--- | :--- | :--- |
 | **Token Cost & Credit Guard** | Fixed frontier billing on every turn | 1–2 static models per session | **5-Tier Smart Auto-Router** (`model="auto"`) | **`$0.0410` actual** vs `$1.9232` Opus Equiv (**97.8% saved**) |
 | **Provider Resilience** | Single-vendor cloud lock-in | Fails on rate-limit or outage | **7-Provider BYOK + Fallback Cascade** | Auto-fails over to **Local GPU (`148.5ms`, `$0.00`)** |
-| **Codebase Navigation** | Ephemeral grep / vector RAG | Per-session ctags repo-map | **1-Click Graphify AST Graph** (`/graphify`) | **2,427 nodes / 4,497 edges** synced in `<2s` (zero LLM cost) |
-| **Domain Specialization** | Manual `@skill` or prompt pasting | Manual config per project | **Zero-Name `PreInvocation` Auto-Router** | Auto-injects **47 repos / 693+ `SKILL.md` files** in `<5ms` |
+| **Codebase Navigation** | Ephemeral grep / vector RAG | Per-session ctags repo-map | **1-Click Graphify AST Graph** (`/graphify`) | **2,510 nodes / 2,819 edges** synced in `<2s` (zero LLM cost) |
+| **Domain Specialization** | Manual `@skill` or prompt pasting | Manual config per project | **Zero-Name `PreInvocation` Auto-Router** | Auto-injects **47 repos / 749 `SKILL.md` files** in `<5ms` |
 | **Pre-Commit Safety Gate** | IDE lint warnings only | Optional test command | **AST Constitution + DeepSeek R1 Critic + `ggshield`** | **0 secret leaks**, 0 bare `except:`, 0 `# rest unchanged` |
 | **Cross-Device Portability** | Manual setup per machine | Manual model & key config | **Hardware-Adaptive `setup_wizard.py`** | Auto-detects PC/Mac GPU, pulls right Ollama LLM & clones 47 repos |
 
 ---
 
-## ✨ Zero-Name 47-Repo & 693-Skill Auto-Router
+## ✨ Zero-Name 47-Repo & 749-Skill Auto-Router
 
 > [!IMPORTANT]
 > **You never need to call out repository or skill names—even when working in a separate project directory.**
@@ -301,17 +301,20 @@ Open **`http://127.0.0.1:8000/dashboard`** in any browser to inspect real-time t
  │ macOS (ARM64) / Windows • Metal / CUDA / Vulkan       │ Tier: FRONTIER (Gemini 4 Carbon) • Matched Skills│
  ├──────────────────┬──────────────────┬─────────────────┴┬─────────────────────┬───────────────────────────┤
  │ Actual Spend     │ Smart Savings    │ Token Throughput │ Graphify AST Graph↗ │ 47-Repo Skill Router      │
- │ $0.0410 USD      │ $1.8822 (97.8%)  │ 94,122 Tokens    │ 2,427 Nodes (Tap!)  │ 693+ Skills (47/47 Ready) │
+ │ $0.0410 USD      │ $1.8822 (97.8%)  │ 94,122 Tokens    │ 2,510 Nodes (Tap!)  │ 749 Skills (47/47 Ready)  │
  ├──────────────────┴──────────────────┴──────────────────┴─────────────────────┴───────────────────────────┤
  │ 🎛️ Clickable 5-Tier Pipeline: [Tier 1 Local $0] ➔ [Tier 2 Scout] ➔ [Coder] ➔ [R1] ➔ [Carbon/Argon/Claude]│
  ├─────────────────────────────────┬─────────────────────────────────┬──────────────────────────────────────┤
  │ 🧪 Live Gateway Playground      │ ✨ Zero-Name 47-Repo Inspector  │ 📊 Spend | Post-Mortems | AST | Skills│
- │ [Tier: auto (5-Tier Router)  ▼] │ [Query: Audit CWV & dialogs... ] │ [Filterable 47-Repo / 693+ Catalog]  │
+ │ [Tier: auto (5-Tier Router)  ▼] │ [Query: Audit CWV & dialogs... ] │ [Filterable 47-Repo / 749 Catalog]   │
  │ [Prompt: Verify gateway...    ] │ Matched: modern-web-guidance,   │ [Open Interactive Graph.html ↗]      │
  │ [▶ Execute on Gateway (Ctrl+↵)] │ vercel-agent-skills, ui-ux-pro  │ [Search AST Symbol: invoke_...]      │
  └─────────────────────────────────┴─────────────────────────────────┴──────────────────────────────────────┘
 ```
 
+#### Modern Web Guidance & Gateway Telemetry Upgrades (`0` Legacy Findings across `52` Rules)
+- **FastAPI Performance & Non-Blocking Concurrency**: `GZipMiddleware` compression, `(st_mtime_ns, st_size)` JSON caching, `asyncio.to_thread` wrappers for Bedrock/OpenAI-compatible/Ollama calls, single-request `GET /v1/telemetry/snapshot`, and `visibilitychange` auto-pause when hidden.
+- **Native Top-Layer UI & Core Web Vitals**: Native `<dialog closedby="any">` modals with `overscroll-behavior: contain` and pointer bounding-box fallback, `content-visibility: auto` + `contain-intrinsic-size` + `contentvisibilityautostatechange` (`capture: true`), `field-sizing: content` auto-sizing textareas, dark `color-scheme`/`accent-color`/`scrollbar-color`, WCAG accessibility semantics (skip link, non-nested card links, ARIA tabs, table captions), atomic `replaceChildren()`, `toReversed()`, and a searchable **Skills (47)** catalog tab.
 
 ### 🤖 Multi-Agent Studio & Live Console
 The control plane dashboard includes a live interactive studio to test, chat with, and dispatch work to every agent without opening separate terminal windows:
@@ -344,7 +347,7 @@ The control plane dashboard includes a live interactive studio to test, chat wit
 
 ## 🧠 1-Click Graphify AST Knowledge Graph (`/graphify`)
 
-Instead of wasting tokens on blind directory greps, the workstation maintains a structural **Tree-sitter AST Knowledge Graph** (`2,427 nodes`, `4,497 edges`, `146 Leiden communities`):
+Instead of wasting tokens on blind directory greps, the workstation maintains a structural **Tree-sitter AST Knowledge Graph** (`2,510 nodes`, `2,819 edges`, `183 Leiden communities`):
 
 1. **Tap on Graphify on `/dashboard`**: Clicking the **Graphify AST Graph** link on `http://127.0.0.1:8000/dashboard` opens `http://127.0.0.1:8000/graphify` (`graphify-out/graph.html`) directly in your browser—or click **`Report ↗`** to open `/graphify/report` (`GRAPH_REPORT.md`).
 2. **Pre-Action Symbol Injection**: When `graphify-out/graph.json` is present in the workspace, `orchestrate.py` queries the AST graph (`BFS depth=2`) before running any agent so exact file paths and line numbers are injected up front.
@@ -361,7 +364,7 @@ Instead of wasting tokens on blind directory greps, the workstation maintains a 
 | **`workstation_health`** | *None* | Checks gateway health, active cloud/GPU providers, and response latency. |
 | **`workstation_spend`** | *None* | Returns total requests, per-model token usage, actual spend, and USD saved vs Opus. |
 | **`workstation_orchestrate`** | `task`, `model="auto"`, `agent="aider"`, `judge=False` | Runs full closed-loop orchestration (Skill Router + Graphify + Agent + AST Gate + `ggshield`). |
-| **`workstation_auto_route_skills`**| `prompt` | Matches any natural-language task against the 47 repos and 693+ indexed `SKILL.md` runbooks. |
+| **`workstation_auto_route_skills`**| `prompt` | Matches any natural-language task against the 47 repos and 749 indexed `SKILL.md` runbooks. |
 | **`workstation_judge`** | *None* | Runs read-only `--judge-only` verification (AST Constitution + DeepSeek R1 Critic + `ggshield`). |
 | **`workstation_scan_secrets`** | `files` *(optional)* | Scans modified working-tree files with GitGuardian (`ggshield`) to block secret leaks. |
 | **`workstation_sync_graph`** | *None* | Executes `python -m graphify update .` to refresh the codebase AST knowledge graph. |
@@ -388,22 +391,28 @@ Every task executed via [`orchestrate.py`](orchestrate.py) must pass four determ
 
 ```bash
 # 1. Interactive Hardware Detector + Ollama Model Installer + API Key Wizard + 47-Repo Sync
-python tools/setup_wizard.py
+python3 tools/setup_wizard.py
 
 # 2. Display "How It Works & How It Functions" Architectural Guide
-python orchestrate.py --guide
+python3 orchestrate.py --guide
 
 # 3. Default Autonomous Execution (Auto-routes model tier + injects 47-Repo Skills)
-python orchestrate.py -t "Add rate-limiting middleware with Redis fallback"
+python3 orchestrate.py -t "Add rate-limiting middleware with Redis fallback"
 
 # 4. Test Zero-Name 47-Repo Skill Router on any prompt
-python tools/skill_router.py "Design a macOS dashboard card with spring animations"
+python3 tools/skill_router.py "Design a macOS dashboard card with spring animations"
 
 # 5. Run Read-Only Verification Gate (AST Constitution + DeepSeek R1 Critic + ggshield)
-python orchestrate.py --judge-only
+python3 orchestrate.py --judge-only
 
 # 6. Inspect Live Token Spend & Smart-Tier Savings
-python orchestrate.py --usage
+python3 orchestrate.py --usage
+
+# 7. Parallel auto-fetch updates for all 47 curated repositories
+python3 tools/manage_tools.py fetch
+
+# 8. Re-register all 47 repo skills + 21 native + 55 curated sub-skills globally
+python3 tools/manage_tools.py register-skills
 ```
 
 ---

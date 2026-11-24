@@ -76,38 +76,40 @@ def activate_target_workspace(ws_path: Path) -> bool:
     if not ws_path.exists() or not ws_path.is_dir():
         return False
     try:
+        launcher = ensure_run_hook_launcher()
+        if (ws_path / "tools" / "pre_invocation_hook.py").exists():
+            # Keep the workstation repo itself clean (already carries AGENTS.md & portable .agents/hooks.json)
+            return True
+
         agents_dir = ws_path / ".agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
         rules_dir = agents_dir / "rules"
         rules_dir.mkdir(parents=True, exist_ok=True)
 
-        launcher = ensure_run_hook_launcher()
         launcher_str = str(launcher.resolve())
 
         # 1. Write workspace .agents/hooks.json (zero-quote path avoids cmd.exe quote stripping)
-        # Never overwrite the workstation repo's own portable .agents/hooks.json
         hooks_file = agents_dir / "hooks.json"
-        if not (ws_path / "tools" / "pre_invocation_hook.py").exists():
-            hooks_payload = {
-                "workstation-auto-router": {
-                    "enabled": True,
-                    "SessionStart": [
-                        {
-                            "type": "command",
-                            "command": f"{launcher_str} --session-start",
-                            "timeout": 15
-                        }
-                    ],
-                    "PreInvocation": [
-                        {
-                            "type": "command",
-                            "command": f"{launcher_str}",
-                            "timeout": 15
-                        }
-                    ]
-                }
+        hooks_payload = {
+            "workstation-auto-router": {
+                "enabled": True,
+                "SessionStart": [
+                    {
+                        "type": "command",
+                        "command": f"{launcher_str} --session-start",
+                        "timeout": 15
+                    }
+                ],
+                "PreInvocation": [
+                    {
+                        "type": "command",
+                        "command": f"{launcher_str}",
+                        "timeout": 15
+                    }
+                ]
             }
-            hooks_file.write_text(json.dumps(hooks_payload, indent=2), encoding="utf-8")
+        }
+        hooks_file.write_text(json.dumps(hooks_payload, indent=2), encoding="utf-8")
 
         # 2. Write workspace .agents/rules/workstation.md
         rules_file = rules_dir / "workstation.md"
